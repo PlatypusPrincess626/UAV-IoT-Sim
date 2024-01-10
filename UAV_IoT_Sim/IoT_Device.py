@@ -25,6 +25,7 @@ class IoT_Device:
             self.tilt = 0                   # 0 for no horizontal tilt
             self.type = 1        
             self.typeStr = "Wireless Sensor"
+            self.storedData = random.randint(0, 250)
             
             # Sensor Specifications
             self.minVolt = 20               # 20 mV minimum voltage 
@@ -48,7 +49,8 @@ class IoT_Device:
             
             self.Ah = 1                     # 1 A*h battery rating
             self.rate = 10                  # 10 hours discharge/charge rate
-            self.battAmp = self.Ah/self.rate 
+            self.battAmp = self.Ah/self.rate
+            self.storedEnergy=self.Ah 
             
         else:
             self.type = 2
@@ -82,9 +84,16 @@ class IoT_Device:
             
             self.Ah = 2                            # 2 A*h battery rating
             self.rate = 10                         # 10 hours discharge/charge rate
-            self.battAmp = self.Ah/self.rate 
+            self.battAmp = self.Ah/self.rate
+            self.storedEnergy=self.Ah 
             
-    
+    def reset(self):
+        self.storedEnergy = self.Ah
+        if self.type == 1:
+            self.storedData = random.randint(0, 250)
+        else:
+            self.storedData = random.randint(0, 25000)
+
     # Call location
     def getIndicies(self):
         return self.indX, self.indY
@@ -116,26 +125,32 @@ class IoT_Device:
         if power>0:
             self.isActive = True
             currAmps = (power / (self.V_mp)) * 60
-            if step % self.sampleFreq == 0:  # Data harvesting scheduling
-                self.harvest_data()
-                currAmps -= self.currDraw * 10
-            if step % math.ceil(self.queue/2):    # Transmission Scheduling
-                self.tryComms()
-                currAmps -= self.commCost * 30
-            self.discharge(currAmps)
+            if self.type == 1:
+                if step % self.sampleFreq == 0:  # Data harvesting scheduling
+                    self.harvest_data()
+                    currAmps -= self.currDraw * 10
+                if step % math.ceil(self.queue/2) == 0:    # Transmission Scheduling
+                    self.tryComms()
+                    currAmps -= self.commCost * 30
+            if currAmps > 0:
+                self.storedEnergy += currAmps
+            else:
+                self.discharge(currAmps)
+            
                     
         elif self.storedEnergy > 0:
             self.isActive = True
             maxAmps = self.battAmp * 60
             currCost = 0
-            if step % self.sampleFreq == 0:
-                if maxAmps > self.currDraw:
-                    self.harvest_data()
-                    currCost += self.currDraw * 10
-            if step % math.ceil(self.queue/2):
-                if maxAmps > self.commCost:
-                    self.upload_Data()
-                    currCost += self.commCost * 30
+            if self.type == 1:
+                if step % self.sampleFreq == 0:
+                    if maxAmps > self.currDraw:
+                        self.harvest_data()
+                        currCost += self.currDraw * 10
+                if step % math.ceil(self.queue/2):
+                    if maxAmps > self.commCost:
+                        self.upload_Data()
+                        currCost += self.commCost * 30
             self.discharge(currCost)
                  
         else:
@@ -174,7 +189,7 @@ class IoT_Device:
                 return sentData
         
         else:
-            return None
+            return -1
     
     # Clusterhead-Specific Tasks
     def set_sensor_data(self, sensList: list):
@@ -188,22 +203,28 @@ class IoT_Device:
     def ch_download(self, step):
         rotations = math.ceil(len(self.sensTable.index)/2)
         rotation = step % rotations
-        sensor = (rotation - 1) * 2
+        sensor = rotation * 2
         recData = 0
         activeChannels = []
-        recData += self.sensTable[sensor].upload(self.indX, self.inY, self.h, self.maxAmBCDist)
-        if len(self.sensTable.index)%2 == 0:
-            recData += self.sensTable[sensor + 1].upload(self.indX, self.inY, self.h, self.maxAmBCDist)
-            activeChannels = 2
-        
-        for channel in range(activeChannels):
-            if recData[channel] == None:
-                self.sensTable.at[rotation, "Connection_Status"] = False
-            else:
-                self.sensTable.at[rotation, "Connection_Status"] = True
+        sensor1 = self.sensTable.iloc[sensor, 0]
+        activeChannels.append(sensor1.ws_upload_data(self.indX, self.indY, self.maxAmBCDist, self, self.h))
+        if rotation < (rotations-1) or len(self.sensTable.index)%2 == 0:
+            sensor2 = self.sensTable.iloc[sensor+1, 0]
+            activeChannels.append(sensor2.ws_upload_data(self.indX, self.indY, self.maxAmBCDist, self, self.h))
+        else:
+            activeChannels.append(-2)
+
+        totalChannels = 0
+        for channel in range(len(activeChannels)):
+            if activeChannels[channel] == -1:
+                self.sensTable.iloc[sensor, 1] = False
+                totalChannels += 1
+            elif activeChannels[channel] >=  0:
+                self.sensTable.iloc[sensor+1, 1] = True
                 self.storedData += recData
+                totalChannels += 1
             
-        self.storedEnergy -= self.commCost * 30 * activeChannels
+        self.storedEnergy -= self.commCost * 30 * totalChannels
     
     def ch_upload(self, X:int, Y:int, h:int=0):
         if math.sqrt(pow((self.indX - X),2) + pow((self.indY - Y),2) \
@@ -215,8 +236,8 @@ class IoT_Device:
                     sentData += self.storedData
                     self.storedData = 0
 
-                self.storedEnergy -= self.LoRaTrans * (sentData/self.transSpdLoRA + 4)
-                self.storedEnergy -= self.LoRaIdle * (1-(sentData/self.transSpdLoRA + 4))
+                self.storedEnergy -= self.LoRaTrans * (sentData/self.transSpdLoRa + 4)
+                self.storedEnergy -= self.LoRaIdle * (1-(sentData/self.transSpdLoRa + 4))
                 return sentData
             
             else:
@@ -225,7 +246,7 @@ class IoT_Device:
         
         else:
             self.storedEnergy -= self.LoRaIdle * 60
-            return None
+            return -1
     
     def chargeTime(self, X, Y, h, climb):
         if self.indX == X and self.indY == Y:
@@ -241,12 +262,12 @@ class IoT_Device:
             return h, 0, 0
     
     def getDest(self, state, full_state, model):
-        unserviced = full_state["AoI"].isin([0])
+        unserviced = full_state.iloc[:,3].isin([0])
         for CH in range(unserviced.size-1):
-            if unserviced.at[CH+1, "AoI"]:
-                return full_state.at[CH+1, "Device"]
+            if unserviced.iloc[CH+1, 3]:
+                return full_state.iloc[CH+1, 0]
             
         # Insert code for independent sensors
         
         action = model.get(state)
-        return full_state[action+1, "Device"]
+        return full_state.iloc[action+1, 0]

@@ -70,7 +70,8 @@ class sim_env:
         
         dims = self.dim
         envObj = [0] * (dims*dims)
-        
+
+        print("Placing Obstuctions")
         for obst in range(self.numObst):
             obstType = random.randint(-3,-1)
             while obstType < 0:
@@ -78,7 +79,8 @@ class sim_env:
                 if envObj[place]==0:
                     envObj[place] = obstType
                     obstType = 0
-        
+
+        print("Placing Sensors")
         envSensors = [0] * (dims*dims)
         sensorList = []
         # Random Sensor Placement for now
@@ -94,17 +96,17 @@ class sim_env:
                     envSensors[place] = obstType
                     obstType = 0
         
-        self.sensorTable = pd.DataFrame(sensorList)
-        
         np.reshape(envSensors,(dims, dims))
         sensCoord = []
         for sensor in sensorList:
-            sensCoord.append([sensor[0].indX, sensor[0].indY])
+            X, Y = sensor[0].getIndicies()
+            sensCoord.append([X, Y])
         data = np.array(sensCoord, dtype = 'int')
         kmeans = KMeans(n_clusters=self.total_clusterheads, random_state=0, n_init=10).fit(data)
         centroids = kmeans.cluster_centers_
-        head_assignment = [sensCoord, kmeans.predict(sensCoord)]
-        
+        heads = kmeans.predict(sensCoord)
+        head_assignment = [sensCoord[i] + [heads[i]-1] for i in range(len(sensCoord))]
+
         uavCHList = []
         clusterheadList = []
         countCH = 0
@@ -126,24 +128,20 @@ class sim_env:
                             place += 1
                         else:
                             place -= 1
- 
+
+        print("Placing Clusterheads") 
         for location in head_assignment:
             X, Y = location[0], location[1]
             for sensor in sensorList:
                 sensorX, sensorY = sensor[0].getIndicies()
                 if sensorX == X and sensorY == Y:
                     clusterheadList[location[2]][1].append(sensor)
-                    sensor.setHead(location[2], len(clusterheadList[location[2]][1]))
-                    break  
+                    sensor[0].setHead(location[2], len(clusterheadList[location[2]][1]))
+                    break
                     
         for CH in clusterheadList:
             uavCHList.append([CH[0], len(CH[1])])
-        
-        for CH in clusterheadList:
             CH[0].set_sensor_data(CH[1])
-            
-        self.clusterTable = pd.DataFrame(clusterheadList)
-        
         
         uavList = []
         count = 0
@@ -157,7 +155,21 @@ class sim_env:
                     envObj[place] = obstType
                     obstType = 0
         
-        self.uavTable = pd.DataFrame(uavList)
+        self.sensorTable = pd.DataFrame(sensorList)
+        self.sensorTable.rename(
+             columns={0:"Sensor"},
+             inplace=True
+        )
+        self.CHTable = pd.DataFrame(clusterheadList)
+        self.CHTable.rename(
+             columns={0:"CH",1:"Sensor_List"},
+             inplace=True
+        )
+        self.UAVTable = pd.DataFrame(uavList)
+        self.UAVTable.rename(
+             columns={0:"UAV"},
+             inplace=True
+        )
         return envObj
     
     # Update Environment Variables
@@ -177,11 +189,12 @@ class sim_env:
         dims = self.dim
         envStaticInter = [0.0] * (dims*dims)
         
-        # Create Stoatic 
+        # Create Static 
         shadows = int(math.sqrt(dims))
+        print("Making Happy Trees")
         for shadow in range(shadows):
             place = random.randint(0, dims*dims-1)
-            shadeSize = random.randint(int(dims/25), int(2*dims/25))
+            shadeSize = random.randint(int(5), int(30))
             intensity = random.randint(int(0.25*shadeSize), int(0.75*shadeSize))
             data2D = self.gaussian_kernel(shadeSize, intensity, normalised = True)
             count=0
@@ -202,27 +215,27 @@ class sim_env:
                     
     # Interactions with devices
     def moveUAV(self, X: int, Y: int, newX: int, newY: int): # Estimated Position of UAV (nearest meter)
-        place = X * self.dims + Y
-        newPlace = newX * self.dims + newY
-        if self.envMap.iat[place, 2] == 3:
-            self.envMap.loc[place, 2] = 0
-        elif self.envMap.iat[place, 2] == 9:
-            self.envMap.loc[place, 2] = 1
+        place = X * self.dim + Y
+        newPlace = newX * self.dim + newY
+        if self.envMap.iloc[place, 2] == 3:
+            self.envMap.iloc[place, 2] = 0
+        elif self.envMap.iloc[place, 2] == 9:
+            self.envMap.iloc[place, 2] = 1
         else:
-            self.envMap.loc[place, 2] /= 3
+            self.envMap.iloc[place, 2] /= 3
             
-        if self.envMap.iat[newPlace, 2] == 0:
-            self.envMap.loc[newPlace, 2] = 3
-        elif self.envMap.iat[newPlace, 2] == 1:
-            self.envMap.loc[newPlace, 2] = 9
+        if self.envMap.iloc[newPlace, 2] == 0:
+            self.envMap.iloc[newPlace, 2] = 3
+        elif self.envMap.iloc[newPlace, 2] == 1:
+            self.envMap.iloc[newPlace, 2] = 9
         else:
-            self.envMap.loc[newPlace, 2] *= 3
+            self.envMap.iloc[newPlace, 2] *= 3
     
     def getIrradiance(self, lat, long, tilt, azimuth, step):
-        solpos = solarposition.get_solarposition(self.time[step], lat, long)
+        solpos = solarposition.get_solarposition(self.times[step], lat, long)
         aoi = irradiance.aoi(tilt, azimuth, solpos.apparent_zenith, solpos.azimuth)
         relative_airmass = atmosphere.get_relative_airmass(solpos.apparent_zenith, model='kasten1966')
-        spectra = spectrum.spectr12(
+        spectra = spectrum.spectrl2(
             apparent_zenith=solpos.apparent_zenith,
             aoi=aoi,
             surface_tilt=tilt,
@@ -238,5 +251,3 @@ class sim_env:
     
     def getInterference(self, X, Y):
         return self.dataStaticInter[X*self.dim+Y] + 0.001 * np.random.random()
-        
-        

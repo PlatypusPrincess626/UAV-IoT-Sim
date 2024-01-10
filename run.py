@@ -101,7 +101,8 @@ def evaluate(
     total_reward = 0
     num_crashes = 0
     total_steps = 0
-    
+    agent.decay_epsilon(1)
+
     for _ in range(eval_episodes):
         eval_env.reset()
         done = False
@@ -109,7 +110,8 @@ def evaluate(
         
         while not done:
             curr_obs = eval_env._curr_state
-            obs_next, reward, terminated, truncated, info = eval_env.step(agent, test=True)
+            obs_next, reward, terminated, truncated, info = eval_env.step(agent)
+            done = terminated
             action = info.get("Last_Action", None)
             agent.update(obs_next, action, reward, curr_obs, done)
             ep_reward =+ reward
@@ -119,6 +121,8 @@ def evaluate(
         if info.get("Crashed", False):
             num_crashes += 1
 
+    if total_steps == 0:
+        total_steps = 1
     return num_crashes/total_steps, total_reward, total_steps
 
 def train(
@@ -135,20 +139,21 @@ def train(
 ):
     #agent.eval_off()
     env.reset()
-    
+    sr, ret, length = 0.0, 0.0, 0.0
     for timestep in range(total_steps):
+        print(f"Step {timestep}: ")
         done = step(agent, env)
+        agent.decay_epsilon(timestep/total_steps)
     
         if done:
             env.reset()
         
-        if timestep % eval_frequency == 0:
+        if timestep % eval_frequency == 0 and timestep > 0:
             sr, ret, length = evaluate(agent, env, eval_episodes)
             
         
         print(
-            f"Training Steps: {timestep}, Env: {env_str}, Crash Rate: {sr:.2f}, \
-            Return: {ret:.2f}, Episode Length: {length:.2f}"
+            f"Training Steps: {timestep}, Env: {env_str}, Crash Rate: {sr:.2f}, Return: {ret:.2f}, Episode Length: {length:.2f}"
         )
         
 def step(agent, env):
@@ -166,9 +171,11 @@ def step(agent, env):
         
 def run_experiment(args):
     env_str = args.env
+    print("Creating Evironment")
     env = UAV_IoT_Sim.make_env(env_str)
     #device = torch.device("cuda")
     
+    print("Creating Agent")
     agent = model_utils.get_ql_agent(
         env
     )
@@ -193,7 +200,8 @@ def run_experiment(args):
         mean_success_rate = RunningAverage(10)
         mean_reward = RunningAverage(10)
         mean_episode_length = RunningAverage(10)
-        
+    
+    print("Beginning Training")
     train(
         agent,
         env,

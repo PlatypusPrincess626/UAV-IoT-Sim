@@ -25,8 +25,8 @@ class get_ql_agent:
         self.epsilon = epsilon_i
         self.n_epsilon = n_epsilon
         
-        self.num_states = env._num_ch
-        self.num_actions = (6800)+ (env._num_uav+env._num_ch)* (25*env._max_steps)* (env._max_steps)
+        self.num_actions = env._num_ch
+        self.num_states = (6800)+ (env._num_uav+env._num_ch)* (25*env._max_steps)* (env._max_steps)
         
         self.alpha = alpha
         self.gamma = gamma

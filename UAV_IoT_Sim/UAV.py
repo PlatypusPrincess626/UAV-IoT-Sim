@@ -63,7 +63,19 @@ class QuadUAV:
         for row in range(len(self.state)-1):
             self.state[row+1][0] = count
             count += 1
-        
+
+    def reset(self):
+        self.state = [[0]*3 for _ in range(len(self.full_state))]
+        self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.cap
+        self.full_state[0, 2] = 0
+        self.full_state[0, 3] = 0
+        count = 0
+        for row in range(len(self.state)-1):
+            self.state[row+1][0] = count
+            self.full_state[row, 2] = 0
+            self.full_state[row, 3] = 0
+            count += 1
+ 
     # Internal UAV Mechanics
     def set_target(self, X:int, Y:int):
         self.targetX = float(X)
@@ -71,7 +83,7 @@ class QuadUAV:
         
     def navigate_step(self, env: object):
         maxDist = math.sqrt(pow(self.indX - self.targetX, 2) + pow(self.indY - self.targetY, 2))
-        if self.storedBatt >= 60 * ((self.cap/self.flight)/(60*60)):
+        if self.storedBatt >=(self.cap/self.flight)/(60*60):
             if maxDist <= self.maxSpd:
                 timeLeft = 60*(1 - maxDist/self.maxSpd)
                 self.indX = self.targetX
@@ -79,8 +91,8 @@ class QuadUAV:
                 self.energy_cost(60, 0, 0, 0, 0)
             else:
                 vectAngle = math.atan((self.targetY - self.indY)/(self.targetX - self.indX)) # Returns radians
-                env.moveUAV(math.round(self.indX), math.round(self.indY), \
-                            math.round(self.maxSpd * math.cos(vectAngle)), math.round(self.maxSpd * math.sin(vectAngle)))
+                env.moveUAV(round(self.indX), round(self.indY), \
+                            round(self.maxSpd * math.cos(vectAngle)), round(self.maxSpd * math.sin(vectAngle)))
                 self.indX = self.maxSpd * math.cos(vectAngle)
                 self.indY = self.maxSpd * math.sin(vectAngle)
                 self.energy_cost(60, 0, 0, 0, 0)
@@ -107,51 +119,53 @@ class QuadUAV:
         commsDone = 3
         totalData = 0
         totalTime = 0.0
+        device = self.target
         if self.target.type == 1:
-            while commsDone > 0:
-                dataReturn = self.target.ws_upload_data(self.indX, self.indY, self.h, self.maxAmBCDist)
-                if dataReturn < (self.transSpdAmBC * 56):
-                    
-                    if commsDone == 2:
-                        totalData += dataReturn
-                        commsDone = 0
-                    elif math.sqrt(pow((self.indX - self.target.indX),2) + pow((self.indY - self.target.indY),2) \
-                         + pow(self.h,2)) < self.maxAmBCDistCharge:
-                        totalData += dataReturn
-                        commsDone = 0
-                    else:
-                        totalData += dataReturn
-                        commsDone = 0
-                        self.inRange = False
+            dataReturn = device.ws_upload_data(self.indX, self.indY, self.maxAmBCDist, self, self.h)
+            if dataReturn < (self.transSpdAmBC * 56) and dataReturn >= 0:
+
+                if commsDone == 2:
+                    totalData += dataReturn
+                    commsDone = 0
+                elif math.sqrt(pow((self.indX - self.target.indX),2) + pow((self.indY - self.target.indY),2) \
+                     + pow(self.h,2)) < self.maxAmBCDistCharge:
+                    totalData += dataReturn
+                    commsDone = 0
                 else:
                     totalData += dataReturn
-                    self.inRange = True
-                    commsDone = 2
-                    
+                    commsDone = 0
+                    self.inRange = False
+            else:
+                totalData += dataReturn
+                self.inRange = True
+                commsDone = 2
+
             totalTime = totalData/self.transSpdSmBC
             self.energy_cost(0, totalTime, 0, 0, 60)
-            
-            
+
+
         else:
-            dataReturn = self.target.ch_upload(self.indX, self.indY, self.h)
-            while commsDone > 0:
-                if dataReturn < (self.transSpdLoRa * 56):
-                    if math.sqrt(pow((self.indX - self.target.indX),2) + pow((self.indY - self.target.indY),2) \
-                         + pow(self.h,2)) < self.LoRaDistmin:
-                        totalData += dataReturn
-                        commsDone = 0
-                    else:
-                        totalData += dataReturn
-                        commsDone = 0
-                        self.inRange = False
+            dataReturn = device.ch_upload(self.indX, self.indY, self.h)
+            if dataReturn < (self.transSpdLoRa * 56) and dataReturn >= 0:
+                if math.sqrt(pow((self.indX - self.target.indX),2) + pow((self.indY - self.target.indY),2) \
+                     + pow(self.h,2)) < self.LoRaDistmin:
+                    totalData += dataReturn
+                    commsDone = 0
                 else:
                     totalData += dataReturn
-                    self.inRange = True
-                    commsDone = 2
+                    commsDone = 0
+                    self.inRange = False
+            else:
+                totalData += dataReturn
+                self.inRange = True
+                commsDone = 2
             totalTime = totalData/self.LoRaRec
             self.energy_cost(0, 0, 0, totalTime, 60-totalTime)
-            self.update_state(self.target.headSerial+1, step, totalData)
-    
+            self.update_state(device.headSerial+1, step, totalData)
+            self.state[device.headSerial+1][2] = step
+            self.state[device.headSerial+1][1] += round(totalData/1000)
+            self.state[0][1] += round(totalData/1000)
+     
     def recieve_energy(self):
         if self.target.type == 2:
             h, tC, tD = self.target.chargeTime(self.indX, self.indY, self.h, self.maxClimb)
@@ -163,13 +177,13 @@ class QuadUAV:
     def set_dest(self, model):
         if self.target == None:
             minDist = 10000
-            minCH = self.full_state.loc[0, "CH"]
-            for CH in range(len(self.full_state)):
-                dist = math.sqrt(pow((self.indX+self.full_state.loc[CH, "CH"].indX), 2)\
-                                 + pow((self.indY+self.full_state.loc[CH, "CH"].indY), 2))
+            minCH = self.full_state.iloc[1, 0]
+            for CH in range(len(self.full_state)-1):
+                dist = math.sqrt(pow((self.indX+self.full_state.iloc[CH+1, 0].indX), 2)\
+                                 + pow((self.indY+self.full_state.iloc[CH+1, 0].indY), 2))
                 if dist < minDist:
                     minDist = dist
-                    minCH = self.full_state[CH,"CH"]
+                    minCH = self.full_state.iloc[CH+1, 0]
             self.target = minCH
             self.targetX = minCH.indX
             self.targetY = minCH.indY
@@ -188,11 +202,6 @@ class QuadUAV:
             return None
     
     def update_state(self, device, step, data):
-        self.full_state.loc[device, "AoI"] =  step
-        self.full_state.loc[device, "Total_Data"] += data
-        self.full_state.loc[0, "Total_Data"] += data
-        
-        self.state[device][2] = step
-        self.state[device][1] += round(data/1000)
-        self.state[0][1] += round(data/1000)
-        
+        self.full_state.iloc[device, 3] =  step
+        self.full_state.iloc[device, 2] += data
+        self.full_state.iloc[0, 2] += data

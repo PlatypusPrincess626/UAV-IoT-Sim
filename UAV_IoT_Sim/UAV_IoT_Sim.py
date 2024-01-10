@@ -15,12 +15,11 @@ class make_env:
         max_num_steps: int = 720
     ):
         self.scene = scene
-        if scene == "test":
-            self._env = Environment.sim_env(scene, num_sensors, num_uav, num_ch, max_num_steps)
-            self._num_sensors = num_sensors
-            self._num_ch = num_ch
-            self._num_uav = num_uav
-            self._max_steps = max_num_steps
+        self._env = Environment.sim_env(scene, num_sensors, num_uav, num_ch, max_num_steps)
+        self._num_sensors = num_sensors
+        self._num_ch = num_ch
+        self._num_uav = num_uav
+        self._max_steps = max_num_steps
         
         self._curr_step = 0
         self._curr_state = None
@@ -39,11 +38,17 @@ class make_env:
         self._aoi_threshold = 60
         self._truncated = False
         self._terminated = False
-        self._curr_total_data = 0
+        self._curr_total_data = 1
     
     def reset(self):
         if self.scene == "test":
-            self._env = Environment.sim_env(self.scene, self._num_sensors, self._num_uav, self._num_ch, self._max_steps)
+            for sensor in range(self._num_sensors):
+                self._env.sensorTable.iloc[sensor,0].reset()
+            for CH in range(self._num_ch):
+                self._env.CHTable.iloc[CH, 0].reset()
+            for uav in range(self._num_uav):
+                self._env.UAVTable.iloc[uav, 0].reset()
+            
             self._curr_step = 0
             self._curr_state = None
             self._curr_reward = 0
@@ -58,26 +63,24 @@ class make_env:
                 "Crashed": False, 
                 "Truncated": False
             }
-            self._aoi_threshold = 60
             self._truncated = False
             self._terminated = False
-            self._curr_total_data = 0
+            self._curr_total_data = 1
             return self._env
     
     def step(self, model):
         if not self._terminated:
             if self._curr_step < self._max_steps:
-                self._env.updateInterference()
                 for sensor in range(self._num_sensors):
-                    self._env.sensorList[sensor, 0].harvest_energy(self._env, self._curr_step)
-                    self._env.sensorList[sensor, 0].harvest_data()
+                    self._env.sensorTable.iloc[sensor, 0].harvest_energy(self._env, self._curr_step)
+                    self._env.sensorTable.iloc[sensor, 0].harvest_data()
 
                 for CH in range(self._num_ch):
-                    self._env.clusterTable[CH, 0].harvest_energy(self._env, self._curr_step)
-                    self._env.clusterTable[CH, 0].ch_download(self._curr_step)
+                    self._env.CHTable.iloc[CH, 0].harvest_energy(self._env, self._curr_step)
+                    self._env.CHTable.iloc[CH, 0].ch_download(self._curr_step)
 
                 for uav in range(self._num_uav):
-                    uav = self._env.uavTable[uav, 0]
+                    uav = self._env.UAVTable.iloc[uav, 0]
                     self.last_action = uav.set_dest(model)
                     uav.navigate_step(self._env)
                     uav.recieve_data(self._curr_step)
@@ -125,32 +128,30 @@ class make_env:
         totalAge = 0
         peakAge = 0
         minAge = self._max_steps
-        for index, val in self._curr_state["AoI"].items():
-            if index > 0:
-                age = self._curr_step - val
-                if age > self._aoi_threshold:
-                    age= self._aoi_threshold
-                totalAge += age
-                if age > peakAge:
-                    peakAge = age
-                if age < minAge:
-                    minAge = age
+        for index in range(len(self._curr_state)-1):
+            age = self._curr_step - self._curr_state[index+1][2]
+            if age > self._aoi_threshold:
+                age= self._aoi_threshold
+            totalAge += age
+            if age > peakAge:
+                peakAge = age
+            if age < minAge:
+                minAge = age
         avgAge = totalAge/len(self._curr_state)
-        
-        dataDistribution = self._curr_state["Total_Data"]
+       
         dataChange = 0
         maxColl = 0.0
         minColl = 1.0
-        for index, val in dataDistribution.items():
+        for index in range(len(self._curr_state)):
             if index > 0:
-                val /= self._curr_total_data
+                val = self._curr_state[index][1] / self._curr_total_data
                 if val > maxColl:
                     maxColl = val
                 if val < minColl:
                     minColl = val
             else:
-                dataChange = val - self._curr_total_data
-                self._curr_total_data += val
+                dataChange = self._curr_state[index][1] - self._curr_total_data
+                self._curr_total_data += self._curr_state[index][1]
         
         distOffset = maxColl - minColl
         
@@ -169,7 +170,7 @@ class make_env:
             "Peak_Age": peakAge,                 # -> peakAoI
             "Data_Distrubution": distOffset,     # -> Distribution of Data
             "Total_Data_Cange": dataChange,      # -> Change in Total Data
-            "Total_Data": self._curr_total_Data, # -> Total Data
+            "Total_Data": self._curr_total_data, # -> Total Data
             "Crashed": self._terminated,         # -> True if UAV is crashed
             "Truncated": self._truncated         # -> Max episode steps reached
         }
