@@ -1,10 +1,15 @@
 import os
 import argparse
-from collections import deque
+from time import time, sleep
+from typing import Optional, Tuple
+
+import wandb
 
 # custom dependencies
 from UAV_IoT_Sim import UAV_IoT_Sim
 from env_utils import model_utils
+from env_utils.logger_utils import RunningAverage, get_logger
+
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -12,7 +17,7 @@ def get_args():
         "--project-name",
         type=str,
         default="uav-iot-sim-test",
-        help="The project name (for loggers) to store results."        
+        help="The project name (for loggers) to store results."
     )
     parser.add_argument(
         "--env",
@@ -35,7 +40,7 @@ def get_args():
     parser.add_argument(
         "--steps",
         type=int,
-        default = 100_000,
+        default=100_000,
         help="Maximum number of steps for training."
     )
     parser.add_argument(
@@ -47,7 +52,7 @@ def get_args():
     parser.add_argument(
         "--eval-episodes",
         type=int,
-        default = 3,
+        default=3,
         help="Episodes to evaluate each evaluation period."
     )
     parser.add_argument(
@@ -74,30 +79,20 @@ def get_args():
         default=50,
         help="The number of sensors spread across the environment."
     )
+    parser.add_argument(
+        "--disable_wandb",
+        type=bool,
+        default=False,
+        help="Activate wandb."
+    )
     return parser.parse_args()
 
-class RunningAverage:
-    def __init__(self, size):
-        self.size = size
-        self.q = deque()
-        self.sum = 0
-
-    def add(self, val):
-        self.q.append(val)
-        self.sum += val
-        if len(self.q) > self.size:
-            self.sum -= self.q.popleft()
-
-    def mean(self):
-        # Avoid divide by 0
-        return self.sum / max(len(self.q), 1)
 
 def evaluate(
-    agent,
-    eval_env,
-    eval_episodes,
+        agent,
+        eval_env,
+        eval_episodes,
 ):
-    
     total_reward = 0
     num_crashes = 0
     total_steps = 0
@@ -107,15 +102,15 @@ def evaluate(
         eval_env.reset()
         done = False
         ep_reward = 0
-        
+
         while not done:
             curr_obs = eval_env._curr_state
             obs_next, reward, terminated, truncated, info = eval_env.step(agent)
             done = terminated
             action = info.get("Last_Action", None)
             agent.update(obs_next, action, reward, curr_obs, done)
-            ep_reward =+ reward
-            
+            ep_reward = + reward
+
         total_reward += ep_reward
         total_steps += eval_env._curr_step
         if info.get("Crashed", False):
@@ -123,58 +118,101 @@ def evaluate(
 
     if total_steps == 0:
         total_steps = 1
-    return num_crashes/total_steps, total_reward, total_steps
+    return num_crashes / total_steps, total_reward, total_steps
+
 
 def train(
-    agent,
-    env: object,
-    env_str: str,
-    total_steps: int,
-    eval_frequency: int,
-    eval_episodes: int,
-    policy_path: str,
-    mean_success_rate: RunningAverage,
-    mean_episode_length: RunningAverage,
-    mean_reward: RunningAverage
+        agent,
+        env: object,
+        env_str: str,
+        total_steps: int,
+        eval_frequency: int,
+        eval_episodes: int,
+        policy_path: str,
+        logger,
+        mean_success_rate: RunningAverage,
+        mean_episode_length: RunningAverage,
+        mean_reward: RunningAverage
 ):
-    #agent.eval_off()
+    start_time = time()
+    # agent.eval_off()
     env.reset()
     sr, ret, length = 0.0, 0.0, 0.0
     for timestep in range(total_steps):
         print(f"Step {timestep}: ")
         done = step(agent, env)
-        agent.decay_epsilon(timestep/total_steps)
-    
+        agent.decay_epsilon(timestep / total_steps)
+
         if done:
             env.reset()
-        
+
         if timestep % eval_frequency == 0 and timestep > 0:
+            hours = (time() - start_time) / 3600
+            log_vals = {
+                "losses/TD_Error": agent.td_errors.mean(),
+                "losses/Grad_Norm": agent.grad_norms.mean(),
+                "losses/Max_Q_Value": agent.qvalue_max.mean(),
+                "losses/Mean_Q_Value": agent.qvalue_mean.mean(),
+                "losses/Min_Q_Value": agent.qvalue_min.mean(),
+                "losses/Max_Target_Value": agent.target_max.mean(),
+                "losses/Mean_Target_Value": agent.target_mean.mean(),
+                "losses/Min_Target_Value": agent.target_min.mean(),
+                "losses/hours": hours,
+            }
             sr, ret, length = evaluate(agent, env, eval_episodes)
-            
-        
+
+            log_vals.update(
+                {
+                    f"{env_str}/SuccessRate": sr,
+                    f"{env_str}/Return": ret,
+                    f"{env_str}/EpisodeLength": length,
+                }
+            )
+
+            logger.log(
+                log_vals,
+                step=timestep,
+            )
+
         print(
             f"Training Steps: {timestep}, Env: {env_str}, Crash Rate: {sr:.2f}, Return: {ret:.2f}, Episode Length: {length:.2f}"
         )
-        
+
+
 def step(agent, env):
     obs_curr = env._curr_state
     obs_next, reward, terminated, truncated, info = env.step(agent)
     action = info.get("Last_Action", None)
-    
+
     if truncated:
         buffer_done = False
     else:
         buffer_done = terminated
-      
+
     agent.update(obs_next, action, reward, obs_curr, buffer_done)
     return terminated
-        
+
+def prepopulate(agent, prepop_steps, env):
+    timestep = 0
+    while timestep < prepop_steps:
+        env.reset()
+        done = False
+        while not done:
+            agent.decay_epsilon(0)
+            obs_curr = env._curr_state
+            obs_next, reward, terminated, truncated, info = env.step(agent)
+            action = info.get("Last_Action", None)
+
+            buffer_done = terminated
+            agent.update(obs_next, action, reward, obs_curr, buffer_done)
+            timestep += 1
+
 def run_experiment(args):
     env_str = args.env
     print("Creating Evironment")
     env = UAV_IoT_Sim.make_env(env_str)
-    #device = torch.device("cuda")
-    
+    # device = torch.device("cuda")
+
     print("Creating Agent")
     agent = model_utils.get_ql_agent(
         env
@@ -188,19 +226,15 @@ def run_experiment(args):
         policy_save_dir,
         f"model={args.model}"
     )
-    
-    if os.path.exists(policy_path + "_mini_checkpoint.pt"):
-        steps_completed = agent.load_mini_checkpoint(policy_path)["step"]
-        print(
-            f"Found a mini checkpoint that completed {steps_completed} training steps."
-        )
-    else:
-        # Prepopulate the replay buffer
-        # prepopulate(agent, 50_000, envs)
-        mean_success_rate = RunningAverage(10)
-        mean_reward = RunningAverage(10)
-        mean_episode_length = RunningAverage(10)
-    
+
+    wandb_kwargs = {"resume": None}
+    prepopulate(agent, 50_000, env)
+    mean_success_rate = RunningAverage(10)
+    mean_reward = RunningAverage(10)
+    mean_episode_length = RunningAverage(10)
+
+    logger = get_logger(policy_path, args, wandb_kwargs)
+
     print("Beginning Training")
     train(
         agent,
@@ -210,10 +244,12 @@ def run_experiment(args):
         args.eval_frequency,
         args.eval_episodes,
         policy_path,
+        logger,
         mean_success_rate,
         mean_episode_length,
         mean_reward
     )
+
 
 if __name__ == "__main__":
     run_experiment(get_args())
