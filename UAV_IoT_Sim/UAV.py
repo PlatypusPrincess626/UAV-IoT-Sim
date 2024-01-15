@@ -17,9 +17,9 @@ class QuadUAV:
         
         # LoRa Comms
         self.LoRaDistmin = 5000         # 5 km conservative LoRa comms distance
-        self.LoRaIdle = 0.0000016       # 1.6 microA idle LoRa
-        self.LoRaTrans = 0.0389         # 38.9 mA transmit LoRa
-        self.LoRaRec = 0.01422          # 14.22 mA receive LoRa
+        self.LoRaIdle = 0.016       # 1.6 microA idle LoRa
+        self.LoRaTrans = 38.9         # 38.9 mA transmit LoRa
+        self.LoRaRec = 14.22          # 14.22 mA receive LoRa
         self.LoRaBER = 0.001
         self.transSpdLoRa = 25000 * (1 - self.LoRaBER)
         
@@ -54,7 +54,7 @@ class QuadUAV:
         self.rate = 2.5                 # 150 min charging time
         self.flight = 0.5               # 30 min flight time
         self.Amp = self.cap/self.rate   # Roughly 2.72 A optimal current
-        self.storedBatt = self.cap/1000 # Initialize at full battery
+        self.storedBatt = self.cap      # Initialize at full battery
         
         # State used for model
         self.state = [[0]*3 for _ in range(len(self.full_state))]
@@ -70,6 +70,8 @@ class QuadUAV:
         self.full_state[0, 2] = 0
         self.full_state[0, 3] = 0
         count = 0
+        self.storedBatt = self.cap
+        self.crash = False
         for row in range(len(self.state)-1):
             self.state[row+1][0] = count
             self.full_state[row, 2] = 0
@@ -83,7 +85,7 @@ class QuadUAV:
         
     def navigate_step(self, env: object):
         maxDist = math.sqrt(pow(self.indX - self.targetX, 2) + pow(self.indY - self.targetY, 2))
-        if self.storedBatt >=(self.cap/self.flight)/(60*60):
+        if self.storedBatt >=((self.cap/self.flight)/(60)):
             if maxDist <= self.maxSpd:
                 timeLeft = 60*(1 - maxDist/self.maxSpd)
                 self.indX = self.targetX
@@ -111,7 +113,9 @@ class QuadUAV:
         totalCost += timeLoRaRec * self.LoRaRec
         totalCost += timeLoRaIdle * self.LoRaIdle
         
-        self.storedBatt -= self.storedBatt
+        self.storedBatt -= totalCost
+        self.state[0][2] = self.storedBatt
+        self.full_state.iloc[0,2] = self.storedBatt
         
     # Finish with battery drain
     # UAV-IoT Communication
@@ -120,27 +124,26 @@ class QuadUAV:
         totalData = 0
         totalTime = 0.0
         device = self.target
-        if self.target.type == 1:
+        if self.storedBatt < (self.cap*.40):
+            self.energy_cost(0, 0, 0, 0, 60)
+
+        elif self.target.type == 1:
             dataReturn = device.ws_upload_data(self.indX, self.indY, self.maxAmBCDist, self, self.h)
             if dataReturn < (self.transSpdAmBC * 56) and dataReturn >= 0:
 
                 if commsDone == 2:
                     totalData += dataReturn
-                    commsDone = 0
                 elif math.sqrt(pow((self.indX - self.target.indX),2) + pow((self.indY - self.target.indY),2) \
                      + pow(self.h,2)) < self.maxAmBCDistCharge:
                     totalData += dataReturn
-                    commsDone = 0
                 else:
                     totalData += dataReturn
-                    commsDone = 0
                     self.inRange = False
             else:
                 totalData += dataReturn
                 self.inRange = True
-                commsDone = 2
 
-            totalTime = totalData/self.transSpdSmBC
+            totalTime = totalData/self.transSpdAmBC
             self.energy_cost(0, totalTime, 0, 0, 60)
 
 
@@ -150,16 +153,13 @@ class QuadUAV:
                 if math.sqrt(pow((self.indX - self.target.indX),2) + pow((self.indY - self.target.indY),2) \
                      + pow(self.h,2)) < self.LoRaDistmin:
                     totalData += dataReturn
-                    commsDone = 0
                 else:
-                    totalData += dataReturn
-                    commsDone = 0
                     self.inRange = False
             else:
                 totalData += dataReturn
                 self.inRange = True
-                commsDone = 2
-            totalTime = totalData/self.LoRaRec
+
+            totalTime = totalData/self.transSpdLoRa
             self.energy_cost(0, 0, 0, totalTime, 60-totalTime)
             self.update_state(device.headSerial+1, step, totalData)
             self.state[device.headSerial+1][2] = step
@@ -171,36 +171,39 @@ class QuadUAV:
             h, tC, tD = self.target.chargeTime(self.indX, self.indY, self.h, self.maxClimb)
             self.h = h
             self.energy_cost(tD, 0, 0, 0, 0)
-            self.storedBatt += tD * (self.cap/(self.rate*60*60))
-            self.target.discharge(tD * (self.cap/(self.rate*60*60)))
+            self.storedBatt += tC * (self.cap/(self.rate*60*60))
+            self.target.discharge(tC * (self.cap/(self.rate*60*60)))
+            self.state[0][2] = self.storedBatt
+            self.full_state.iloc[0, 3] = self.storedBatt
     
     def set_dest(self, model):
         if self.target == None:
             minDist = 10000
             minCH = self.full_state.iloc[1, 0]
             for CH in range(len(self.full_state)-1):
-                dist = math.sqrt(pow((self.indX+self.full_state.iloc[CH+1, 0].indX), 2)\
-                                 + pow((self.indY+self.full_state.iloc[CH+1, 0].indY), 2))
+                dist = math.sqrt(pow((self.indX-self.full_state.iloc[CH+1, 0].indX), 2)\
+                                 + pow((self.indY-self.full_state.iloc[CH+1, 0].indY), 2))
                 if dist < minDist:
                     minDist = dist
                     minCH = self.full_state.iloc[CH+1, 0]
             self.target = minCH
             self.targetX = minCH.indX
             self.targetY = minCH.indY
-        elif self.targetX == self.indX and self.targetY == self.indY:
+
+        elif self.storedBatt < (self.cap * .60):
+            self.target = self.target
+
+        else:
             dest = self.target.getDest(self.state, self.full_state, model)
             self.target = dest
             self.targetX = dest.indX
             self.targetY = dest.indY
-        else:
-            # No change to destination
-            self.target = self.target
-            
+
         try:
             return self.target.headSerial
         except:
             return None
-    
+
     def update_state(self, device, step, data):
         self.full_state.iloc[device, 3] =  step
         self.full_state.iloc[device, 2] += data

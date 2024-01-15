@@ -102,12 +102,22 @@ def evaluate(
         eval_env.reset()
         done = False
         ep_reward = 0
+        avgAoI = 0.0
+        peakAoI = 0.0
+        dataDist = 0.0
+        dataColl = 0.0
 
         while not done:
             curr_obs = eval_env._curr_state
             obs_next, reward, terminated, truncated, info = eval_env.step(agent)
-            done = terminated
+
+            if terminated or truncated:
+                done = True
             action = info.get("Last_Action", None)
+            avgAoI = info.get("Avg_Age", 0.0)
+            peakAoI = info.get("Peak_Age", 0.0)
+            dataDist = info.get("Data_Distribution", 0.0)
+            dataColl = info.get("Total_Data_Change", 0.0)
             agent.update(obs_next, action, reward, curr_obs, done)
             ep_reward = + reward
 
@@ -118,7 +128,7 @@ def evaluate(
 
     if total_steps == 0:
         total_steps = 1
-    return num_crashes / total_steps, total_reward, total_steps
+    return (1-num_crashes/total_steps), total_reward, total_steps, avgAoI, peakAoI, dataDist, dataColl
 
 
 def train(
@@ -146,7 +156,7 @@ def train(
         if done:
             env.reset()
 
-        if timestep % eval_frequency == 0 and timestep > 0:
+        if timestep % eval_frequency == 0:
             hours = (time() - start_time) / 3600
             log_vals = {
                 "losses/TD_Error": agent.td_errors.mean(),
@@ -159,13 +169,17 @@ def train(
                 "losses/Min_Target_Value": agent.target_min.mean(),
                 "losses/hours": hours,
             }
-            sr, ret, length = evaluate(agent, env, eval_episodes)
+            sr, ret, length, avgAoI, peakAoI, dataDist, dataColl = evaluate(agent, env, eval_episodes)
 
             log_vals.update(
                 {
                     f"{env_str}/SuccessRate": sr,
                     f"{env_str}/Return": ret,
                     f"{env_str}/EpisodeLength": length,
+                    f"{env_str}/AverageAoI": avgAoI,
+                    f"{env_str}/PeakAoI": peakAoI,
+                    f"{env_str}/Distribution": dataDist,
+                    f"{env_str}/TotalCollected": dataColl,
                 }
             )
 
@@ -175,7 +189,7 @@ def train(
             )
 
         print(
-            f"Training Steps: {timestep}, Env: {env_str}, Crash Rate: {sr:.2f}, Return: {ret:.2f}, Episode Length: {length:.2f}"
+            f"Training Steps: {timestep}, Env: {env_str}, Sucess Rate: {sr:.2f}, Return: {ret:.2f}, Episode Length: {length:.2f}"
         )
 
 
@@ -184,18 +198,19 @@ def step(agent, env):
     obs_next, reward, terminated, truncated, info = env.step(agent)
     action = info.get("Last_Action", None)
 
-    if truncated:
-        buffer_done = False
-    else:
-        buffer_done = terminated
+    buffer_done = terminated
+    done = False
+    if terminated or truncated:
+        done = True
 
     agent.update(obs_next, action, reward, obs_curr, buffer_done)
-    return terminated
+    return done
 
 def prepopulate(agent, prepop_steps, env):
     timestep = 0
     while timestep < prepop_steps:
         env.reset()
+        print(f"Prepop Step: {timestep}")
         done = False
         while not done:
             agent.decay_epsilon(0)
@@ -204,6 +219,8 @@ def prepopulate(agent, prepop_steps, env):
             action = info.get("Last_Action", None)
 
             buffer_done = terminated
+            if terminated or truncated:
+                done = True
             agent.update(obs_next, action, reward, obs_curr, buffer_done)
             timestep += 1
 
@@ -228,12 +245,12 @@ def run_experiment(args):
     )
 
     wandb_kwargs = {"resume": None}
+    logger = get_logger(policy_path, args, wandb_kwargs)
+
     prepopulate(agent, 50_000, env)
     mean_success_rate = RunningAverage(10)
     mean_reward = RunningAverage(10)
     mean_episode_length = RunningAverage(10)
-
-    logger = get_logger(policy_path, args, wandb_kwargs)
 
     print("Beginning Training")
     train(

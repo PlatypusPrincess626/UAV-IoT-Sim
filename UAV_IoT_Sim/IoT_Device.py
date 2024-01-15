@@ -117,7 +117,7 @@ class IoT_Device:
     
     def harvest_energy(self, env, step):
         spectra = env.getIrradiance(self.lat, self.long, self.tilt, self.azimuth, step)
-        interference = env.getInterference(self.indX, self.indY)
+        interference = env.getInterference(self.indX, self.indY, self.type)
         f = InterpolatedUnivariateSpline(spectra['wavelength'], spectra['poa_global'])
         powDensity = (1 - interference) * f.integral(self.spctrlLow,self.spctrlHigh)
         power = powDensity * self.solarArea/(1000*1000)
@@ -130,7 +130,6 @@ class IoT_Device:
                     self.harvest_data()
                     currAmps -= self.currDraw * 10
                 if step % math.ceil(self.queue/2) == 0:    # Transmission Scheduling
-                    self.tryComms()
                     currAmps -= self.commCost * 30
             if currAmps > 0:
                 self.storedEnergy += currAmps
@@ -149,7 +148,6 @@ class IoT_Device:
                         currCost += self.currDraw * 10
                 if step % math.ceil(self.queue/2):
                     if maxAmps > self.commCost:
-                        self.upload_Data()
                         currCost += self.commCost * 30
             self.discharge(currCost)
                  
@@ -211,15 +209,13 @@ class IoT_Device:
         if rotation < (rotations-1) or len(self.sensTable.index)%2 == 0:
             sensor2 = self.sensTable.iloc[sensor+1, 0]
             activeChannels.append(sensor2.ws_upload_data(self.indX, self.indY, self.maxAmBCDist, self, self.h))
-        else:
-            activeChannels.append(-2)
 
         totalChannels = 0
         for channel in range(len(activeChannels)):
             if activeChannels[channel] == -1:
                 self.sensTable.iloc[sensor, 1] = False
                 totalChannels += 1
-            elif activeChannels[channel] >=  0:
+            elif len(activeChannels) > 1:
                 self.sensTable.iloc[sensor+1, 1] = True
                 self.storedData += recData
                 totalChannels += 1
@@ -262,12 +258,14 @@ class IoT_Device:
             return h, 0, 0
     
     def getDest(self, state, full_state, model):
+        if self.storedData > 1000:
+            return self
+
         unserviced = full_state.iloc[:,3].isin([0])
         for CH in range(unserviced.size-1):
-            if unserviced.iloc[CH+1, 3]:
+            if unserviced.iloc[CH+1]:
                 return full_state.iloc[CH+1, 0]
             
         # Insert code for independent sensors
-        
-        action = model.get(state)
+        action = model.act(state)
         return full_state.iloc[action+1, 0]

@@ -1,5 +1,5 @@
 import numpy as np
-from logger_utils import RunningAverage
+from env_utils.logger_utils import RunningAverage
 
 
 class get_ql_agent:
@@ -28,6 +28,7 @@ class get_ql_agent:
 
         self.num_actions = env._num_ch
         self.num_states = (6800) + (env._num_uav + env._num_ch) * (25 * env._max_steps) * (env._max_steps)
+        self.encoder = np.array([[[]]])
 
         self.alpha = alpha
         self.gamma = gamma
@@ -42,6 +43,18 @@ class get_ql_agent:
         self.qvalue_min = RunningAverage(100)
         self.target_min = RunningAverage(100)
 
+    def encode_state(self, state):
+        if self.encoder.size == 0:
+            np.append(self.encoder, [state])
+            return 0
+        else:
+            for index in range(len(self.encoder)):
+                comparison = self.encoder[index] == state
+                if caparison.all():
+                    return index
+            np.append(self.encoder, [state])
+            return len(self.encoder)-1
+
     def decay_epsilon(self, n):
         """
         Decays the agent's exploration rate according to n, which is a
@@ -52,20 +65,25 @@ class get_ql_agent:
             self.epsilon_f,
             self.epsilon_i - (n / self.n_epsilon) * (self.epsilon_i - self.epsilon_f))
 
-    def act(self, s_t):
+    def act(self, s_t_raw):
         """
         Epsilon-greedy policy.
         """
         if np.random.rand() < self.epsilon:
             return np.random.randint(self.num_actions)
 
+        s_t = self.encode_state(s_t_raw)
         return np.argmax(self.Q[s_t])
 
-    def update(self, s_t, a_t, r_t, s_t_next, d_t):
+    def update(self, s_t_raw, a_t, r_t, s_t_next_raw, d_t):
         """
         Uses the q-learning update rule to update the agent's predictions
         for Q(s_t, a_t).
         """
+
+        s_t = self.encode_state(s_t_raw)
+        s_t_next = self.encode_state(s_t_next_raw)
+
         Q_next = np.max(self.Q[s_t_next])
 
         targets = r_t + (1 - d_t) * self.gamma * Q_next
@@ -78,8 +96,7 @@ class get_ql_agent:
         self.target_mean.add(targets.mean().item())
         self.target_min.add(targets.min().item())
 
-        loss = (np.square(self.Q[s_t]-targets)).mean(axis=1)
+        loss = (np.square(self.Q[s_t].max()-targets)).mean()
         self.td_errors.add(loss.item())
 
-        self.Q[s_t, a_t] = self.Q[s_t, a_t] + self.alpha * \
-                           (r_t + (1 - d_t) * self.gamma * Q_next - self.Q[s_t, a_t])
+        self.Q[s_t, a_t] = self.Q[s_t, a_t] + self.alpha * (r_t + (1 - d_t) * self.gamma * Q_next - self.Q[s_t, a_t])

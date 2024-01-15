@@ -26,11 +26,11 @@ class make_env:
         self._curr_reward = 0
         self._curr_info = {
             "Last_Action": 0,
-            "Reward_Chage": 0.0,          # -> Change in reward at step
+            "Reward_Change": 0.0,          # -> Change in reward at step
             "Avg_Age": 0.0,               # -> avgAoI
             "Peak_Age": 0.0,              # -> peakAoI
-            "Data_Distrubution": 0.0,     # -> Distribution of Data
-            "Total_Data_Cange": 0.0,      # -> Change in Total Data
+            "Data_Distribution": 0.0,     # -> Distribution of Data
+            "Total_Data_Change": 0.0,      # -> Change in Total Data
             "Total_Data": 0.0,            # -> Total Data
             "Crashed": False,
             "Truncated": False
@@ -54,11 +54,11 @@ class make_env:
             self._curr_reward = 0
             self._curr_info = {
                 "Last_Action": 0,
-                "Reward_Chage": 0.0,          # -> Change in reward at step
+                "Reward_Change": 0.0,          # -> Change in reward at step
                 "Avg_Age": 0.0,               # -> avgAoI
                 "Peak_Age": 0.0,              # -> peakAoI
-                "Data_Distrubution": 0.0,     # -> Distribution of Data
-                "Total_Data_Cange": 0.0,      # -> Change in Total Data
+                "Data_Distribution": 0.0,     # -> Distribution of Data
+                "Total_Data_Change": 0.0,      # -> Change in Total Data
                 "Total_Data": 0.0,            # -> Total Data
                 "Crashed": False, 
                 "Truncated": False
@@ -89,15 +89,16 @@ class make_env:
                     self._terminated = uav.crash
 
                 self.reward()
+                self._curr_step += 1
             else:
                 self._truncated = True
                 self._curr_info={
                     "Last_Action": self.last_action,
-                    "Reward_Chage": 0,        # -> Change in reward at step
+                    "Reward_Change": 0,        # -> Change in reward at step
                     "Avg_Age": 0,                   # -> avgAoI
                     "Peak_Age": 0,                 # -> peakAoI
-                    "Data_Distrubution": 0,     # -> Distribution of Data
-                    "Total_Data_Cange": 0,      # -> Change in Total Data
+                    "Data_Distribution": 0,     # -> Distribution of Data
+                    "Total_Data_Change": 0,      # -> Change in Total Data
                     "Total_Data": self._curr_total_data, # -> Total Data
                     "Crashed": self._terminated,         # -> True if UAV is crashed
                     "Truncated": self._truncated         # -> Max episode steps reached
@@ -106,16 +107,16 @@ class make_env:
             self._curr_reward = 0
             self._curr_infor={
                 "Last_Action": self.last_action,
-                "Reward_Chage": 0,        # -> Change in reward at step
+                "Reward_Change": 0,        # -> Change in reward at step
                 "Avg_Age": 0,                   # -> avgAoI
                 "Peak_Age": 0,                 # -> peakAoI
-                "Data_Distrubution": 0,     # -> Distribution of Data
-                "Total_Data_Cange": 0,      # -> Change in Total Data
+                "Data_Distribution": 0,     # -> Distribution of Data
+                "Total_Data_Change": 0,      # -> Change in Total Data
                 "Total_Data": self._curr_total_data, # -> Total Data
                 "Crashed": self._terminated,         # -> True if UAV is crashed
                 "Truncated": self._truncated         # -> Max episode steps reached
             }
-                
+
         return self._curr_state, self._curr_reward, self._terminated, self._truncated, self._curr_info
            
     def reward(self):
@@ -158,18 +159,18 @@ class make_env:
         rewardDist = (1 - distOffset)
         rewardPeak = (1 - 2 * (self._aoi_threshold - peakAge)/self._aoi_threshold)
         rewardAvgAge = (1 - 2 * (peakAge - avgAge)/self._aoi_threshold)
-        rewardDataChange = dataChange/10000 # Maximum = 10
+        rewardDataChange = dataChange/10 # Maximum = 10
         rewardChange = 10*rewardDist + 10*rewardPeak + 10*rewardAvgAge + 4*rewardDataChange
         if self._terminated:
             rewardChange -= 100
         
         self._curr_info = {
             "Last_Action": self.last_action,
-            "Reward_Chage": rewardChange,        # -> Change in reward at step
+            "Reward_Change": rewardChange,        # -> Change in reward at step
             "Avg_Age": avgAge,                   # -> avgAoI
             "Peak_Age": peakAge,                 # -> peakAoI
-            "Data_Distrubution": distOffset,     # -> Distribution of Data
-            "Total_Data_Cange": dataChange,      # -> Change in Total Data
+            "Data_Distribution": distOffset,     # -> Distribution of Data
+            "Total_Data_Change": dataChange,      # -> Change in Total Data
             "Total_Data": self._curr_total_data, # -> Total Data
             "Crashed": self._terminated,         # -> True if UAV is crashed
             "Truncated": self._truncated         # -> Max episode steps reached

@@ -249,5 +249,8 @@ class sim_env:
         
         return spectra
     
-    def getInterference(self, X, Y):
-        return self.dataStaticInter[X*self.dim+Y] + 0.001 * np.random.random()
+    def getInterference(self, X, Y, type):
+        if type == 1:
+            return self.dataStaticInter[X*self.dim+Y] + 0.001 * np.random.random()
+        else:
+            return 0.001 * np.random.random()
