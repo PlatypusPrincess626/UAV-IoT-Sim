@@ -96,7 +96,7 @@ def evaluate(
     total_reward = 0
     num_crashes = 0
     total_steps = 0
-    agent.decay_epsilon(1)
+    #agent.decay_epsilon(1)
 
     for _ in range(eval_episodes):
         eval_env.reset()

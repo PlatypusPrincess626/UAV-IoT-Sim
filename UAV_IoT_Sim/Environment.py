@@ -90,7 +90,7 @@ class sim_env:
             while obstType > 0:
                 place = random.randint(0, dims*dims-1)
                 if envObj[place]==0:
-                    sensorList.append([IoT_Device.IoT_Device(int(place/dims), int(place%dims), obstType,\
+                    sensorList.append([IoT_Device.IoT_Device(int(place%dims), math.floor(place/dims), obstType,\
                                                            self.envMap.iat[place,0], self.envMap.iat[place,1])])
                     envObj[place] = obstType
                     envSensors[place] = obstType
@@ -117,7 +117,7 @@ class sim_env:
             obstType = 2
             while obstType > 0:
                 if envObj[place]==0:
-                    clusterheadList.append([IoT_Device.IoT_Device(int(place/dims), int(place%dims), obstType,\
+                    clusterheadList.append([IoT_Device.IoT_Device(int(place%dims), math.floor(place/dims), obstType,\
                                                            self.envMap.iat[place,0], self.envMap.iat[place,1], countCH), []])
                     countCH += 1
                     envObj[place] = obstType
@@ -150,7 +150,7 @@ class sim_env:
             while obstType > 0:
                 place = random.randint(0, dims*dims-1)
                 if envObj[place]==0:
-                    uavList.append([UAV.QuadUAV(int(place/dims), int(place%dims), self.envMap.iat[place,0],\
+                    uavList.append([UAV.QuadUAV(int(place%dims), math.floor(place/dims), self.envMap.iat[place,0],\
                                                         self.envMap.iat[place,1], count, uavCHList)])
                     envObj[place] = obstType
                     obstType = 0
@@ -215,8 +215,8 @@ class sim_env:
                     
     # Interactions with devices
     def moveUAV(self, X: int, Y: int, newX: int, newY: int): # Estimated Position of UAV (nearest meter)
-        place = X * self.dim + Y
-        newPlace = newX * self.dim + newY
+        place = Y * self.dim + X
+        newPlace = newY * self.dim + newX
         if self.envMap.iloc[place, 2] == 3:
             self.envMap.iloc[place, 2] = 0
         elif self.envMap.iloc[place, 2] == 9:

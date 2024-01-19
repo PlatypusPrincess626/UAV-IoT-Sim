@@ -86,17 +86,18 @@ class QuadUAV:
     def navigate_step(self, env: object):
         maxDist = math.sqrt(pow(self.indX - self.targetX, 2) + pow(self.indY - self.targetY, 2))
         if self.storedBatt >=((self.cap/self.flight)/(60)):
-            if maxDist <= self.maxSpd:
+            if maxDist <= self.maxSpd * 60:
                 timeLeft = 60*(1 - maxDist/self.maxSpd)
+                env.moveUAV(round(self.indX), round(self.indY), round(self.targetX), round(self.targetY))
                 self.indX = self.targetX
                 self.indY = self.targetY
                 self.energy_cost(60, 0, 0, 0, 0)
             else:
                 vectAngle = math.atan((self.targetY - self.indY)/(self.targetX - self.indX)) # Returns radians
-                env.moveUAV(round(self.indX), round(self.indY), \
-                            round(self.maxSpd * math.cos(vectAngle)), round(self.maxSpd * math.sin(vectAngle)))
-                self.indX = self.maxSpd * math.cos(vectAngle)
-                self.indY = self.maxSpd * math.sin(vectAngle)
+                direction = (self.targetX - self.indX)/abs(self.targetX - self.indX)
+                env.moveUAV(round(self.indX), round(self.indY), math.floor(self.indX + direction * self.maxSpd * 60 * math.cos(vectAngle)), math.floor(self.indY + direction * self.maxSpd * 60 * math.sin(vectAngle)))
+                self.indX += direction * self.maxSpd * 60 * math.cos(vectAngle)
+                self.indY += direction * self.maxSpd * 60 * math.sin(vectAngle)
                 self.energy_cost(60, 0, 0, 0, 0)
         else:
             self.crash = True

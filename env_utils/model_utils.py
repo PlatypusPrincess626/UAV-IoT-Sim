@@ -3,6 +3,7 @@ import pygad
 import pygad.nn
 import pygad.gann
 import pandas as pd
+import statistics as stats
 
 from env_utils.logger_utils import RunningAverage
 
@@ -112,13 +113,14 @@ class get_gann_agent:
                  ):
         self._num_inputs = 3*(env._num_ch+1)
         self._num_output = env._num_ch
+        self.sol_idx = 0
 
         self.a_t = 0
         self.r_t = 0
         self.d_t = False
         self.gamma = 0.95
-        self.last_inputs = np.array([0]*self._num_inputs)
-        self.data_inputs = np.array([0]*self._num_inputs)
+        self.last_inputs = np.expand_dims(np.array([0]*self._num_inputs).flatten(), axis=0)
+        self.data_inputs = np.expand_dims(np.array([0]*self._num_inputs).flatten(), axis=0)
 
         self.td_errors = RunningAverage(100)
         self.grad_norms = RunningAverage(100)
@@ -139,9 +141,9 @@ class get_gann_agent:
 
     def fitness_func(self, ga_instance, solution, sol_idx):
 
-        predictions = pygad.nn.predict(last_layer=self.GANN_instance.population_network[sol_idx],
+        predictions = pygad.nn.predict(last_layer=self.GANN_instance.population_networks[sol_idx],
                                        data_inputs=self.data_inputs)
-        previous = pygad.nn.predict(last_layer=self.GANN_instance.population_network[sol_idx],
+        previous = pygad.nn.predict(last_layer=self.GANN_instance.population_networks[sol_idx],
                          data_inputs=self.last_inputs)
         expected_error = pow(self.r_t + (1 - self.d_t) * self.gamma * np.max(predictions) - np.max(previous), 2)
         solution_fitness = (1-expected_error)*100
@@ -157,30 +159,14 @@ class get_gann_agent:
         self.last_fitness = ga_instance.best_solution()[1].copy()
 
     def update(self, s_t, a_t, r_t, s_t_next, d_t):
-        self.last_inputs = np.flatten(np.array(s_t))
-        self.data_inputs = np.flatten(np.array[s_t_next])
+        self.last_inputs = np.expand_dims(np.array(s_t).flatten(), axis=0)
+        self.data_inputs = np.expand_dims(np.array(s_t_next).flatten(), axis=0)
         self.d_t = d_t
         self.r_t = r_t
         self.a_t = a_t
 
         population_vectors = pygad.gann.population_as_vectors(population_networks=self.GANN_instance.population_networks)
         initial_population = population_vectors.copy()
-
-        predictions = pygad.nn.predict(last_layer=self.GANN_instance.population_network[self.sol_idx],
-                                       data_inputs=self.data_inputs)
-        previous = pygad.nn.predict(last_layer=self.GANN_instance.population_network[self.sol_idx],
-                                    data_inputs=self.last_inputs)
-
-        self.qvalue_max.add(previous.max().item())
-        self.qvalue_mean.add(previous.mean().item())
-        self.qvalue_min.add(previous.min().item())
-
-        self.target_max.add(predictions.max().item())
-        self.target_mean.add(predictions.mean().item())
-        self.target_min.add(predictions.min().item())
-
-        loss = (np.square(previous - predictions)).mean()
-        self.td_errors.add(loss.item())
 
         ga_instance = pygad.GA(num_generations=1,
                        num_parents_mating=4,
@@ -193,11 +179,28 @@ class get_gann_agent:
                        keep_parents=-1,
                        on_generation=self.callback_generation)
         ga_instance.run()
+        
+        predictions = pygad.nn.predict(last_layer=self.GANN_instance.population_networks[self.sol_idx],
+                                       data_inputs=self.data_inputs)
+        previous = pygad.nn.predict(last_layer=self.GANN_instance.population_networks[self.sol_idx],
+                                    data_inputs=self.last_inputs)
+        
+        self.qvalue_max.add(max(previous))
+        self.qvalue_mean.add(stats.mean(previous))
+        self.qvalue_min.add(min(previous))
+
+        self.target_max.add(max(predictions))
+        self.target_mean.add(stats.mean(predictions))
+        self.target_min.add(min(predictions))
+
+        loss = (np.square(max(previous) - max(predictions)))
+        self.td_errors.add(loss)
+        
 
         self.sol, self.sol_fit, self.sol_idx = ga_instance.best_solution()
 
     def act(self, s_t):
-        inputs = np.flatten(np.array(s_t))
+        inputs = np.expand_dims(np.array(s_t).flatten(), axis=0)
 
         predictions = pygad.nn.predict(last_layer=self.GANN_instance.population_networks[self.sol_idx],
                                        data_inputs=inputs)

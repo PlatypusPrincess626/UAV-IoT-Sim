@@ -22,7 +22,7 @@ class make_env:
         self._max_steps = max_num_steps
         
         self._curr_step = 0
-        self._curr_state = None
+        self._curr_state = [0,0,0]*(self._num_ch+1)
         self._curr_reward = 0
         self._curr_info = {
             "Last_Action": 0,
@@ -50,7 +50,7 @@ class make_env:
                 self._env.UAVTable.iloc[uav, 0].reset()
             
             self._curr_step = 0
-            self._curr_state = None
+            self._curr_state = [0,0,0]*(self._num_ch+1)
             self._curr_reward = 0
             self._curr_info = {
                 "Last_Action": 0,
