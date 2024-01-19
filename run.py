@@ -96,7 +96,7 @@ def evaluate(
     total_reward = 0
     num_crashes = 0
     total_steps = 0
-    #agent.decay_epsilon(1)
+    agent.decay_epsilon(1)
 
     for _ in range(eval_episodes):
         eval_env.reset()
@@ -118,7 +118,8 @@ def evaluate(
             peakAoI = info.get("Peak_Age", 0.0)
             dataDist = info.get("Data_Distribution", 0.0)
             dataColl = info.get("Total_Data_Change", 0.0)
-            agent.update(obs_next, action, reward, curr_obs, done)
+            agent.update_mem(obs_next, action, reward, curr_obs, done)
+            agent.train()
             ep_reward = + reward
 
         total_reward += ep_reward
@@ -151,7 +152,7 @@ def train(
     for timestep in range(total_steps):
         print(f"Step {timestep}: ")
         done = step(agent, env)
-        #agent.decay_epsilon(timestep / total_steps)
+        agent.decay_epsilon(timestep / total_steps)
 
         if done:
             env.reset()
@@ -203,7 +204,8 @@ def step(agent, env):
     if terminated or truncated:
         done = True
 
-    agent.update(obs_next, action, reward, obs_curr, buffer_done)
+    agent.update_mem(obs_next, action, reward, obs_curr, buffer_done)
+    agent.train()
     return done
 
 def prepopulate(agent, prepop_steps, env):
@@ -213,7 +215,7 @@ def prepopulate(agent, prepop_steps, env):
         print(f"Prepop Step: {timestep}")
         done = False
         while not done:
-            #agent.decay_epsilon(0)
+            agent.decay_epsilon(0)
             obs_curr = env._curr_state
             obs_next, reward, terminated, truncated, info = env.step(agent)
             action = info.get("Last_Action", None)
@@ -221,7 +223,8 @@ def prepopulate(agent, prepop_steps, env):
             buffer_done = terminated
             if terminated or truncated:
                 done = True
-            agent.update(obs_next, action, reward, obs_curr, buffer_done)
+            agent.update_mem(obs_next, action, reward, obs_curr, buffer_done)
+            agent.train()
             timestep += 1
 
 def run_experiment(args):
@@ -231,7 +234,7 @@ def run_experiment(args):
     # device = torch.device("cuda")
 
     print("Creating Agent")
-    agent = model_utils.get_gann_agent(
+    agent = model_utils.get_ddqn_agent(
         env
     )
 

@@ -1,4 +1,5 @@
 import numpy as np
+import tensorflow as tf
 import pygad
 import pygad.nn
 import pygad.gann
@@ -63,7 +64,7 @@ class get_ql_agent:
 
     def decay_epsilon(self, n):
         """
-        Decays the agent's exploration rate according to n, which is a
+        Decays the get_ddqn_agent's exploration rate according to n, which is a
         float between 0 and 1 describing how far along training is, 
         with 0 meaning 'just started' and 1 meaning 'done'.
         """
@@ -83,7 +84,7 @@ class get_ql_agent:
 
     def update(self, s_t_raw, a_t, r_t, s_t_next_raw, d_t):
         """
-        Uses the q-learning update rule to update the agent's predictions
+        Uses the q-learning update rule to update the get_ddqn_agent's predictions
         for Q(s_t, a_t).
         """
 
@@ -206,3 +207,128 @@ class get_gann_agent:
                                        data_inputs=inputs)
 
         return np.argmax(predictions)
+
+
+class DDDQN(tf.keras.Model):
+    def __init__(self):
+        super(DDDQN, self).__init__(env)
+        self.d1 = tf.keras.layers.Dense(128, activation='relu')
+        self.d2 = tf.keras.layers.Dense(128, activation='relu')
+        self.v = tf.keras.layers.Dense(1, activation=None)
+        self.a = tf.keras.layers.Dense(env._num_ch, activation=None)
+
+    def call(self, input_data):
+        x = self.d1(input_data)
+        x = self.d2(x)
+        v = self.v(x)
+        a = self.a(x)
+        Q = v + (a - tf.math.reduce_mean(a, axis=1, keepdims=True))
+        return Q
+
+    def advantage(self, state):
+        x = self.d1(state)
+        x = self.d2(x)
+        a = self.a(x)
+        return a
+
+
+class exp_replay():
+    def __init__(self, env, buffer_size=25000):
+        self.buffer_size = buffer_size
+        self.state_mem = np.zeros((self.buffer_size, *((env._num_ch+1)*3)), dtype=np.float32)
+        self.action_mem = np.zeros(self.buffer_size, dtype=np.int32)
+        self.reward_mem = np.zeros(self.buffer_size, dtype=np.float32)
+        self.next_state_mem = np.zeros((self.buffer_size, *((env._num_ch+1)*3)), dtype=np.float32)
+        self.done_mem = np.zeros(self.buffer_size, dtype=np.bool)
+        self.pointer = 0
+
+    def add_exp(self, state, action, reward, next_state, done):
+        idx = self.pointer % self.buffer_size
+        self.state_mem[idx] = state
+        self.action_mem[idx] = action
+        self.reward_mem[idx] = reward
+        self.next_state_mem[idx] = next_state
+        self.done_mem[idx] = 1 - int(done)
+        self.pointer += 1
+
+    def sample_exp(self, batch_size=64):
+        max_mem = min(self.pointer, self.buffer_size)
+        batch = np.random.choice(max_mem, batch_size, replace=False)
+        states = self.state_mem[batch]
+        actions = self.action_mem[batch]
+        rewards = self.reward_mem[batch]
+        next_states = self.next_state_mem[batch]
+        dones = self.done_mem[batch]
+        return states, actions, rewards, next_states, dones
+
+
+class get_ddqn_agent:
+    def __init__(self, env, gamma=0.99, replace=100, lr=0.001):
+        self.gamma = gamma
+        self.epsilon = 1.0
+        self.min_epsilon = 0.01
+        self.epsilon_decay = 1e-3
+        self.replace = replace
+        self.trainstep = 0
+        self.memory = exp_replay(env)
+        self.batch_size = 64
+        self.q_net = DDDQN(env)
+        self.target_net = DDDQN(env)
+        opt = tf.keras.optimizers.Adam(learning_rate=lr)
+        self.q_net.compile(loss='mse', optimizer=opt)
+        self.target_net.compile(loss='mse', optimizer=opt)
+
+        self.td_errors = RunningAverage(100)
+        self.grad_norms = RunningAverage(100)
+        self.qvalue_max = RunningAverage(100)
+        self.target_max = RunningAverage(100)
+        self.qvalue_mean = RunningAverage(100)
+        self.target_mean = RunningAverage(100)
+        self.qvalue_min = RunningAverage(100)
+        self.target_min = RunningAverage(100)
+
+    def act(self, state):
+        if np.random.rand() <= self.epsilon:
+            return np.random.choice([i for i in range(env._num_ch)])
+
+        else:
+            actions = self.q_net.advantage(np.array(state).flatten())
+            action = np.argmax(actions)
+            return action
+
+    def update_mem(self, state, action, reward, next_state, done):
+        self.memory.add_exp(np.array(state).flatten(), action, reward, np.array(next_state).flatten(), done)
+
+    def update_target(self):
+        self.target_net.set_weights(self.q_net.get_weights())
+
+    def epsilon_decay(self, new_epsilon):
+        self.epsilon = new_epsilon
+        return self.epsilon
+
+    def train(self):
+        if self.memory.pointer < self.batch_size:
+            return
+
+        if self.trainstep % self.replace == 0:
+            self.update_target()
+        states, actions, rewards, next_states, dones = self.memory.sample_exp(self.batch_size)
+        target = self.q_net.predict(states)
+        next_state_val = self.target_net.predict(next_states)
+        max_action = np.argmax(self.q_net.predict(next_states), axis=1)
+        batch_index = np.arange(self.batch_size, dtype=np.int32)
+        q_target = np.copy(target)  # optional
+        q_target[batch_index, actions] = rewards + self.gamma * next_state_val[batch_index, max_action] * dones
+        self.q_net.train_on_batch(states, q_target)
+        self.trainstep += 1
+
+        self.qvalue_max.add(np.argmax(target))
+        self.qvalue_mean.add(np.mean(target))
+        self.qvalue_min.add(np.argmin(target))
+
+        self.target_max.add(np.argmax(next_state_val))
+        self.target_mean.add(np.mean(next_state_val))
+        self.target_min.add(np.argmin(next_state_val))
+
+        loss = (np.square(np.argmax(next_state_val) - np.argmax(target)))
+        self.td_errors.add(loss)
