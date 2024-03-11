@@ -154,7 +154,7 @@ def train(
     for timestep in range(total_steps):
         print(f"Step {timestep}: ")
         done = step(agent, env)
-        agent.decay_epsilon(timestep / total_steps)
+        #agent.decay_epsilon(timestep / total_steps)
 
         if done:
             agent.update_target_from_model()
@@ -219,7 +219,7 @@ def prepopulate(agent, prepop_steps, env):
         print(f"Prepop Step: {timestep}")
         done = False
         while not done:
-            agent.decay_epsilon(0)
+            #agent.decay_epsilon(0)
             obs_curr = env._curr_state
             obs_next, reward, terminated, truncated, info = env.step(agent)
             action = info.get("Last_Action", None)
@@ -256,7 +256,7 @@ def run_experiment(args):
     wandb_kwargs = {"resume": None}
     logger = get_logger(policy_path, args, wandb_kwargs)
 
-    prepopulate(agent, 50_000, env)
+    prepopulate(agent, 5_000, env)
     mean_success_rate = RunningAverage(10)
     mean_reward = RunningAverage(10)
     mean_episode_length = RunningAverage(10)
