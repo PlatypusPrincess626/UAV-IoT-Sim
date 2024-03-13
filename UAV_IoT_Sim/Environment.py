@@ -20,11 +20,11 @@ class sim_env:
         
         
         if(scene == "test"):
-            # Test scene will be Upemba National Park in Kabanga, Congo
-            self.lat_center = -9.00           # Latitude
-            self.long_center = 26.75          # Longitude
-            self.pressure = 101709            # Sea Level is 1013.25 mb, Average Pressure in Kabanga is +4.09mb
-            self.water_vapor_content = 0.35   # Roughly 0.35 cm in Kabanga
+            # Test scene will be Yellowstone National Park
+            self.lat_center = 44.424           # Latitude
+            self.long_center = -110.589        # Longitude
+            self.pressure = 101253            # Sea Level is 1013.25 mb, Average Pressure in Yellowstone is +4.09mb
+            self.water_vapor_content = 0.35   # Roughly 0.35 cm in Yellowstone
             self.tau500 = 0.75                # Aerosol Turbidity 500nm
             self.ozone = 0.23                 # Ozone in atm-cm
             self.albedo = 0.2                 # Bare Ground and Grassy

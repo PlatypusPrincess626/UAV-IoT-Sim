@@ -71,10 +71,6 @@ class make_env:
     def step(self, model):
         if not self._terminated:
             if self._curr_step < self._max_steps:
-                for sensor in range(self._num_sensors):
-                    self._env.sensorTable.iloc[sensor, 0].harvest_energy(self._env, self._curr_step)
-                    self._env.sensorTable.iloc[sensor, 0].harvest_data()
-
                 for CH in range(self._num_ch):
                     self._env.CHTable.iloc[CH, 0].harvest_energy(self._env, self._curr_step)
                     self._env.CHTable.iloc[CH, 0].ch_download(self._curr_step)

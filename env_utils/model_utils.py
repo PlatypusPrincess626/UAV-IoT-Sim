@@ -59,7 +59,7 @@ class get_ql_agent:
         else:
             for index in range(len(self.encoder)):
                 comparison = self.encoder[index] == state
-                if caparison.all():
+                if comparison.all():
                     return index
             np.append(self.encoder, [state])
             return len(self.encoder)-1
