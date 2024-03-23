@@ -250,7 +250,7 @@ class get_ddqn_agent():
         #   Linear activation on the last layer
         model.compile(loss='mean_squared_error',  # Loss function: Mean Squared Error
                       optimizer=tf.keras.optimizers.Adam(
-                          lr=self.alpha))  # Optimaizer: Adam (Feel free to check other options)
+                          learning_rate=self.alpha))  # Optimaizer: Adam (Feel free to check other options)
         return model
 
     def update_target_from_model(self):
