@@ -34,6 +34,7 @@ class IoT_Device:
             self.maxData = 250              # 250 kB maximum data storage
             self.sensRes = 5000             # 5k Ohm sensor resistance
             self.currDraw = self.minVolt/self.sensRes
+            self.Ah=1
             
         else:
             self.type = 2

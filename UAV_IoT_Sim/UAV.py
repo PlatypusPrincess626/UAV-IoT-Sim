@@ -178,10 +178,7 @@ class QuadUAV:
             self.full_state.iloc[0, 3] = self.storedBatt
     
     def set_dest(self, model):
-        if self.target.type == 1:
-            self.target = self.target
-
-        elif self.target == None:
+        if self.target == None:
             minDist = 10000
             minCH = self.full_state.iloc[1, 0]
             for CH in range(len(self.full_state)-1):
@@ -193,6 +190,9 @@ class QuadUAV:
             self.target = minCH
             self.targetX = minCH.indX
             self.targetY = minCH.indY
+
+        elif self.target.type == 1:
+            self.target = self.target
 
         elif self.storedBatt < (self.cap * .60):
             self.target = self.target

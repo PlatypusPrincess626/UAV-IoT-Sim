@@ -1,0 +1,14 @@
+
+Prepop Step: 0
+Traceback (most recent call last):
+  File "/home/panlab_user/UAV-IoT-Sim/run.py", line 281, in <module>
+    run_experiment(get_args())
+  File "/home/panlab_user/UAV-IoT-Sim/run.py", line 259, in run_experiment
+    prepopulate(agent, 5_000, env)
+  File "/home/panlab_user/UAV-IoT-Sim/run.py", line 224, in prepopulate
+    obs_next, reward, terminated, truncated, info = env.step(agent)
+  File "/home/panlab_user/UAV-IoT-Sim/UAV_IoT_Sim/UAV_IoT_Sim.py", line 80, in step
+    self.last_action = uav.set_dest(model)
+  File "/home/panlab_user/UAV-IoT-Sim/UAV_IoT_Sim/UAV.py", line 181, in set_dest
+    if self.target.type == 1:
+AttributeError: 'NoneType' object has no attribute 'type'
