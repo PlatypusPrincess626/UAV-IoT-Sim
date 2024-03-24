@@ -9,10 +9,9 @@ class QuadUAV:
         self.typeStr = "UAV"
         
         # AmBC Comms
-        self.maxAmBCDist = 2000         # 2 km AmBC comms distance
-        self.maxAmBCDistCharge = 20     # 10 m distance for AmBC charging
+        self.maxAmBCDist = 500
         self.commCost = 0.00007         # 70 microAmp current necessary
-        self.AmBCBER = 0.001            # Bit Error Rate
+        self.AmBCBER = 0.1            # Bit Error Rate
         self.transSpdAmBC = 1000 * (1 - self.AmBCBER)
         
         # LoRa Comms
@@ -29,6 +28,7 @@ class QuadUAV:
         self.maxH = 20
         self.h = 20
         self.target = None
+        self.targetHead = None
         self.targetX = float(X)
         self.targetY = float(Y)
         self.lat = lat
@@ -121,31 +121,31 @@ class QuadUAV:
     # Finish with battery drain
     # UAV-IoT Communication
     def recieve_data(self, step):
-        commsDone = 3
         totalData = 0
-        totalTime = 0.0
         device = self.target
         if self.storedBatt < (self.cap*.40):
             self.energy_cost(0, 0, 0, 0, 60)
 
         elif self.target.type == 1:
-            dataReturn = device.ws_upload_data(self.indX, self.indY, self.maxAmBCDist, self, self.h)
-            if dataReturn < (self.transSpdAmBC * 56) and dataReturn >= 0:
+            dataReturn = device.ws_upload_data(self.indX, self.indY, self.maxAmBCDist, self.h)
 
-                if commsDone == 2:
-                    totalData += dataReturn
-                elif math.sqrt(pow((self.indX - self.target.indX),2) + pow((self.indY - self.target.indY),2) \
-                     + pow(self.h,2)) < self.maxAmBCDistCharge:
-                    totalData += dataReturn
-                else:
-                    totalData += dataReturn
-                    self.inRange = False
+            if math.sqrt(pow((self.indX - self.target.indX),2) + pow((self.indY - self.target.indY),2) \
+                    + pow(self.h,2)) < self.maxAmBCDist:
+                totalData += dataReturn
+                self.target = self.targetHead
+                self.targetX = self.targetHead.indX
+                self.targetY = self.targetHead.indY
             else:
                 totalData += dataReturn
                 self.inRange = True
 
             totalTime = totalData/self.transSpdAmBC
-            self.energy_cost(0, totalTime, 0, 0, 60)
+            self.energy_cost(0, totalTime, totalTime, 0, 0)
+
+            self.update_state(self.targetHead.headSerial + 1, step, totalData)
+            self.state[self.targetHead.headSerial + 1][2] = step
+            self.state[self.targetHead.headSerial + 1][1] += round(totalData / 1000)
+            self.state[0][1] += round(totalData / 1000)
 
 
         else:
@@ -191,14 +191,23 @@ class QuadUAV:
             self.targetX = minCH.indX
             self.targetY = minCH.indY
 
+        elif self.target.type == 1:
+            self.target = self.target
+
         elif self.storedBatt < (self.cap * .60):
             self.target = self.target
 
         else:
             dest = self.target.getDest(self.state, self.full_state, model)
-            self.target = dest
-            self.targetX = dest.indX
-            self.targetY = dest.indY
+            if dest.type == 1:
+                self.targetHead = self.target
+                self.target = dest
+                self.targetX = dest.indX
+                self.targetY = dest.indY
+            else:
+                self.target = dest
+                self.targetX = dest.indX
+                self.targetY = dest.indY
 
         try:
             return self.target.headSerial
@@ -206,6 +215,6 @@ class QuadUAV:
             return None
 
     def update_state(self, device, step, data):
-        self.full_state.iloc[device, 3] =  step
+        self.full_state.iloc[device, 3] = step
         self.full_state.iloc[device, 2] += data
         self.full_state.iloc[0, 2] += data

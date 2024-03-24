@@ -59,7 +59,7 @@ class get_ql_agent:
         else:
             for index in range(len(self.encoder)):
                 comparison = self.encoder[index] == state
-                if caparison.all():
+                if comparison.all():
                     return index
             np.append(self.encoder, [state])
             return len(self.encoder)-1
@@ -250,7 +250,7 @@ class get_ddqn_agent():
         #   Linear activation on the last layer
         model.compile(loss='mean_squared_error',  # Loss function: Mean Squared Error
                       optimizer=tf.keras.optimizers.Adam(
-                          lr=self.alpha))  # Optimaizer: Adam (Feel free to check other options)
+                          learning_rate=self.alpha))  # Optimaizer: Adam (Feel free to check other options)
         return model
 
     def update_target_from_model(self):

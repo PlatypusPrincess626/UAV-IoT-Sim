@@ -14,10 +14,10 @@ class IoT_Device:
         
         # Communication Specifications
         self.LoRaDistmin = 5000         # 5 km conservative LoRa comms distance
-        self.maxAmBCDist = 2000         # 2 km AmBC comms distance
+        self.maxAmBCDist = 500         # 500 m AmBC comms distance
         self.maxAmBCDistCharge = 20     # 10 m distance for AmBC charging
         self.commCost = 0.00007         # 70 microAmp current necessary
-        self.AmBCBER = 0.001            # Bit Error Rate
+        self.AmBCBER = 0.1            # Bit Error Rate
         self.transSpdAmBC = 1000 * (1 - self.AmBCBER)
         
         if devType == 1:
@@ -34,23 +34,7 @@ class IoT_Device:
             self.maxData = 250              # 250 kB maximum data storage
             self.sensRes = 5000             # 5k Ohm sensor resistance
             self.currDraw = self.minVolt/self.sensRes
-            
-            # BPW34 Solar Cell Specifications
-            self.solarArea = 50 * 50        # 50 mm x mm solar panel assumption
-            self.V_mp = 2                   # 2 V peak in ideal conditions (Vmp)
-            self.spctrlLow = 0              # Spectral bandwidth for power calculations
-            self.spctrlHigh = numpy.inf
-            self.panelRes = 11.44           # Internal resistance of solar panels
-            
-            self._C = .470                   # 470 mF capacitance
-            self._Q = (self._C * self.V_mp)           # C * V = Q
-            self.capRes = .156              # Internal resistance of capacitor
-            self.serRes = 0
-            
-            self.Ah = 1                     # 1 A*h battery rating
-            self.rate = 10                  # 10 hours discharge/charge rate
-            self.battAmp = self.Ah/self.rate
-            self.storedEnergy=self.Ah 
+            self.Ah=1
             
         else:
             self.type = 2
@@ -104,13 +88,6 @@ class IoT_Device:
     def setHead(self, head: int, queue:int):
         self.head = head
         self.queue = queue
-    
-    # Harvesting
-    def ws_charge(self,xtraCurr):
-        if xtraCurr > self.battAmp:
-            self.storedEnergy += self.battAmp/60
-            if self.storedEnergy > self.Ah:
-                self.storedEnergy = self.Ah
             
     def discharge(self, currCost):
         self.storedEnergy -= currCost
@@ -122,79 +99,24 @@ class IoT_Device:
         powDensity = (1 - interference) * f.integral(self.spctrlLow,self.spctrlHigh)
         power = powDensity * self.solarArea/(1000*1000)
         
-        if power>0:
-            self.isActive = True
+        if power > 0:
             currAmps = (power / (self.V_mp)) * 60
-            if self.type == 1:
-                if step % self.sampleFreq == 0:  # Data harvesting scheduling
-                    self.harvest_data()
-                    currAmps -= self.currDraw * 10
-                if step % math.ceil(self.queue/2) == 0:    # Transmission Scheduling
-                    currAmps -= self.commCost * 30
-            if currAmps > 0:
-                self.storedEnergy += currAmps
-            else:
-                self.discharge(currAmps)
-            
-                    
-        elif self.storedEnergy > 0:
-            self.isActive = True
-            maxAmps = self.battAmp * 60
-            currCost = 0
-            if self.type == 1:
-                if step % self.sampleFreq == 0:
-                    if maxAmps > self.currDraw:
-                        self.harvest_data()
-                        currCost += self.currDraw * 10
-                if step % math.ceil(self.queue/2):
-                    if maxAmps > self.commCost:
-                        currCost += self.commCost * 30
-            self.discharge(currCost)
-                 
-        else:
-            self.isActive = False
-                
-       
-    
-    def harvest_data(self) -> float:
-        if self.isActive:
-            if self.storedData < self.maxData:
-                self.storedData += self.maxColRate * 10 # Assume 10 samples taken every collection period
-                if self.storedData > self.maxData:
-                    self.storedData = self.maxData
-        else:
-            self.storedData += 0
+            self.storedEnergy += currAmps
     
     # Uploading data from a sensor
-    def ws_upload_data(self, X:int, Y:int, commsDistance:int, device:object, h:int=0):
-        if self.isActive:
-            if self.storedData > 0:
-                self.storedData -= self.transSpdAmBC * 28 * (device.type-1) # Assume 10 seconds to connect to clusterhead/uav
-                sentData = self.transSpdAmBC * 28 * (device.type-1)
-                if self.storedData < 0:
-                    sentData += self.storedData 
-                    self.storedData = 0
-                return sentData
-            
-        elif math.sqrt(pow((self.indX - X),2) + pow((self.indY - Y),2) \
-                         + pow(h,2)) <= commsDistance:
-            if self.storedData > 0:
-                self.storedData -= self.transSpdAmBC * 28 * (device.type-1)# Assume 10 seconds to connect to clusterhead/uav
-                sentData = self.transSpdAmBC * 28 * (device.type-1)
-                if self.storedData < 0:
-                    sentData += self.storedData
-                    self.storedData = 0
-                return sentData
-        
+    def ws_upload_data(self, X: int, Y: int, commsDistance: int, h: int=0):
+        if math.sqrt(pow((self.indX - X),2) + pow((self.indY - Y),2) + pow(h,2)) <= commsDistance:
+            return self.maxColRate
         else:
             return -1
     
     # Clusterhead-Specific Tasks
     def set_sensor_data(self, sensList: list):
         sensActive = [True] * (len(sensList))
-        self.sensTable = pd.concat([pd.DataFrame(sensList), pd.DataFrame(sensActive)], axis=1)
+        sensAoI = [0] * (len(sensList))
+        self.sensTable = pd.concat([pd.DataFrame(sensList), pd.DataFrame(sensActive), pd.DataFrame(sensAoI)], axis=1)
         self.sensTable.rename(
-            columns = {0:"Sensor", 1:"Connection_Status"},
+            columns = {0:"Sensor", 1:"Connection_Status", 2:"AoI"},
             inplace = True
         )
     
@@ -205,10 +127,10 @@ class IoT_Device:
         recData = 0
         activeChannels = []
         sensor1 = self.sensTable.iloc[sensor, 0]
-        activeChannels.append(sensor1.ws_upload_data(self.indX, self.indY, self.maxAmBCDist, self, self.h))
+        activeChannels.append(sensor1.ws_upload_data(self.indX, self.indY, self.maxAmBCDist, self.h))
         if rotation < (rotations-1) or len(self.sensTable.index)%2 == 0:
             sensor2 = self.sensTable.iloc[sensor+1, 0]
-            activeChannels.append(sensor2.ws_upload_data(self.indX, self.indY, self.maxAmBCDist, self, self.h))
+            activeChannels.append(sensor2.ws_upload_data(self.indX, self.indY, self.maxAmBCDist, self.h))
 
         totalChannels = 0
         for channel in range(len(activeChannels)):
@@ -217,6 +139,7 @@ class IoT_Device:
                 totalChannels += 1
             elif len(activeChannels) > 1:
                 self.sensTable.iloc[sensor+1, 1] = True
+                self.sensTable.iloc[sensor+1, 2] = step
                 self.storedData += recData
                 totalChannels += 1
             
@@ -267,5 +190,9 @@ class IoT_Device:
                 return full_state.iloc[CH+1, 0]
             
         # Insert code for independent sensors
+        for sens in range(self.sensTable.size):
+            if not self.sensTable[sens, 1]:
+                return self.sensTable.iloc[sens, 0]
+
         action = model.act(state)
         return full_state.iloc[action+1, 0]
