@@ -55,6 +55,7 @@ class QuadUAV:
         self.flight = 0.5               # 30 min flight time
         self.Amp = self.cap/self.rate   # Roughly 2.72 A optimal current
         self.storedBatt = self.cap      # Initialize at full battery
+        self.is_charging = False
         
         # State used for model
         self.state = [[0]*3 for _ in range(len(self.full_state))]
@@ -123,10 +124,7 @@ class QuadUAV:
     def recieve_data(self, step):
         totalData = 0
         device = self.target
-        if self.storedBatt < (self.cap*.40):
-            self.energy_cost(0, 0, 0, 0, 60)
-
-        elif self.target.type == 1:
+        if self.target.type == 1:
             dataReturn = device.ws_upload_data(self.indX, self.indY, self.maxAmBCDist, self.h)
 
             if math.sqrt(pow((self.indX - self.target.indX),2) + pow((self.indY - self.target.indY),2) \
@@ -194,7 +192,11 @@ class QuadUAV:
         elif self.target.type == 1:
             self.target = self.target
 
-        elif self.storedBatt < (self.cap * .60):
+        elif self.storedBatt < (self.cap * .50):
+            self.is_charging = True
+            self.target = self.target
+        
+        elif self.is_charging and self.storedBatt < (self.cap * .80):
             self.target = self.target
 
         else:
