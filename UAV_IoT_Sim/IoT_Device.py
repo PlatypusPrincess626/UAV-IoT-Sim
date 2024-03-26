@@ -169,14 +169,14 @@ class IoT_Device:
     
     def chargeTime(self, X, Y, h, climb):
         if self.indX == X and self.indY == Y:
-            if h > 0:
-                timeDock = h/climb
-                timeCharge = 60.0 - timeDock
-                return 0, timeCharge, timeDock
-            else:
-                timeDock = 0
-                timeCharge = 60.0
-                return 0, timeCharge, timeDock
+            #if h > 0:
+            #    timeDock = h/climb
+            #    timeCharge = 60.0 - timeDock
+            #    return 0, timeCharge, timeDock
+            #else:
+            timeDock = 0
+            timeCharge = 60.0
+            return 0, timeCharge, timeDock
         else:
             return h, 0, 0
     
@@ -191,7 +191,7 @@ class IoT_Device:
             
         # Insert code for independent sensors
         for sens in range(self.sensTable.size):
-            if not self.sensTable[sens, 1]:
+            if not self.sensTable.iloc[sens, 1]:
                 return self.sensTable.iloc[sens, 0]
 
         action = model.act(state)
