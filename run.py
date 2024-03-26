@@ -96,7 +96,9 @@ def evaluate(
     total_reward = 0
     num_crashes = 0
     total_steps = 0
-    #agent.decay_epsilon(1)
+    
+    #QL
+    agent.decay_epsilon(1)
 
     for _ in range(eval_episodes):
         eval_env.reset()
@@ -118,12 +120,18 @@ def evaluate(
             peakAoI = info.get("Peak_Age", 0.0)
             dataDist = info.get("Data_Distribution", 0.0)
             dataColl = info.get("Total_Data_Change", 0.0)
-            agent.update_mem(curr_obs, action, reward, obs_next, done)
-            if len(agent.memory)>64:
-                agent.train(64)
+            
+            #QL
+            agent.update(obs_curr, action, reward, obs_next, buffer_done)
+            #DDQN
+            #agent.update_mem(curr_obs, action, reward, obs_next, done)
+            #if len(agent.memory)>64:
+            #    agent.train(64)
             ep_reward = + reward
-
-        agent.update_target_from_model()
+	
+	#DDQN
+        #agent.update_target_from_model()
+        
         total_reward += ep_reward
         total_steps += eval_env._curr_step
         if info.get("Crashed", False):
@@ -154,7 +162,9 @@ def train(
     for timestep in range(total_steps):
         print(f"Step {timestep}: ")
         done = step(agent, env)
-        #agent.decay_epsilon(timestep / total_steps)
+        
+        #QL
+        agent.decay_epsilon(timestep / total_steps)
 
         if done:
             agent.update_target_from_model()
@@ -206,14 +216,19 @@ def step(agent, env):
     done = False
     if terminated or truncated:
         done = True
-
-    agent.update_mem(obs_next, action, reward, obs_curr, buffer_done)
-    if len(agent.memory) > 64:
-        agent.train(64)
+        
+    #QL
+    agent.update(obs_curr, action, reward, obs_next, buffer_done)
+    #agent.update_mem(obs_next, action, reward, obs_curr, buffer_done)
+    #if len(agent.memory) > 64:
+        #agent.train(64)
     return done
 
 def prepopulate(agent, prepop_steps, env):
     timestep = 0
+    
+    #QL
+    agent.decay_epsilon(0) 
     while timestep < prepop_steps:
         env.reset()
         print(f"Prepop Step: {timestep}")
@@ -226,11 +241,17 @@ def prepopulate(agent, prepop_steps, env):
 
             buffer_done = terminated
             if terminated or truncated:
-                agent.update_target_from_model()
+            	#DDQN
+                #agent.update_target_from_model()
                 done = True
-            agent.update_mem(obs_next, action, reward, obs_curr, buffer_done)
-            if len(agent.memory) > 64:
-                agent.train(64)
+            
+            #QL
+            agent.update(obs_curr, action, reward, obs_next, buffer_done)
+              
+            #DDQN
+            #agent.update_mem(obs_next, action, reward, obs_curr, buffer_done)
+            #if len(agent.memory) > 64:
+            #    agent.train(64)
             timestep += 1
 
 def run_experiment(args):
@@ -240,7 +261,7 @@ def run_experiment(args):
     # device = torch.device("cuda")
 
     print("Creating Agent")
-    agent = model_utils.get_ddqn_agent(
+    agent = model_utils.get_ql_agent(
         env
     )
 
