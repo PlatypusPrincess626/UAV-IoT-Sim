@@ -54,7 +54,7 @@ class IoT_Device:
             self.transSpdLoRa = 25000 * (1 - self.LoRaBER)
             
             # BPW34 Solar Cell Specifications
-            self.numPanels = 2
+            self.numPanels = 6
             self.solarArea = 50*50*self.numPanels  # Total surface area
             self.V_mp = 2*self.numPanels           # 2 V * number of panels in series (Vmp)
             self.spctrlLow = 0                     # Spectral bandwidth for power calculations
@@ -105,7 +105,7 @@ class IoT_Device:
     
     # Uploading data from a sensor
     def ws_upload_data(self, X: int, Y: int, commsDistance: int, h: int=0):
-        if math.sqrt(pow((self.indX - X),2) + pow((self.indY - Y),2) + pow(h,2)) <= commsDistance:
+        if math.sqrt(pow((self.indX - X),2) + pow((self.indY - Y),2)) <= commsDistance:
             return self.maxColRate
         else:
             return -1
@@ -128,29 +128,28 @@ class IoT_Device:
         activeChannels = []
         sensor1 = self.sensTable.iloc[sensor, 0]
         activeChannels.append(sensor1.ws_upload_data(self.indX, self.indY, self.maxAmBCDist, self.h))
+
         if rotation < (rotations-1) or len(self.sensTable.index)%2 == 0:
             sensor2 = self.sensTable.iloc[sensor+1, 0]
             activeChannels.append(sensor2.ws_upload_data(self.indX, self.indY, self.maxAmBCDist, self.h))
 
         totalChannels = 0
         for channel in range(len(activeChannels)):
-            if activeChannels[channel] == -1:
-                self.sensTable.iloc[sensor, 1] = False
+            if activeChannels[channel] > 0:
+                self.sensTable.iloc[sensor+channel, 1] = True
                 totalChannels += 1
-            elif len(activeChannels) > 1:
-                self.sensTable.iloc[sensor+1, 1] = True
-                self.sensTable.iloc[sensor+1, 2] = step
-                self.storedData += recData
-                totalChannels += 1
-            
+            else:
+                self.sensTable.iloc[sensor+channel, 1] = False
+
         self.storedEnergy -= self.commCost * 30 * totalChannels
-    
+
     def ch_upload(self, X:int, Y:int, h:int=0):
-        if math.sqrt(pow((self.indX - X),2) + pow((self.indY - Y),2) \
-                         + pow(h,2)) <= self.LoRaDistmin:
+        if math.sqrt(pow((self.indX - X),2) + pow((self.indY - Y),2)) <= self.LoRaDistmin:
+
             if self.storedData > 0:
                 self.storedData -= self.transSpdLoRa * 56
                 sentData = self.transSpdLoRa * 56
+
                 if self.storedData < 0:
                     sentData += self.storedData
                     self.storedData = 0
@@ -167,32 +166,24 @@ class IoT_Device:
             self.storedEnergy -= self.LoRaIdle * 60
             return -1
     
-    def chargeTime(self, X, Y, h, climb):
+    def chargeTime(self, X:int, Y:int, h, climb):
         if self.indX == X and self.indY == Y:
-            #if h > 0:
-            #    timeDock = h/climb
-            #    timeCharge = 60.0 - timeDock
-            #    return 0, timeCharge, timeDock
-            #else:
-            timeDock = 0
-            timeCharge = 60.0
-            return 0, timeCharge, timeDock
+            return 0, 60.0, 0
         else:
-            return h, 0, 0
+            return 0, 0, 0
     
     def getDest(self, state, full_state, model):
-        if self.storedData > 1000:
-            return self
+        if self.storedData > 50:
+            return self, False
 
         unserviced = full_state.iloc[:,3].isin([0])
         for CH in range(unserviced.size-1):
             if unserviced.iloc[CH+1]:
-                return full_state.iloc[CH+1, 0]
-            
-        # Insert code for independent sensors
+                return full_state.iloc[CH+1, 0], False
+
         for sens in range(self.sensTable.size):
             if not self.sensTable.iloc[sens, 1]:
-                return self.sensTable.iloc[sens, 0]
+                return self.sensTable.iloc[sens, 0], False
 
         action = model.act(state)
-        return full_state.iloc[action+1, 0]
+        return full_state.iloc[action+1, 0], True

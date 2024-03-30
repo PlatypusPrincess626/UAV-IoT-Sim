@@ -31,7 +31,7 @@ class sim_env:
             self.dim = 10000                  # Map dimension n x n
             self.numObst = 500                # Number of obstacles decided
             self.stepSize = 'T'               # Frequency of time steps
-            self.times = pd.date_range('2021-01-01 8:00', freq=self.stepSize, periods=max_num_steps, tz="Africa/Lubumbashi")
+            self.times = pd.date_range('2021-01-01 12:00', freq=self.stepSize, periods=max_num_steps, tz="MST")
             random.seed('2021-01-01 8:00')
             
             
