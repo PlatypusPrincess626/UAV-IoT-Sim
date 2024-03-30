@@ -96,9 +96,14 @@ def evaluate(
     total_reward = 0
     num_crashes = 0
     total_steps = 0
-    
+
+    accum_avgAoI = 0
+    accum_peakAoI = 0
+    accum_dataDist = 0
+    accum_dataColl = 0
+
     #QL
-    agent.decay_epsilon(1)
+    #agent.decay_epsilon(1)
 
     for _ in range(eval_episodes):
         eval_env.reset()
@@ -111,27 +116,33 @@ def evaluate(
 
         while not done:
             curr_obs = eval_env._curr_state
-            obs_next, reward, terminated, truncated, info = eval_env.step(agent)
+            obs_next, reward, terminated, truncated, info, used_model = eval_env.step(agent)
 
             if terminated or truncated:
                 done = True
             action = info.get("Last_Action", None)
-            avgAoI = info.get("Avg_Age", 0.0)
-            peakAoI = info.get("Peak_Age", 0.0)
-            dataDist = info.get("Data_Distribution", 0.0)
-            dataColl = info.get("Total_Data_Change", 0.0)
-            
-            #QL
-            agent.update(obs_curr, action, reward, obs_next, buffer_done)
-            #DDQN
-            #agent.update_mem(curr_obs, action, reward, obs_next, done)
-            #if len(agent.memory)>64:
-            #    agent.train(64)
-            ep_reward = + reward
-	
-	#DDQN
+            avgAoI += info.get("Avg_Age", 0.0)
+            peakAoI += info.get("Peak_Age", 0.0)
+            dataDist += info.get("Data_Distribution", 0.0)
+            dataColl += info.get("Total_Data_Change", 0.0)
+
+            if used_model:
+            	#QL/GANN
+                agent.update(curr_obs, action, reward, obs_next, terminated)
+            	#DDQN
+                #agent.update_mem(curr_obs, action, reward, obs_next, done)
+                #if len(agent.memory)>64:
+                #    agent.train(64)
+            ep_reward += reward
+
+        #DDQN
         #agent.update_target_from_model()
-        
+
+        accum_avgAoI += avgAoI/eval_env._curr_step
+        accum_peakAoI += peakAoI/eval_env._curr_step
+        accum_dataDist += dataDist/eval_env._curr_step
+        accum_dataColl += dataColl/eval_env._curr_step
+
         total_reward += ep_reward
         total_steps += eval_env._curr_step
         if info.get("Crashed", False):
@@ -139,7 +150,7 @@ def evaluate(
 
     if total_steps == 0:
         total_steps = 1
-    return (1-num_crashes/total_steps), total_reward, total_steps, avgAoI, peakAoI, dataDist, dataColl
+    return (1-num_crashes/total_steps), total_reward, total_steps, accum_avgAoI/eval_episodes, accum_peakAoI/eval_episodes, 1000*accum_dataDist/eval_episodes, 1000*accum_dataColl/eval_episodes
 
 
 def train(
@@ -162,12 +173,12 @@ def train(
     for timestep in range(total_steps):
         print(f"Step {timestep}: ")
         done = step(agent, env)
-        
+
         #QL
-        agent.decay_epsilon(timestep / total_steps)
+        #agent.decay_epsilon(timestep / total_steps)
 
         if done:
-            agent.update_target_from_model()
+            #agent.update_target_from_model()
             env.reset()
 
         if timestep % eval_frequency == 0:
@@ -209,34 +220,35 @@ def train(
 
 def step(agent, env):
     obs_curr = env._curr_state
-    obs_next, reward, terminated, truncated, info = env.step(agent)
+    obs_next, reward, terminated, truncated, info, used_model = env.step(agent)
     action = info.get("Last_Action", None)
 
     buffer_done = terminated
     done = False
+
     if terminated or truncated:
         done = True
-        
-    #QL
-    agent.update(obs_curr, action, reward, obs_next, buffer_done)
-    #agent.update_mem(obs_next, action, reward, obs_curr, buffer_done)
-    #if len(agent.memory) > 64:
-        #agent.train(64)
+
+    if used_model:
+    	#QL/GANN
+        agent.update(obs_curr, action, reward, obs_next, buffer_done)
+        #agent.update_mem(obs_next, action, reward, obs_curr, buffer_done)
+        #if len(agent.memory) > 64:
+            #agent.train(64)
     return done
 
 def prepopulate(agent, prepop_steps, env):
     timestep = 0
     
     #QL
-    agent.decay_epsilon(0) 
+    #agent.decay_epsilon(0) 
     while timestep < prepop_steps:
         env.reset()
         print(f"Prepop Step: {timestep}")
         done = False
         while not done:
-            #agent.decay_epsilon(0)
             obs_curr = env._curr_state
-            obs_next, reward, terminated, truncated, info = env.step(agent)
+            obs_next, reward, terminated, truncated, info, used_model = env.step(agent)
             action = info.get("Last_Action", None)
 
             buffer_done = terminated
@@ -244,14 +256,14 @@ def prepopulate(agent, prepop_steps, env):
             	#DDQN
                 #agent.update_target_from_model()
                 done = True
-            
-            #QL
-            agent.update(obs_curr, action, reward, obs_next, buffer_done)
-              
-            #DDQN
-            #agent.update_mem(obs_next, action, reward, obs_curr, buffer_done)
-            #if len(agent.memory) > 64:
-            #    agent.train(64)
+
+            if used_model:
+                #QL/GANN
+                agent.update(obs_curr, action, reward, obs_next, buffer_done)
+                #DDQN
+                #agent.update_mem(obs_next, action, reward, obs_curr, buffer_done)
+                #if len(agent.memory) > 64:
+                #    agent.train(64)
             timestep += 1
 
 def run_experiment(args):
@@ -261,7 +273,7 @@ def run_experiment(args):
     # device = torch.device("cuda")
 
     print("Creating Agent")
-    agent = model_utils.get_ql_agent(
+    agent = model_utils.get_gann_agent(
         env
     )
 
@@ -300,3 +312,4 @@ def run_experiment(args):
 
 if __name__ == "__main__":
     run_experiment(get_args())
+x

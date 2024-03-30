@@ -69,19 +69,17 @@ class make_env:
             return self._env
     
     def step(self, model):
+        used_model = False
+
         if not self._terminated:
             if self._curr_step < self._max_steps:
-                for sensor in range(self._num_sensors):
-                    self._env.sensorTable.iloc[sensor, 0].harvest_energy(self._env, self._curr_step)
-                    self._env.sensorTable.iloc[sensor, 0].harvest_data()
-
                 for CH in range(self._num_ch):
                     self._env.CHTable.iloc[CH, 0].harvest_energy(self._env, self._curr_step)
                     self._env.CHTable.iloc[CH, 0].ch_download(self._curr_step)
 
                 for uav in range(self._num_uav):
                     uav = self._env.UAVTable.iloc[uav, 0]
-                    self.last_action = uav.set_dest(model)
+                    self.last_action, used_model = uav.set_dest(model)
                     uav.navigate_step(self._env)
                     uav.recieve_data(self._curr_step)
                     uav.recieve_energy()
@@ -105,6 +103,7 @@ class make_env:
                 }
         else:
             self._curr_reward = 0
+            used_model = False
             self._curr_infor={
                 "Last_Action": self.last_action,
                 "Reward_Change": 0,        # -> Change in reward at step
@@ -117,8 +116,8 @@ class make_env:
                 "Truncated": self._truncated         # -> Max episode steps reached
             }
 
-        return self._curr_state, self._curr_reward, self._terminated, self._truncated, self._curr_info
-           
+        return self._curr_state, self._curr_reward, self._terminated, self._truncated, self._curr_info, used_model
+
     def reward(self):
         '''
         Distribution of Data
@@ -151,8 +150,8 @@ class make_env:
                 if val < minColl:
                     minColl = val
             else:
-                dataChange = self._curr_state[index][1] - self._curr_total_data
-                self._curr_total_data += self._curr_state[index][1]
+                dataChange = max(0, self._curr_state[index][1] - self._curr_total_data)
+                self._curr_total_data += abs(dataChange)
         
         distOffset = maxColl - minColl
         
