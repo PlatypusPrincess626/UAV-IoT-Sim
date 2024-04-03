@@ -150,7 +150,7 @@ def evaluate(
 
     if total_steps == 0:
         total_steps = 1
-    return (1-num_crashes/total_steps), total_reward, total_steps, accum_avgAoI/eval_episodes, accum_peakAoI/eval_episodes, 1000*accum_dataDist/eval_episodes, 1000*accum_dataColl/eval_episodes
+    return (1-num_crashes/total_steps), total_reward/eval_episodes, total_steps/eval_episodes, accum_avgAoI/eval_episodes, accum_peakAoI/eval_episodes, accum_dataDist/eval_episodes, 1000*accum_dataColl/eval_episodes
 
 
 def train(
@@ -289,7 +289,7 @@ def run_experiment(args):
     wandb_kwargs = {"resume": None}
     logger = get_logger(policy_path, args, wandb_kwargs)
 
-    prepopulate(agent, 50_000, env)
+    #prepopulate(agent, 50_000, env)
     mean_success_rate = RunningAverage(10)
     mean_reward = RunningAverage(10)
     mean_episode_length = RunningAverage(10)
@@ -312,4 +312,4 @@ def run_experiment(args):
 
 if __name__ == "__main__":
     run_experiment(get_args())
-x
+
