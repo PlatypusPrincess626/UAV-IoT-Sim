@@ -193,7 +193,7 @@ class IoT_Device:
 
         sensMapping = [[0] * 3 for _ in range(5)]
         count = 0
-        for sens in range(self.sens_table.size):
+        for sens in range(self.sens_table.size - 1):
             if not self.sens_table.iloc[sens, 1] and count < 5:
                 sensMapping[count][0], sensMapping[count][1], sensMapping[count][2] = sens, \
                     math.sqrt(pow((self.indX - self.sens_table.iloc[sens, 0].indX), 2) + \
