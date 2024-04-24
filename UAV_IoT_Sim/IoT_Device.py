@@ -156,7 +156,7 @@ class IoT_Device:
 
         self.stored_energy -= self._comms.get("LoRa_Current_A", 0.0) * 30 * totalChannels
 
-    def ch_upload(self, X: int, Y: int, h: int = 0):
+    def ch_upload(self, X: int, Y: int):
         if math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)) <= \
                 self._comms.get("LoRa_Max_Distance_m", 0.0):
 
@@ -193,14 +193,14 @@ class IoT_Device:
 
         sensMapping = [[0] * 3 for _ in range(5)]
         count = 0
-        for sens in range(self.sens_table.size - 1):
-            if not self.sens_table.iloc[sens, 1] and count < 5:
+        for sens in range(self.sens_table.size):
+            if self.sens_table.iloc[sens - 1, 1] or count >= 5:
                 sensMapping[count][0], sensMapping[count][1], sensMapping[count][2] = sens, \
                     math.sqrt(pow((self.indX - self.sens_table.iloc[sens, 0].indX), 2) + \
                               pow((self.indY - self.sens_table.iloc[sens, 0].indY), 2)), (-5 + count)
-                state[sensMapping[count][2]][1], state[sensMapping[count][2]][2] = sensMapping[count][1], \
-                    self.sens_table.iloc[sens, 2]
-                count += 1
+            state[sensMapping[count][2]][1], state[sensMapping[count][2]][2] = sensMapping[count][1], \
+                self.sens_table.iloc[sens, 2]
+            count += 1
 
         action = model.act(state)
 

@@ -30,7 +30,7 @@ class sim_env:
             self.albedo = 0.2                 # Bare Ground and Grassy
             self.dim = 10000                  # Map dimension n x n
             self.numObst = 500                # Number of obstacles decided
-            self.stepSize = 'T'               # Frequency of time steps
+            self.stepSize = 'min'               # Frequency of time steps
             self.times = pd.date_range('2021-01-01 12:00', freq=self.stepSize, periods=max_num_steps, tz="MST")
             random.seed('2021-01-01 8:00')
             
