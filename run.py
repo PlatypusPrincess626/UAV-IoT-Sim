@@ -103,7 +103,7 @@ def evaluate(
     accum_dataDist = 0
     accum_dataColl = 0
 
-    CH_Metrics = [0, 0] * eval_env.num_ch
+    CH_Metrics = [[0, 0] * eval_env.num_ch]
 
     # QL
     agent.decay_epsilon(1)
@@ -130,6 +130,7 @@ def evaluate(
             dataDist += info.get("Data_Distribution", 0.0)
             dataColl += info.get("Total_Data_Change", 0.0)
 
+            ch: int
             for ch in range(len(CH_Metrics)):
                 CH_Metrics[ch][0] += eval_env.curr_state[ch + 1][1]
                 CH_Metrics[ch][1] += eval_env.curr_step - eval_env.curr_state[ch + 1][2]
