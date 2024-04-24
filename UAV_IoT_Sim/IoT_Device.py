@@ -196,8 +196,8 @@ class IoT_Device:
         for sens in range(self.sens_table.size):
             if self.sens_table.iloc[sens - 1, 1] or count >= 5:
                 sensMapping[count][0], sensMapping[count][1], sensMapping[count][2] = sens, \
-                    math.sqrt(pow((self.indX - self.sens_table.iloc[sens, 0].indX), 2) + \
-                              pow((self.indY - self.sens_table.iloc[sens, 0].indY), 2)), (-5 + count)
+                    math.sqrt(pow((self.indX - self.sens_table.iloc[sens - 1, 0].indX), 2) + \
+                              pow((self.indY - self.sens_table.iloc[sens - 1, 0].indY), 2)), (-5 + count)
             state[sensMapping[count][2]][1], state[sensMapping[count][2]][2] = sensMapping[count][1], \
                 self.sens_table.iloc[sens, 2]
             count += 1
