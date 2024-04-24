@@ -35,8 +35,8 @@ class get_ql_agent:
         self.epsilon = epsilon_i
         self.n_epsilon = n_epsilon
 
-        self.num_actions = env._num_ch
-        self.num_states = (6800) + (env._num_uav + env._num_ch) * (25 * env._max_steps) * (env._max_steps)
+        self.num_actions = env.num_ch + 5
+        self.num_states = (6800) + (env._num_uav + env.num_ch + 5) * (25 * env._max_steps) * (env._max_steps)
         self.encoder = np.array([[[]]])
 
         self.alpha = alpha
@@ -114,8 +114,8 @@ class get_gann_agent:
     def __init__(self,
                  env
                  ):
-        self._num_inputs = 3*(env._num_ch+1)
-        self._num_output = env._num_ch
+        self._num_inputs = 3*(env.num_ch + 6)
+        self._num_output = env.num_ch + 5
         self.sol_idx = 0
 
         self.a_t = 0
@@ -213,8 +213,8 @@ class get_gann_agent:
 
 class get_ddqn_agent():
     def __init__(self, env, alpha=0.5, gamma=0.95, epsilon=0.5, epsilon_min=0.1, epsilon_decay=0.01):
-        self.nS =((env._num_ch+1)* 3)
-        self.nA = env._num_ch
+        self.nS =((env.num_ch + 6) * 3)
+        self.nA = env.num_ch + 5
         self.memory = deque([], maxlen=2500)
         self.alpha = alpha
         self.gamma = gamma

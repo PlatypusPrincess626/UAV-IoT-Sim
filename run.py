@@ -93,6 +93,7 @@ def evaluate(
         eval_env,
         eval_episodes,
 ):
+    info = None
     total_reward = 0
     num_crashes = 0
     total_steps = 0
@@ -102,8 +103,10 @@ def evaluate(
     accum_dataDist = 0
     accum_dataColl = 0
 
-    #QL
-    #agent.decay_epsilon(1)
+    CH_Metrics = [0, 0] * eval_env.num_ch
+
+    # QL
+    # agent.decay_epsilon(1)
 
     for _ in range(eval_episodes):
         eval_env.reset()
@@ -115,42 +118,52 @@ def evaluate(
         dataColl = 0.0
 
         while not done:
-            curr_obs = eval_env._curr_state
-            obs_next, reward, terminated, truncated, info, used_model = eval_env.step(agent)
+            train_model, old_state, old_action = eval_env.step(agent)
+            buffer_done = eval_env.terminated
+            info = eval_env.curr_info
 
-            if terminated or truncated:
+            if buffer_done or eval_env.truncated:
                 done = True
-            action = info.get("Last_Action", None)
+
             avgAoI += info.get("Avg_Age", 0.0)
             peakAoI += info.get("Peak_Age", 0.0)
             dataDist += info.get("Data_Distribution", 0.0)
             dataColl += info.get("Total_Data_Change", 0.0)
 
-            if used_model:
-            	#QL/GANN
-                agent.update(curr_obs, action, reward, obs_next, terminated)
-            	#DDQN
-                #agent.update_mem(curr_obs, action, reward, obs_next, done)
-                #if len(agent.memory)>64:
+            for ch in range(len(CH_Metrics)):
+                CH_Metrics[ch][0] += eval_env.curr_state[ch + 1][1]
+                CH_Metrics[ch][1] += eval_env.curr_step - eval_env.curr_state[ch + 1][2]
+
+            if train_model:
+                agent.update(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
+                # DDQN
+                # agent.update_mem(env._curr_state, old_action, env._curr_reward, old_state, buffer_done)
+                # if len(agent.memory) > 64:
                 #    agent.train(64)
-            ep_reward += reward
+            ep_reward += eval_env.curr_reward
 
-        #DDQN
-        #agent.update_target_from_model()
+        # DDQN
+        # agent.update_target_from_model()
 
-        accum_avgAoI += avgAoI/eval_env._curr_step
-        accum_peakAoI += peakAoI/eval_env._curr_step
-        accum_dataDist += dataDist/eval_env._curr_step
-        accum_dataColl += dataColl/eval_env._curr_step
+        accum_avgAoI += avgAoI / eval_env.curr_step
+        accum_peakAoI += peakAoI / eval_env.curr_step
+        accum_dataDist += dataDist / eval_env.curr_step
+        accum_dataColl += dataColl / eval_env.curr_step
+
+        for ch in range(len(CH_Metrics)):
+            CH_Metrics[ch][0] /= eval_env.curr_step
+            CH_Metrics[ch][1] /= eval_env.curr_step
 
         total_reward += ep_reward
-        total_steps += eval_env._curr_step
+        total_steps += eval_env.curr_step
         if info.get("Crashed", False):
             num_crashes += 1
 
     if total_steps == 0:
         total_steps = 1
-    return (1-num_crashes/total_steps), total_reward/eval_episodes, total_steps/eval_episodes, accum_avgAoI/eval_episodes, accum_peakAoI/eval_episodes, accum_dataDist/eval_episodes, 1000*accum_dataColl/eval_episodes
+    return (1 - num_crashes / total_steps), total_reward / eval_episodes, \
+        total_steps / eval_episodes, accum_avgAoI / eval_episodes, accum_peakAoI / eval_episodes, \
+        accum_dataDist / eval_episodes, 1000 * accum_dataColl / eval_episodes, CH_Metrics
 
 
 def train(
@@ -174,11 +187,11 @@ def train(
         print(f"Step {timestep}: ")
         done = step(agent, env)
 
-        #QL
-        #agent.decay_epsilon(timestep / total_steps)
+        # QL
+        # agent.decay_epsilon(timestep / total_steps)
 
         if done:
-            #agent.update_target_from_model()
+            # agent.update_target_from_model()
             env.reset()
 
         if timestep % eval_frequency == 0:
@@ -194,7 +207,16 @@ def train(
                 "losses/Min_Target_Value": agent.target_min.mean(),
                 "losses/hours": hours,
             }
-            sr, ret, length, avgAoI, peakAoI, dataDist, dataColl = evaluate(agent, env, eval_episodes)
+            sr, ret, length, avgAoI, peakAoI, dataDist, dataColl, CH_Metrics = evaluate(agent, env, eval_episodes)
+
+            for ch in range(len(CH_Metrics)):
+                log_vals.update(
+                    {
+                        f"{env_str}/CH" + str(ch+1) + "_Data": CH_Metrics[ch][0],
+                        f"{env_str}/CH" + str(ch+1) + "_Age": CH_Metrics[ch][1]
+                    }
+
+                )
 
             log_vals.update(
                 {
@@ -219,52 +241,49 @@ def train(
 
 
 def step(agent, env):
-    obs_curr = env._curr_state
-    obs_next, reward, terminated, truncated, info, used_model = env.step(agent)
-    action = info.get("Last_Action", None)
-
-    buffer_done = terminated
+    train_model, old_state, old_action = env.step(agent)
+    buffer_done = env.terminated
     done = False
 
-    if terminated or truncated:
+    if buffer_done or env.truncated:
         done = True
 
-    if used_model:
-    	#QL/GANN
-        agent.update(obs_curr, action, reward, obs_next, buffer_done)
-        #agent.update_mem(obs_next, action, reward, obs_curr, buffer_done)
-        #if len(agent.memory) > 64:
-            #agent.train(64)
+    if train_model:
+        agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
+        # DDQN
+        # agent.update_mem(env._curr_state, old_action, env._curr_reward, old_state, buffer_done)
+        # if len(agent.memory) > 64:
+        #    agent.train(64)
     return done
+
 
 def prepopulate(agent, prepop_steps, env):
     timestep = 0
-    
-    #QL
-    #agent.decay_epsilon(0) 
+
+    # QL
+    # agent.decay_epsilon(0)
     while timestep < prepop_steps:
         env.reset()
         print(f"Prepop Step: {timestep}")
         done = False
-        while not done:
-            obs_curr = env._curr_state
-            obs_next, reward, terminated, truncated, info, used_model = env.step(agent)
-            action = info.get("Last_Action", None)
 
-            buffer_done = terminated
-            if terminated or truncated:
-            	#DDQN
-                #agent.update_target_from_model()
+        while not done:
+            train_model, old_state, old_action = env.step(agent)
+            buffer_done = env.terminated
+
+            if buffer_done or env.truncated:
+                # DDQN
+                # agent.update_target_from_model()
                 done = True
 
-            if used_model:
-                #QL/GANN
-                agent.update(obs_curr, action, reward, obs_next, buffer_done)
-                #DDQN
-                #agent.update_mem(obs_next, action, reward, obs_curr, buffer_done)
-                #if len(agent.memory) > 64:
+            if train_model:
+                agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
+                # DDQN
+                # agent.update_mem(env._curr_state, old_action, env._curr_reward, old_state, buffer_done)
+                # if len(agent.memory) > 64:
                 #    agent.train(64)
             timestep += 1
+
 
 def run_experiment(args):
     env_str = args.env
@@ -289,7 +308,7 @@ def run_experiment(args):
     wandb_kwargs = {"resume": None}
     logger = get_logger(policy_path, args, wandb_kwargs)
 
-    #prepopulate(agent, 50_000, env)
+    # prepopulate(agent, 50_000, env)
     mean_success_rate = RunningAverage(10)
     mean_reward = RunningAverage(10)
     mean_episode_length = RunningAverage(10)
@@ -312,4 +331,3 @@ def run_experiment(args):
 
 if __name__ == "__main__":
     run_experiment(get_args())
-

@@ -99,7 +99,7 @@ class sim_env:
         np.reshape(envSensors,(dims, dims))
         sensCoord = []
         for sensor in sensorList:
-            X, Y = sensor[0].getIndicies()
+            X, Y = sensor[0].get_indicies()
             sensCoord.append([X, Y])
         data = np.array(sensCoord, dtype = 'int')
         kmeans = KMeans(n_clusters=self.total_clusterheads, random_state=0, n_init=10).fit(data)
@@ -133,10 +133,10 @@ class sim_env:
         for location in head_assignment:
             X, Y = location[0], location[1]
             for sensor in sensorList:
-                sensorX, sensorY = sensor[0].getIndicies()
+                sensorX, sensorY = sensor[0].get_indicies()
                 if sensorX == X and sensorY == Y:
                     clusterheadList[location[2]][1].append(sensor)
-                    sensor[0].setHead(location[2], len(clusterheadList[location[2]][1]))
+                    sensor[0].set_head(location[2], len(clusterheadList[location[2]][1]))
                     break
                     
         for CH in clusterheadList:
