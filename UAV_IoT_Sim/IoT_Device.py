@@ -184,12 +184,12 @@ class IoT_Device:
 
     def get_dest(self, state, full_state, model, step, _=None):
         if self.stored_data > 100:
-            return False, False, self, _, _, _, _, _
+            return False, False, self, _, state, _, self.headSerial, _
 
         unserviced = full_state.iloc[:, 3].isin([0])
         for CH in range(unserviced.size - 1):
             if unserviced.iloc[CH + 1]:
-                return False, True, full_state.iloc[CH + 1, 0], _, _, _, _, _
+                return False, True, full_state.iloc[CH + 1, 0], _, state, _, self.headSerial, _
 
         sensMapping = [[0] * 3 for _ in range(5)]
         count = 0

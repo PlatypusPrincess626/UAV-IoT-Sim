@@ -106,7 +106,7 @@ def evaluate(
     CH_Metrics = [0, 0] * eval_env.num_ch
 
     # QL
-    # agent.decay_epsilon(1)
+    agent.decay_epsilon(1)
 
     for _ in range(eval_episodes):
         eval_env.reset()
@@ -188,7 +188,7 @@ def train(
         done = step(agent, env)
 
         # QL
-        # agent.decay_epsilon(timestep / total_steps)
+        agent.decay_epsilon(timestep / total_steps)
 
         if done:
             # agent.update_target_from_model()
@@ -261,7 +261,7 @@ def prepopulate(agent, prepop_steps, env):
     timestep = 0
 
     # QL
-    # agent.decay_epsilon(0)
+    agent.decay_epsilon(0)
     while timestep < prepop_steps:
         env.reset()
         print(f"Prepop Step: {timestep}")
@@ -292,7 +292,7 @@ def run_experiment(args):
     # device = torch.device("cuda")
 
     print("Creating Agent")
-    agent = model_utils.get_gann_agent(
+    agent = model_utils.get_ql_agent(
         env
     )
 

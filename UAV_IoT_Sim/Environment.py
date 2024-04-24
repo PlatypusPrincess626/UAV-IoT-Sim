@@ -190,13 +190,14 @@ class sim_env:
         envStaticInter = [0.0] * (dims*dims)
         
         # Create Static 
-        shadows = int(math.sqrt(dims))
+        shadows = int(math.sqrt(dims*dims))
         print("Making Happy Trees")
         for shadow in range(shadows):
+        
             place = random.randint(0, dims*dims-1)
-            shadeSize = random.randint(int(5), int(30))
-            intensity = random.randint(int(0.25*shadeSize), int(0.75*shadeSize))
-            data2D = self.gaussian_kernel(shadeSize, intensity, normalised = True)
+            shadeSize = random.randint(int(8), int(30))
+            intensity = random.randint(int(0.75*shadeSize), int(1*shadeSize))
+            data2D = self.gaussian_kernel(shadeSize, intensity, normalised = False)
             count=0
             for pixel in range(shadeSize*shadeSize):
                 try:
@@ -211,6 +212,7 @@ class sim_env:
                 if count%shadeSize==0:
                     place += (dims-shadeSize)
                     count = 0
+                    
         self.dataStaticInter = np.array(envStaticInter, dtype='float')
                     
     # Interactions with devices

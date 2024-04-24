@@ -23,10 +23,10 @@ class make_env:
         
         self.curr_step = 0
         self.curr_state = [0, 0, 0] * (self.num_ch + 1)
-        self.last_action = None
+        self.last_action = 0
 
-        self.archived_state = None
-        self.archived_action = None
+        self.archived_state = [0, 0, 0] * (self.num_ch + 1)
+        self.archived_action = 0
 
         self.curr_reward = 0
         self.curr_info = {
@@ -54,13 +54,14 @@ class make_env:
                 self._env.CHTable.iloc[CH, 0].reset()
             for uav in range(self._num_uav):
                 self._env.UAVTable.iloc[uav, 0].reset()
+            self._env.initInterference()
             
             self.curr_step = 0
             self.curr_state = [0, 0, 0] * (self.num_ch + 1)
-            self.last_action = None
+            self.last_action = 0
 
-            self.archived_state = None
-            self.archived_action = None
+            self.archived_state = [0, 0, 0] * (self.num_ch + 1)
+            self.archived_action = 0
 
             self.curr_reward = 0
             self.curr_info = {
@@ -82,33 +83,35 @@ class make_env:
     
     def step(self, model):
         train_model = False
-        old_state = None
-        old_action = None
+        old_state = [0, 0, 0] * (self.num_ch + 1)
+        old_action = 0
 
         if not self.terminated:
             if self.curr_step < self._max_steps:
+                x = self.curr_step/60 + 1
+                alpha = 1.041834 - 0.6540587 * x + 0.4669073 * pow(x, 2) - 0.1225805 * pow(x, 3) + 0.0137882 * pow(x, 4) - 0.0005703625 * pow(x, 5)
+            	
                 for sens in range(self._num_sensors):
-                    self._env.sensorTable.iloc[sens, 0].harvest_energy(self._env, self.curr_step)
-                    self._env.sensorTable.iloc[sens, 0].harvest_data(self._env, self.curr_step)
+                    self._env.sensorTable.iloc[sens, 0].harvest_energy(alpha, self._env, self.curr_step)
+                    self._env.sensorTable.iloc[sens, 0].harvest_data(self.curr_step)
 
                 for CH in range(self.num_ch):
-                    self._env.CHTable.iloc[CH, 0].harvest_energy(self._env, self.curr_step)
+                    self._env.CHTable.iloc[CH, 0].harvest_energy(alpha, self._env, self.curr_step)
                     self._env.CHTable.iloc[CH, 0].ch_download(self.curr_step)
 
                 for uav in range(self._num_uav):
                     uav = self._env.UAVTable.iloc[uav, 0]
-                    train_model, used_model, state, action = uav.set_dest(model)
+                    train_model, used_model, state, action = uav.set_dest(model, self.curr_step)
                     uav.navigate_step(self._env)
                     train_model, change_archives = uav.receive_data(self.curr_step)
                     uav.receive_energy()
 
-                    self.curr_state = state
+                    self.curr_state = uav.state
                     self.last_action = action
                     self.terminated = uav.crash
 
-                    if train_model:
-                        old_state = self.archived_state
-                        old_action = self.archived_action
+                    old_state = self.archived_state
+                    old_action = self.archived_action
 
                     if change_archives:
                         for Iter in range(5):
@@ -148,7 +151,7 @@ class make_env:
                 "Truncated": self.truncated         # -> Max episode steps reached
             }
 
-        return [train_model, old_state, old_action]
+        return train_model, old_state, old_action
 
     def reward(self):
         '''
