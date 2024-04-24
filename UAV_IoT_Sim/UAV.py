@@ -168,7 +168,7 @@ class QuadUAV:
 
 
         else:
-            dataReturn = max(0, device.ch_upload(self.indX, self.indY, self.h))
+            dataReturn = max(0, device.ch_upload(self.indX, self.indY))
 
             if (self._comms.get("LoRa_Bit_Rate_bit/s", 0.0) * 56) > dataReturn >= 0:
                 if math.sqrt(pow((self.indX - self.target.indX), 2) + pow((self.indY - self.target.indY), 2) < \
@@ -192,11 +192,11 @@ class QuadUAV:
 
     def receive_energy(self):
         if self.target.type == 2:
-            h, tC, tD = self.target.charge_time(int(self.indX), int(self.indY))
+            t = self.target.charge_time(int(self.indX), int(self.indY))
 
-            self.energy_cost(tD, 0, 0)
+            # self.energy_cost(tD, 0, 0)
 
-            self.stored_energy += tC * (self.max_energy / (self.charge_rate * 60 * 60))
+            self.stored_energy += t * (self.max_energy / (self.charge_rate * 60 * 60))
             self.state[0][2] = self.stored_energy
             self.full_state.iloc[0, 3] = self.stored_energy
 
@@ -240,9 +240,8 @@ class QuadUAV:
             if changed_transit and self.model_transit:
                 train_model = True
 
-            if used_model:
-                self.origin_state = state1
-                self.origin_action = action1
+            self.state = state1
+            self.action = action1
 
             if dest1.type == 1:
                 self.targetHead = dest2
@@ -256,9 +255,9 @@ class QuadUAV:
                 self.targetHead = dest1
                 self.targetX = dest1.indX
                 self.targetY = dest1.indY
-                return train_model, used_model, _, state1, _, action1
+                return train_model, used_model, state1, action1
 
-        return train_model, used_model, _, self.state, _, self.targetHead.headSerial
+        return train_model, used_model, self.state, self.targetHead.headSerial
 
     def update_state(self, device, step, data):
         self.full_state.iloc[device, 3] = step
