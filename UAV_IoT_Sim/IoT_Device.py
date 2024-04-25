@@ -241,8 +241,8 @@ class IoT_Device:
         if action <= len(full_state):
             return True, True, full_state.iloc[action + 1, 0], _, state, _, action, _
         else:
-            sensor = self.sens_table.iloc[sensMapping[action - len(state) + 1][0], 0]
-            self.sens_table.iloc[sensMapping[action - len(state) + 1][0], 2] = step
+            sensor = self.sens_table.iloc[sensMapping[action - len(full_state) + 1][0], 0]
+            self.sens_table.iloc[sensMapping[action - len(full_state) + 1][0], 2] = step
             state1 = state
             for Iter in range(5):
                 state[Iter - 5][1], state[Iter - 5][2] = 0, 0
