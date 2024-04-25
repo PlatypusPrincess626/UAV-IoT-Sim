@@ -1,6 +1,7 @@
 # Dependencies to Import
 import math
 import pandas as pd
+import numpy as np
 
 
 class QuadUAV:
@@ -51,9 +52,9 @@ class QuadUAV:
         self.origin_action = None
 
         # Pandas version of state used for environment comparisons
-        self.uav = [self, len(CHList), float(0.0), float(0.0)]
-        self.CH_state = pd.concat([pd.DataFrame(CHList), pd.DataFrame([[0, 0]] * (len(CHList)))], axis=1)
-        self.full_state = pd.concat([pd.Series(self.uav), self.CH_state], axis=0)
+        self.uav = np.array([self, len(CHList), float(0.0), float(0.0)])
+        self.CH_state = np.concatenate((np.array(CHList), np.array([[0, 0] * (len(CHList))])), axis=1)
+        self.full_state = pd.DataFrame(np.concatenate((self.uav, self.CH_state)))
 
         self.full_state = self.full_state.sort_index()
         self.full_state = self.full_state.reset_index()
