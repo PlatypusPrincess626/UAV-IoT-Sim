@@ -83,7 +83,7 @@ class make_env:
     
     def step(self, model):
         train_model = False
-        old_state = [0, 0, 0] * (self.num_ch + 6)
+        old_state = [[0, 0, 0] * (self.num_ch + 6)]
         old_action = 0
 
         if not self.terminated:
@@ -115,8 +115,8 @@ class make_env:
 
                     if change_archives:
                         for Iter in range(5):
-                            self.archived_state[(len(self.archived_state) - 6) + Iter][1], \
-                                state[(len(self.archived_state) - 6) + Iter][2] = 0, 0
+                            self.archived_state[Iter - 5][1], \
+                                state[Iter - 5][2] = 0, 0
                         self.archived_action = action
 
                     if used_model:

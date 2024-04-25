@@ -245,7 +245,7 @@ class IoT_Device:
             self.sens_table.iloc[sensMapping[action - len(state) + 1][0], 2] = step
             state1 = state
             for Iter in range(5):
-                state[(len(state) - 6) + Iter][1], state[(len(state) - 6) + Iter][2] = 0, 0
+                state[Iter - 5][1], state[Iter - 5][2] = 0, 0
 
             action2 = model.act(state) % (len(full_state) - 1)
             return True, True, sensor, full_state.iloc[action2 + 1, 0], state1, state, action, action2
