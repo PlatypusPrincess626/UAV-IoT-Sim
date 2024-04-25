@@ -128,9 +128,9 @@ class QuadUAV:
         # Cost of air travel
         total_cost += flight * ((self.max_energy / self.flight_discharge) / (60 * 60))
         # Cost of AmBC
-        total_cost += lora * self._comms.get("LoRa_Current_A", 0.0)
+        total_cost += lora * self._comms.get("LoRa_Current_A")
         # Cost of LoRa
-        total_cost += ambc * self._comms.get("AmBC_Current_mA", 0.0)
+        total_cost += ambc * self._comms.get("AmBC_Current_mA")
 
         self.stored_energy -= total_cost
         self.state[0][2] = self.stored_energy
@@ -145,10 +145,10 @@ class QuadUAV:
         change_archives = False
 
         if self.target.type == 1:
-            dataReturn = max(0, device.ws_upload_data(self.indX, self.indY))
+            dataReturn = max(0, device.ws_upload_data(int(self.indX), int(self.indY)))
 
             if math.sqrt(pow((self.indX - self.target.indX), 2) + pow((self.indY - self.target.indY), 2)) < \
-                    self._comms.get("AmBC_Max_Distance_m", 0.0):
+                    self._comms.get("AmBC_Max_Distance_m"):
                 totalData += dataReturn
                 self.target = self.targetHead
                 self.targetX = self.targetHead.indX
@@ -168,11 +168,11 @@ class QuadUAV:
 
 
         else:
-            dataReturn = max(0, device.ch_upload(self.indX, self.indY))
+            dataReturn = max(0, device.ch_upload(int(self.indX), int(self.indY)))
 
-            if (self._comms.get("LoRa_Bit_Rate_bit/s", 0.0) * 56) > dataReturn >= 0:
+            if (self._comms.get("LoRa_Bit_Rate_bit/s") * 56) > dataReturn >= 0:
                 if math.sqrt(pow((self.indX - self.target.indX), 2) + pow((self.indY - self.target.indY), 2) < \
-                             self._comms.get("LoRa_Max_Distance_m", 0.0)):
+                             self._comms.get("LoRa_Max_Distance_m")):
                     totalData += max(0, dataReturn)
                 else:
                     self.inRange = False
@@ -180,13 +180,13 @@ class QuadUAV:
                 totalData += max(0, dataReturn)
                 self.inRange = True
 
-            totalTime = totalData / self._comms.get("LoRa_Bit_Rate_bit/s", 0.0)
+            totalTime = totalData / self._comms.get("LoRa_Bit_Rate_bit/s")
             self.energy_cost(0, totalTime, 0)
 
             self.update_state(device.headSerial + 1, step, totalData)
             self.state[device.headSerial + 1][2] = step
-            self.state[device.headSerial + 1][1] += round(totalData / (1000000*8))
-            self.state[0][1] += round(totalData / (1000000*8))
+            self.state[device.headSerial + 1][1] += round(totalData / (1000000 * 8))
+            self.state[0][1] += round(totalData / (1000000 * 8))
 
         return train_model, change_archives
 

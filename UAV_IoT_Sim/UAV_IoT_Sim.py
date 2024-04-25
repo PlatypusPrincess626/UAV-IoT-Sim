@@ -191,7 +191,7 @@ class make_env:
         
         distOffset = maxColl - minColl
         
-        rewardDist = (1 - distOffset)
+        rewardDist = (1 - distOffset) / 10
         rewardPeak = (1 - 2 * (peakAge / self._aoi_threshold))
         rewardAvgAge = (1 - 2 * (peakAge - avgAge)/self._aoi_threshold)
         rewardDataChange = dataChange / 10

@@ -32,6 +32,7 @@ class IoT_Device:
 
         self.spctrlLow = 0  # Spectral bandwidth for power calculations
         self.spctrlHigh = numpy.inf
+        self.solar_powered = True
 
         if devType == 1:
             self.type = 1
@@ -97,10 +98,19 @@ class IoT_Device:
         self.queue = queue
 
     def harvest_data(self, step):
-        if step % self.sample_freq == 0:
-            self.stored_data = min(self.stored_data + self.max_col_rate, self.max_data)
-            self.stored_energy -= self.sens_amp * 30
-            return True
+        if self.solar_powered:
+            if step % self.sample_freq == 0:
+                self.stored_data = min(self.stored_data + self.max_col_rate, self.max_data)
+                return True
+            else:
+                return False
+        elif self.stored_energy > self.sens_amp * 30:
+            if step % self.sample_freq == 0:
+                self.stored_data = min(self.stored_data + self.max_col_rate, self.max_data)
+                self.stored_energy -= self.sens_amp * 30
+                return True
+            else:
+                return False
         else:
             return False
 
@@ -113,12 +123,13 @@ class IoT_Device:
 
         if power > 0:
             self.stored_energy += power
+            self.solar_powered = True
 
     # Uploading data from a sensor
     def ws_upload_data(self, X, Y):
         if math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)) <= \
-                self._comms.get("AmBC_Max_Distance_m", 0.0):
-            return min(self._comms.get("AmBC_Bit_Rate_bit/s" * 56, 0.0), self.stored_data)
+                self._comms.get("AmBC_Max_Distance_m"):
+            return min(self._comms.get("AmBC_Bit_Rate_bit/s" * 56), self.stored_data)
         else:
             return -1
 
@@ -156,25 +167,46 @@ class IoT_Device:
             else:
                 self.sens_table.iloc[sensor + channel, 1] = False
 
-        self.stored_energy -= self._comms.get("LoRa_Current_A", 0.0) * 30 * totalChannels
+        self.stored_energy -= self._comms.get("LoRa_Current_A") * 30 * totalChannels
 
     def ch_upload(self, X: int, Y: int):
-        if math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)) <= \
-                self._comms.get("LoRa_Max_Distance_m", 0.0):
+        if self.solar_powered:
+            if math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)) <= \
+                    self._comms.get("LoRa_Max_Distance_m"):
 
-            if self.stored_data > 0:
-                self.stored_data -= min(self._comms.get("LoRa_Bit_Rate_bit/s", 0.0) * 56, self.stored_data)
-                sent_data = min(self._comms.get("LoRa_Bit_Rate_bit/s", 0.0) * 56, self.stored_data)
+                if self.stored_data > 0:
+                    self.stored_data -= min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
+                    sent_data = min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
 
-                self.stored_energy -= self._comms.get("LoRa_Current_A", 0.0) * 60
-                return sent_data
+                    self.stored_energy -= self._comms.get("LoRa_Current_A") * 60
+                    return sent_data
+
+                else:
+                    self.stored_energy -= self._comms.get("LoRa_Current_A") * 60
+                    return 0
 
             else:
-                self.stored_energy -= self._comms.get("LoRa_Current_A", 0.0) * 60
-                return 0
+                self.stored_energy -= self._comms.get("LoRa_Current_A") * 60
+                return -1
+        elif self.stored_energy > self._comms.get("LoRa_Current_A") * 60:
+            if math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)) <= \
+                    self._comms.get("LoRa_Max_Distance_m"):
 
+                if self.stored_data > 0:
+                    self.stored_data -= min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
+                    sent_data = min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
+
+                    self.stored_energy -= self._comms.get("LoRa_Current_A") * 60
+                    return sent_data
+
+                else:
+                    self.stored_energy -= self._comms.get("LoRa_Current_A") * 60
+                    return 0
+
+            else:
+                self.stored_energy -= self._comms.get("LoRa_Current_A") * 60
+                return -1
         else:
-            self.stored_energy -= self._comms.get("LoRa_Current_A", 0.0) * 60
             return -1
 
     def charge_time(self, X: int, Y: int):
