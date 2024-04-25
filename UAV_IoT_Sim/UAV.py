@@ -5,6 +5,7 @@ import pandas as pd
 
 class QuadUAV:
     def __init__(self, X: int, Y: int, long: float, lat: float, uavNum: int, CHList: list):
+        self.action = None
         self.type = 3
         self.serial = uavNum
         self.typeStr = "UAV"
@@ -128,7 +129,7 @@ class QuadUAV:
         # Cost of air travel
         total_cost += flight * ((self.max_energy / self.flight_discharge) / (60 * 60))
         # Cost of AmBC
-        total_cost += lora * self._comms.get("LoRa_Current_A")
+        total_cost += lora * self._comms.get("LoRa_Current_mA")
         # Cost of LoRa
         total_cost += ambc * self._comms.get("AmBC_Current_mA")
 
