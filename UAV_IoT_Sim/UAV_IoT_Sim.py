@@ -83,7 +83,7 @@ class make_env:
     
     def step(self, model):
         train_model = False
-        old_state = [0, 0, 0] * (self.num_ch + 1)
+        old_state = [0, 0, 0] * (self.num_ch  + 1)
         old_action = 0
 
         if not self.terminated:

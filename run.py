@@ -97,6 +97,7 @@ def evaluate(
     total_reward = 0
     num_crashes = 0
     total_steps = 0
+    count = 0
 
     accum_avgAoI = 0
     accum_peakAoI = 0
@@ -141,21 +142,21 @@ def evaluate(
                 # agent.update_mem(env._curr_state, old_action, env._curr_reward, old_state, buffer_done)
                 # if len(agent.memory) > 64:
                 #    agent.train(64)
-            ep_reward += eval_env.curr_reward
+            ep_reward += info.get("Reward_Change")
 
         # DDQN
         # agent.update_target_from_model()
 
-        accum_avgAoI += avgAoI / eval_env.curr_step
-        accum_peakAoI += peakAoI / eval_env.curr_step
-        accum_dataDist += dataDist / eval_env.curr_step
-        accum_dataColl += dataColl / eval_env.curr_step
+        accum_avgAoI += avgAoI / (eval_env.curr_step + count)
+        accum_peakAoI += peakAoI / (eval_env.curr_step + count)
+        accum_dataDist += dataDist / (eval_env.curr_step + count)
+        accum_dataColl += dataColl / (eval_env.curr_step + count)
 
         for ch in range(len(CH_Metrics)):
             CH_Metrics[ch][0] /= eval_env.curr_step
             CH_Metrics[ch][1] /= eval_env.curr_step
 
-        total_reward += ep_reward
+        total_reward += ep_reward / eval_env.curr_step
         total_steps += eval_env.curr_step
         if info.get("Crashed", False):
             num_crashes += 1
@@ -185,9 +186,8 @@ def train(
     env.reset()
     sr, ret, length = 0.0, 0.0, 0.0
     for timestep in range(total_steps):
-        print(f"Step {timestep}: ")
         done = step(agent, env)
-
+        print(f"Step {timestep}: Training")
         # QL
         agent.decay_epsilon(timestep / total_steps)
 
@@ -250,6 +250,7 @@ def step(agent, env):
         done = True
 
     if train_model:
+        #QL
         agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
         # DDQN
         # agent.update_mem(env._curr_state, old_action, env._curr_reward, old_state, buffer_done)
