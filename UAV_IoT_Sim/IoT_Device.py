@@ -129,7 +129,7 @@ class IoT_Device:
     def ws_upload_data(self, X, Y):
         if math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)) <= \
                 self._comms.get("AmBC_Max_Distance_m"):
-            return min(self._comms.get("AmBC_Bit_Rate_bit/s" * 56), self.stored_data)
+            return min(self._comms.get("AmBC_Bit_Rate_bit/s") * 56, self.stored_data)
         else:
             return -1
 
