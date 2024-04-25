@@ -116,7 +116,7 @@ class make_env:
                     if change_archives:
                         for Iter in range(5):
                             self.archived_state[Iter - 5][1], \
-                                state[Iter - 5][2] = 0, 0
+                                self.archived_state[Iter - 5][2] = 0, 0
                         self.archived_action = action
 
                     if used_model:
