@@ -1,5 +1,7 @@
 # Import Dependencies
 import random
+from typing import List
+
 import numpy
 import math
 import pandas as pd
@@ -191,7 +193,7 @@ class IoT_Device:
             if unserviced.iloc[CH + 1]:
                 return False, True, full_state.iloc[CH + 1, 0], _, state, _, self.headSerial, _
 
-        sensMapping = [[0] * 3 for _ in range(5)]
+        sensMapping: List[List[int]] = [[0] * 3 for _ in range(5)]
         count = 0
         for sens in range(len(self.sens_table)):
             if not (self.sens_table.iloc[sens, 1]) and (count < 5):
@@ -199,7 +201,7 @@ class IoT_Device:
                     math.sqrt(pow((self.indX - self.sens_table.iloc[sens, 0].indX), 2) + \
                               pow((self.indY - self.sens_table.iloc[sens, 0].indY), 2)), (-5 + count)
                 state[sensMapping[count][2]][1], state[sensMapping[count][2]][2] = sensMapping[count][1], \
-                    self.sens_table.iloc[sens - 1, 2]
+                    self.sens_table.iloc[sens, 2]
             count += 1
 
         action = model.act(state)
@@ -207,11 +209,11 @@ class IoT_Device:
         if action <= len(state) - 6:
             return True, True, full_state.iloc[action + 1, 0], _, state, _, action, _
         else:
-            sensor = self.sens_table.iloc[sensMapping[action - (len(state) - 6)][0], 0]
-            self.sens_table.iloc[sensMapping[action - (len(state) - 6)][0], 2] = step
+            sensor = self.sens_table.iloc[sensMapping[action - (len(state) + 5)][0], 0]
+            self.sens_table.iloc[sensMapping[action - (len(state) + 5)][0], 2] = step
             state1 = state
             for Iter in range(5):
-                state[(len(state) - 6) + Iter][1], state[(len(state) - 6) + Iter][2] = 0, 0
+                state[(len(state) - 5) + Iter][1], state[(len(state) - 5) + Iter][2] = 0, 0
 
             action2 = model.act(state)
             return True, True, sensor, full_state.iloc[action2 + 1, 0], state1, state, action, action2
