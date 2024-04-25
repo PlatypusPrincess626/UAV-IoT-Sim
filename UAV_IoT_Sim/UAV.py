@@ -53,7 +53,7 @@ class QuadUAV:
         # Pandas version of state used for environment comparisons
         self.uav = [self, len(CHList), float(0.0), float(0.0)]
         self.CH_state = pd.concat([pd.DataFrame(CHList), pd.DataFrame([[0, 0]] * (len(CHList)))], axis=1)
-        self.full_state = pd.concat([pd.DataFrame(self.uav), self.CH_state], axis=0)
+        self.full_state = pd.concat([self.uav, self.CH_state], axis=0)
 
         self.full_state = self.full_state.sort_index()
         self.full_state = self.full_state.reset_index()
