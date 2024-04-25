@@ -52,8 +52,9 @@ class QuadUAV:
 
         # Pandas version of state used for environment comparisons
         self.uav = [self, len(CHList), float(0.0), float(0.0)]
-        self.full_state = pd.concat([pd.DataFrame(CHList), pd.DataFrame([[0, 0]] * (len(CHList)))], axis=1)
-        self.full_state.loc[-1] = self.uav
+        self.CH_state = pd.concat([pd.DataFrame(CHList), pd.DataFrame([[0, 0]] * (len(CHList)))], axis=1)
+        self.full_state = pd.concat([pd.DataFrame(self.uav), self.CH_state], axis=0)
+
         self.full_state = self.full_state.sort_index()
         self.full_state = self.full_state.reset_index()
         self.full_state.drop('index', axis=1, inplace=True)
@@ -71,7 +72,7 @@ class QuadUAV:
         self.is_charging = False
 
         # State used for model
-        self.state = [[0, 0, 0] for _ in range(len(self.full_state) + 5)]
+        self.state = [[0, 0, 0] for _ in range(len(CHList) + 6)]
         self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy
         count = 0
         for row in range(len(self.state) - 1):
@@ -85,7 +86,7 @@ class QuadUAV:
         self.model_transit = False
 
         # Reset State
-        self.state = [[0, 0, 0] for _ in range(len(self.full_state) + 5)]
+        self.state = [[0, 0, 0] for _ in range(len(CHList) + 6)]
         self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy
         self.full_state[0, 2] = 0
         self.full_state[0, 3] = 0
