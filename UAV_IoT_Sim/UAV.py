@@ -52,7 +52,7 @@ class QuadUAV:
         self.origin_action = None
 
         # Pandas version of state used for environment comparisons
-        self.uav = np.array([self, len(CHList), float(0.0), float(0.0)])
+        self.uav = np.array([[self, len(CHList), float(0.0), float(0.0)]])
         self.CH_state = np.concatenate((np.array(CHList), np.array([[0, 0]] * (len(CHList)))), axis=1)
         self.full_state = pd.DataFrame(np.concatenate((self.uav, self.CH_state)))
 
