@@ -215,5 +215,5 @@ class IoT_Device:
             for Iter in range(5):
                 state[(len(state) - 5) + Iter][1], state[(len(state) - 5) + Iter][2] = 0, 0
 
-            action2 = model.act(state) % len(full_state)
-            return True, True, sensor, full_state.iloc[action2, 0], state1, state, action, action2
+            action2 = model.act(state) % (len(full_state) - 1)
+            return True, True, sensor, full_state.iloc[action2 + 1, 0], state1, state, action, action2
