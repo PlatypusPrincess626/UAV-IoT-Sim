@@ -238,7 +238,7 @@ class IoT_Device:
 
         action = model.act(state)
 
-        if action <= len(state) - 5:
+        if action <= len(full_state):
             return True, True, full_state.iloc[action + 1, 0], _, state, _, action, _
         else:
             sensor = self.sens_table.iloc[sensMapping[action - len(state) + 1][0], 0]
