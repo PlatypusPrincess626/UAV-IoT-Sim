@@ -173,11 +173,11 @@ class QuadUAV:
             if (self._comms.get("LoRa_Bit_Rate_bit/s", 0.0) * 56) > dataReturn >= 0:
                 if math.sqrt(pow((self.indX - self.target.indX), 2) + pow((self.indY - self.target.indY), 2) < \
                              self._comms.get("LoRa_Max_Distance_m", 0.0)):
-                    totalData += dataReturn
+                    totalData += max(0, dataReturn)
                 else:
                     self.inRange = False
             else:
-                totalData += dataReturn
+                totalData += max(0, dataReturn)
                 self.inRange = True
 
             totalTime = totalData / self._comms.get("LoRa_Bit_Rate_bit/s", 0.0)
@@ -185,8 +185,8 @@ class QuadUAV:
 
             self.update_state(device.headSerial + 1, step, totalData)
             self.state[device.headSerial + 1][2] = step
-            self.state[device.headSerial + 1][1] += round(totalData / 1000)
-            self.state[0][1] += round(totalData / 1000)
+            self.state[device.headSerial + 1][1] += round(totalData / (1000000*8))
+            self.state[0][1] += round(totalData / (1000000*8))
 
         return train_model, change_archives
 

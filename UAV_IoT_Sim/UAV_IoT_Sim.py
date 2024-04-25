@@ -177,6 +177,7 @@ class make_env:
         dataChange = 0
         maxColl = 0.0
         minColl = 1.0
+        index: int
         for index in range(len(self.curr_state)):
             if index > 0:
                 val = self.curr_state[index][1] / self._curr_total_data
