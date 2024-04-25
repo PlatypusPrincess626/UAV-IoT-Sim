@@ -71,7 +71,7 @@ class QuadUAV:
         self.is_charging = False
 
         # State used for model
-        self.state = [[0] * 3 for _ in range(len(self.full_state) + 5)]
+        self.state = [[0, 0, 0] for _ in range(len(self.full_state) + 5)]
         self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy
         count = 0
         for row in range(len(self.state) - 1):
@@ -85,7 +85,7 @@ class QuadUAV:
         self.model_transit = False
 
         # Reset State
-        self.state = [[0] * 3 for _ in range(len(self.full_state))]
+        self.state = [[0, 0, 0] for _ in range(len(self.full_state) + 5)]
         self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy
         self.full_state[0, 2] = 0
         self.full_state[0, 3] = 0
