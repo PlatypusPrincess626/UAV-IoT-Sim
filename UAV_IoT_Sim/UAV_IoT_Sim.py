@@ -22,10 +22,10 @@ class make_env:
         self._max_steps = max_num_steps
         
         self.curr_step = 0
-        self.curr_state = [[0, 0, 0] * (self.num_ch + 1)]
+        self.curr_state = [[0, 0, 0] * (self.num_ch + 6)]
         self.last_action = 0
 
-        self.archived_state = [[0, 0, 0] * (self.num_ch + 1)]
+        self.archived_state = [[0, 0, 0] * (self.num_ch + 6)]
         self.archived_action = 0
 
         self.curr_reward = 0
@@ -57,10 +57,10 @@ class make_env:
             self._env.initInterference()
             
             self.curr_step = 0
-            self.curr_state = [[0, 0, 0] * (self.num_ch + 1)]
+            self.curr_state = [[0, 0, 0] * (self.num_ch + 6)]
             self.last_action = 0
 
-            self.archived_state = [[0, 0, 0] * (self.num_ch + 1)]
+            self.archived_state = [[0, 0, 0] * (self.num_ch + 6)]
             self.archived_action = 0
 
             self.curr_reward = 0
@@ -83,7 +83,7 @@ class make_env:
     
     def step(self, model):
         train_model = False
-        old_state = [0, 0, 0] * (self.num_ch  + 1)
+        old_state = [0, 0, 0] * (self.num_ch + 6)
         old_action = 0
 
         if not self.terminated:
