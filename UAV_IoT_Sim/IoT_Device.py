@@ -194,12 +194,12 @@ class IoT_Device:
         sensMapping = [[0] * 3 for _ in range(5)]
         count = 0
         for sens in range(self.sens_table.size):
-            if self.sens_table.iloc[sens - 1, 1] or count >= 5:
+            if not (self.sens_table.iloc[sens - 1, 1]) and (count < 5):
                 sensMapping[count][0], sensMapping[count][1], sensMapping[count][2] = sens, \
                     math.sqrt(pow((self.indX - self.sens_table.iloc[sens - 1, 0].indX), 2) + \
                               pow((self.indY - self.sens_table.iloc[sens - 1, 0].indY), 2)), (-5 + count)
-            state[sensMapping[count][2]][1], state[sensMapping[count][2]][2] = sensMapping[count][1], \
-                self.sens_table.iloc[sens, 2]
+                state[sensMapping[count][2]][1], state[sensMapping[count][2]][2] = sensMapping[count][1], \
+                    self.sens_table.iloc[sens - 1, 2]
             count += 1
 
         action = model.act(state)
