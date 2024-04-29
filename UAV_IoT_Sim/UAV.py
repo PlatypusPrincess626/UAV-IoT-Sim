@@ -197,9 +197,7 @@ class QuadUAV:
         if self.target.type == 2:
             t = self.target.charge_time(int(self.indX), int(self.indY))
 
-            # self.energy_cost(tD, 0, 0)
-
-            self.stored_energy += t * (self.max_energy / (self.charge_rate * 60 * 60))
+            self.stored_energy += t * (self.max_energy / (self.charge_rate * 60))
             self.state[0][2] = self.stored_energy
             self.full_state.iloc[0, 3] = self.stored_energy
 
@@ -240,11 +238,15 @@ class QuadUAV:
             used_model, changed_transit, dest1, dest2, state1, state2, action1, action2 = \
                 self.target.get_dest(self.state, self.full_state, model, step)
 
-            if changed_transit and self.model_transit:
+            if self.model_transit and changed_transit:
                 train_model = True
 
             self.state = state1
             self.action = action1
+            if used_model:
+                self.model_transit = True
+            else:
+                self.model_transit = False
 
             if dest1.type == 1:
                 self.targetHead = dest2

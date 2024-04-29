@@ -196,7 +196,7 @@ class sim_env:
         
             place = random.randint(0, dims*dims-1)
             shadeSize = random.randint(int(8), int(30))
-            intensity = random.randint(int(0.75*shadeSize), int(1*shadeSize))
+            intensity = random.randint(int(0.75*shadeSize), int(0.95*shadeSize))
             data2D = self.gaussian_kernel(shadeSize, intensity, normalised = False)
             count=0
             for pixel in range(shadeSize*shadeSize):
@@ -253,6 +253,6 @@ class sim_env:
     
     def getInterference(self, X, Y, type):
         if type == 1:
-            return self.dataStaticInter[X*self.dim+Y] + 0.001 * np.random.random()
+            return self.dataStaticInter[X*self.dim+Y]
         else:
-            return 0.001 * np.random.random()
+            return 0

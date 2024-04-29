@@ -75,7 +75,7 @@ class IoT_Device:
             self.max_data = 25000
             self.stored_data = random.randint(0, 25000)
 
-            self.solarArea = 20 * 40  # 20 mm x 40 mm
+            self.solarArea = 200 * 400  # 20 cm x 40 cm
             self._C = 3200  # F (Battery Supported)
             self.max_energy = 1.51  # Ah
             self.charge_rate = 3.02  # A/s
@@ -129,7 +129,7 @@ class IoT_Device:
     def ws_upload_data(self, X, Y):
         if math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)) <= \
                 self._comms.get("AmBC_Max_Distance_m"):
-            return min(self._comms.get("AmBC_Bit_Rate_bit/s") * 56, self.stored_data)
+            return min(self._comms.get("AmBC_Bit_Rate_bit/s") * 30, self.stored_data)
         else:
             return -1
 
@@ -152,17 +152,18 @@ class IoT_Device:
         sensor = rotation * 2
         activeChannels = []
         sensor1 = self.sens_table.iloc[sensor, 0]
-        activeChannels.append(sensor1.ws_upload_data(self.indX, self.indY))
+        activeChannels.append(max(0, sensor1.ws_upload_data(self.indX, self.indY)))
 
         if rotation < (rotations - 1) or len(self.sens_table.index) % 2 == 0:
             sensor2 = self.sens_table.iloc[sensor + 1, 0]
-            activeChannels.append(sensor2.ws_upload_data(self.indX, self.indY))
+            activeChannels.append(max(0, sensor2.ws_upload_data(self.indX, self.indY)))
 
         totalChannels = 0
         for channel in range(len(activeChannels)):
             if activeChannels[channel] > 0:
                 self.sens_table.iloc[sensor + channel, 1] = True
                 self.sens_table.iloc[sensor + channel, 2] = step
+                self.stored_data += activeChannels[channel]
                 totalChannels += 1
             else:
                 self.sens_table.iloc[sensor + channel, 1] = False
@@ -210,7 +211,7 @@ class IoT_Device:
             return -1
 
     def charge_time(self, X: int, Y: int):
-        if self.indX == X and self.indY == Y and (self.stored_energy > 6800 / (2.5 * 60) or self.solar_powered):
+        if self.indX == X and self.indY == Y and (self.stored_energy > 6.8 / (2.5 * 60) or self.solar_powered):
             if not self.solar_powered:
                 self.stored_energy -= 6.8 / (2.5 * 60)
             return 60.0
