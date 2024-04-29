@@ -265,14 +265,16 @@ class QuadUAV:
                 self.target = dest1
                 self.targetX = dest1.indX
                 self.targetY = dest1.indY
-                return train_model, used_model, state1, action1
+                return (train_model, used_model, state1, action1, \
+                        self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
             else:
                 self.target = dest1
                 self.targetHead = dest1
                 self.targetX = dest1.indX
                 self.targetY = dest1.indY
-                return train_model, used_model, state1, action1
+                return (train_model, used_model, state1, action1, \
+                        self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
         return (train_model, used_model, self.state, self.targetHead.headSerial, \
                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
