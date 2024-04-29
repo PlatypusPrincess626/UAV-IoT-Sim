@@ -284,7 +284,7 @@ class sim_env:
                                               9, stride=1, method='mean', pad=True, return_max_pos=False)
 
         self.dataStaticInter = temp.flatten()
-        
+
     # Interactions with devices
     def moveUAV(self, X: int, Y: int, newX: int, newY: int): # Estimated Position of UAV (nearest meter)
         place = Y * self.dim + X

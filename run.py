@@ -104,7 +104,7 @@ def evaluate(
     accum_dataDist = 0
     accum_dataColl = 0
 
-    CH_Metrics = [[0, 0] * eval_env.num_ch]
+    CH_Metrics = [[0, 0] for _ in range(eval_env.num_ch)]
     accum_comms = 0
     accum_move = 0
     accum_harvest = 0
@@ -307,7 +307,7 @@ def prepopulate(agent, prepop_steps, env):
 def run_experiment(args):
     env_str = args.env
     print("Creating Evironment")
-    env = UAV_IoT_Sim.make_env(env_str)
+    env = UAV_IoT_Sim.make_env(scene=env_str, num_sensors=50, num_ch=5, num_uav=1, max_num_steps=720)
     # device = torch.device("cuda")
 
     print("Creating Agent")
