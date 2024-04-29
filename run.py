@@ -156,14 +156,13 @@ def evaluate(
             CH_Metrics[ch][0] /= eval_env.curr_step
             CH_Metrics[ch][1] /= eval_env.curr_step
 
-        total_reward += ep_reward / eval_env.curr_step
+        total_reward += ep_reward / (eval_env.curr_step+count)
         total_steps += eval_env.curr_step
         if info.get("Crashed", False):
             num_crashes += 1
 
-    if total_steps == 0:
-        total_steps = 1
-    return (1 - num_crashes / total_steps), total_reward / eval_episodes, \
+    
+    return 1 - (num_crashes / eval_episodes), total_reward / eval_episodes, \
         total_steps / eval_episodes, accum_avgAoI / eval_episodes, accum_peakAoI / eval_episodes, \
         accum_dataDist / eval_episodes, 1000 * accum_dataColl / eval_episodes, CH_Metrics
 
@@ -187,7 +186,6 @@ def train(
     sr, ret, length = 0.0, 0.0, 0.0
     for timestep in range(total_steps):
         done = step(agent, env)
-        print(f"Step {timestep}: Training")
         # QL
         agent.decay_epsilon(timestep / total_steps)
 
@@ -250,6 +248,7 @@ def step(agent, env):
         done = True
 
     if train_model:
+        print(f"Training")
         #QL
         agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
         # DDQN

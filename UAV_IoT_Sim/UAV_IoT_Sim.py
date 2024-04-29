@@ -44,7 +44,7 @@ class make_env:
         self._aoi_threshold = 60
         self.truncated = False
         self.terminated = False
-        self._curr_total_data = 1
+        self._curr_total_data = 0
     
     def reset(self):
         if self.scene == "test":
@@ -78,7 +78,7 @@ class make_env:
 
             self.truncated = False
             self.terminated = False
-            self._curr_total_data = 1
+            self._curr_total_data = 0
             return self._env
     
     def step(self, model):
@@ -163,25 +163,25 @@ class make_env:
         '''
         totalAge = 0
         peakAge = 0
-        minAge = self._max_steps
-        for index in range(len(self.curr_state) - 1):
+        minAge = self._aoi_threshold
+        for index in range(len(self.curr_state) - 6):
             age = self.curr_step - self.curr_state[index + 1][2]
             if age > self._aoi_threshold:
-                age= self._aoi_threshold
+                age = self._aoi_threshold
             totalAge += age
             if age > peakAge:
                 peakAge = age
             if age < minAge:
                 minAge = age
-        avgAge = totalAge/len(self.curr_state)
+        avgAge = totalAge/self.num_ch
        
         dataChange = 0
         maxColl = 0.0
         minColl = 1.0
         index: int
-        for index in range(len(self.curr_state)):
+        for index in range(len(self.curr_state) - 5):
             if index > 0:
-                val = self.curr_state[index][1] / self._curr_total_data
+                val = self.curr_state[index][1] / (max(self._curr_total_data, 1))
                 if val > maxColl:
                     maxColl = val
                 if val < minColl:
@@ -192,10 +192,10 @@ class make_env:
         
         distOffset = maxColl - minColl
         
-        rewardDist = (1 - distOffset) / 10
-        rewardPeak = (1 - 2 * (peakAge / self._aoi_threshold))
-        rewardAvgAge = (1 - 2 * (peakAge - avgAge)/self._aoi_threshold)
-        rewardDataChange = dataChange / 10
+        rewardDist = 1 - distOffset
+        rewardPeak = 1 - (peakAge / self._aoi_threshold)
+        rewardAvgAge = 1 - (peakAge - avgAge)/self._aoi_threshold
+        rewardDataChange = dataChange / (max(self._curr_total_data/(self.curr_step+1), 1))
         rewardChange = rewardDist + rewardPeak + rewardAvgAge + rewardDataChange
 
         if self.terminated:
