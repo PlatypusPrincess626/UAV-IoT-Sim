@@ -279,9 +279,12 @@ class sim_env:
                     place += (dims-shadeSize)
                     count = 0
 
-        self.dataStaticInter = poolingOverlap(np.array(envStaticInter, dtype='float'), \
+
+        temp = poolingOverlap(np.array(envStaticInter, dtype='float').reshape(dims, dims), \
                                               9, stride=1, method='mean', pad=True, return_max_pos=False)
 
+        self.dataStaticInter = temp.flatten()
+        
     # Interactions with devices
     def moveUAV(self, X: int, Y: int, newX: int, newY: int): # Estimated Position of UAV (nearest meter)
         place = Y * self.dim + X
