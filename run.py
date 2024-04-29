@@ -105,6 +105,9 @@ def evaluate(
     accum_dataColl = 0
 
     CH_Metrics = [[0, 0] * eval_env.num_ch]
+    accum_comms = 0
+    accum_move = 0
+    accum_harvest = 0
 
     # QL
     agent.decay_epsilon(1)
@@ -119,7 +122,7 @@ def evaluate(
         dataColl = 0.0
 
         while not done:
-            train_model, old_state, old_action = eval_env.step(agent)
+            train_model, old_state, old_action, comms, move, harvest = eval_env.step(agent)
             buffer_done = eval_env.terminated
             info = eval_env.curr_info
 
@@ -130,6 +133,9 @@ def evaluate(
             peakAoI += info.get("Peak_Age", 0.0)
             dataDist += info.get("Data_Distribution", 0.0)
             dataColl += info.get("Total_Data_Change", 0.0)
+            accum_comms += comms
+            accum_move += move
+            accum_harvest += harvest
 
             ch: int
             for ch in range(len(CH_Metrics)):
@@ -156,6 +162,10 @@ def evaluate(
             CH_Metrics[ch][0] /= eval_env.curr_step
             CH_Metrics[ch][1] /= eval_env.curr_step
 
+        accum_comms += eval_env.curr_step
+        accum_move += eval_env.curr_step
+        accum_harvest += eval_env.curr_step
+
         total_reward += ep_reward / (eval_env.curr_step+count)
         total_steps += eval_env.curr_step
         if info.get("Crashed", False):
@@ -164,7 +174,8 @@ def evaluate(
     
     return 1 - (num_crashes / eval_episodes), total_reward / eval_episodes, \
         total_steps / eval_episodes, accum_avgAoI / eval_episodes, accum_peakAoI / eval_episodes, \
-        accum_dataDist / eval_episodes, 1000 * accum_dataColl / eval_episodes, CH_Metrics
+        accum_dataDist / eval_episodes, 1000 * accum_dataColl / eval_episodes, CH_Metrics, \
+        accum_comms, accum_move, accum_harvest
 
 
 def train(
@@ -206,16 +217,8 @@ def train(
                 "losses/Min_Target_Value": agent.target_min.mean(),
                 "losses/hours": hours,
             }
-            sr, ret, length, avgAoI, peakAoI, dataDist, dataColl, CH_Metrics = evaluate(agent, env, eval_episodes)
-
-            for ch in range(len(CH_Metrics)):
-                log_vals.update(
-                    {
-                        f"{env_str}/CH" + str(ch+1) + "_Data": CH_Metrics[ch][0],
-                        f"{env_str}/CH" + str(ch+1) + "_Age": CH_Metrics[ch][1]
-                    }
-
-                )
+            sr, ret, length, avgAoI, peakAoI, dataDist, dataColl, CH_Metrics, \
+                comms, move, harvest = evaluate(agent, env, eval_episodes)
 
             log_vals.update(
                 {
@@ -226,6 +229,21 @@ def train(
                     f"{env_str}/PeakAoI": peakAoI,
                     f"{env_str}/Distribution": dataDist,
                     f"{env_str}/TotalCollected": dataColl,
+
+                    f"{env_str}/CH1_Data": CH_Metrics[0][0],
+                    f"{env_str}/CH1_Age": CH_Metrics[0][1],
+                    f"{env_str}/CH2_Data": CH_Metrics[1][0],
+                    f"{env_str}/CH2_Age": CH_Metrics[1][1],
+                    f"{env_str}/CH3_Data": CH_Metrics[2][0],
+                    f"{env_str}/CH3_Age": CH_Metrics[2][1],
+                    f"{env_str}/CH4_Data": CH_Metrics[3][0],
+                    f"{env_str}/CH4_Age": CH_Metrics[3][1],
+                    f"{env_str}/CH5_Data": CH_Metrics[4][0],
+                    f"{env_str}/CH5_Age": CH_Metrics[4][1],
+
+                    f"{env_str}/Comms_Cost": comms,
+                    f"{env_str}/Flight_Cost": move,
+                    f"{env_str}/Energy_Harvested": harvest,
                 }
             )
 
@@ -240,7 +258,7 @@ def train(
 
 
 def step(agent, env):
-    train_model, old_state, old_action = env.step(agent)
+    train_model, old_state, old_action, comms, move, harvest = env.step(agent)
     buffer_done = env.terminated
     done = False
 
@@ -269,7 +287,7 @@ def prepopulate(agent, prepop_steps, env):
         done = False
 
         while not done:
-            train_model, old_state, old_action = env.step(agent)
+            train_model, old_state, old_action, comms, move, harvest = env.step(agent)
             buffer_done = env.terminated
 
             if buffer_done or env.truncated:

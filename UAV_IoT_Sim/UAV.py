@@ -80,6 +80,10 @@ class QuadUAV:
             self.state[row + 1][0] = count
             count += 1
 
+        self.step_comms_cost = 0
+        self.step_move_cost = 0
+        self.energy_harvested = 0
+
     def reset(self):
         # Reset Flags
         self.stored_energy = self.max_energy
@@ -101,6 +105,7 @@ class QuadUAV:
     # Internal UAV Mechanics
     def navigate_step(self, env: object):
         maxDist = math.sqrt(pow(self.indX - self.targetX, 2) + pow(self.indY - self.targetY, 2))
+        self.step_move_cost = 0
 
         if self.targetX == self.indX and self.targetY == self.indY:
             pass
@@ -127,6 +132,7 @@ class QuadUAV:
             self.crash = True
 
     def energy_cost(self, flight: float = 0.0, lora: float = 0.0, ambc: float = 0.0):
+
         total_cost = 0
         # Cost of air travel
         total_cost += flight * ((self.max_energy / self.flight_discharge) / (60 * 60))
@@ -134,6 +140,9 @@ class QuadUAV:
         total_cost += lora * self._comms.get("LoRa_Current_mA")
         # Cost of LoRa
         total_cost += ambc * self._comms.get("AmBC_Current_mA")
+
+        self.step_move_cost = flight * ((self.max_energy / self.flight_discharge) / (60 * 60))
+        self.step_comms_cost += lora * self._comms.get("LoRa_Current_mA") + ambc * self._comms.get("AmBC_Current_mA")
 
         self.stored_energy -= total_cost
         self.state[0][2] = self.stored_energy
@@ -146,6 +155,7 @@ class QuadUAV:
         device = self.target
         train_model = False
         change_archives = False
+        self.step_comms_cost = 0
 
         if self.target.type == 1:
             dataReturn = max(0, device.ws_upload_data(int(self.indX), int(self.indY)))
@@ -194,10 +204,12 @@ class QuadUAV:
         return train_model, change_archives
 
     def receive_energy(self):
+        self.energy_harvested = 0
         if self.target.type == 2:
             t = self.target.charge_time(int(self.indX), int(self.indY))
 
             self.stored_energy += t * (self.max_energy / (self.charge_rate * 60))
+            self.energy_harvested = t * (self.max_energy / (self.charge_rate * 60))
             self.state[0][2] = self.stored_energy
             self.full_state.iloc[0, 3] = self.stored_energy
 
@@ -262,7 +274,8 @@ class QuadUAV:
                 self.targetY = dest1.indY
                 return train_model, used_model, state1, action1
 
-        return train_model, used_model, self.state, self.targetHead.headSerial
+        return (train_model, used_model, self.state, self.targetHead.headSerial, \
+                self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
     def update_state(self, device, step, data):
         self.full_state.iloc[device, 3] = step
