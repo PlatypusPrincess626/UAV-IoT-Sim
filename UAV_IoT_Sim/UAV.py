@@ -208,8 +208,8 @@ class QuadUAV:
         if self.target.type == 2:
             t = self.target.charge_time(int(self.indX), int(self.indY))
 
-            self.stored_energy += t * (self.max_energy / (self.charge_rate * 60))
-            self.energy_harvested = t * (self.max_energy / (self.charge_rate * 60))
+            self.stored_energy += t * (self.max_energy / (self.charge_rate * 60 * 60))
+            self.energy_harvested = t * (self.max_energy / (self.charge_rate * 60 * 60))
             self.state[0][2] = self.stored_energy
             self.full_state.iloc[0, 3] = self.stored_energy
 
