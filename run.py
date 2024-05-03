@@ -10,6 +10,11 @@ from UAV_IoT_Sim import UAV_IoT_Sim
 from env_utils import model_utils
 from env_utils.logger_utils import RunningAverage, get_logger
 
+import os
+import tensorflow as tf
+#os.environ["LD_LIBRARY_PATH"] = "/UAV-IoT-Sim/uav-iot-env/lib/python3.10/site-packages/nvidia/cudnn/lib/libcudnn.so.9"
+#env LD_LIBRARY_PATH=/UAV-IoT-Sim/uav-iot-env/lib/python3.10/site-packages/nvidia/cudnn/lib/libcudnn.so.9 python run.py --project-name DQNN042024 --steps 50_000 --eval-frequency 1_000
+
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -110,7 +115,7 @@ def evaluate(
     accum_harvest = 0
 
     # QL
-    agent.decay_epsilon(1)
+    #agent.decay_epsilon(1)
 
     for _ in range(eval_episodes):
         eval_env.reset()
@@ -143,15 +148,15 @@ def evaluate(
                 CH_Metrics[ch][1] += eval_env.curr_step - eval_env.curr_state[ch + 1][2]
 
             if train_model:
-                agent.update(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
+                #agent.update(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
                 # DDQN
-                # agent.update_mem(env._curr_state, old_action, env._curr_reward, old_state, buffer_done)
-                # if len(agent.memory) > 64:
-                #    agent.train(64)
+                agent.update_mem(eval_env.curr_state, old_action, eval_env.curr_reward, old_state, buffer_done)
+                if len(agent.memory) > 64:
+                    agent.train(64)
             ep_reward += info.get("Reward_Change")
 
         # DDQN
-        # agent.update_target_from_model()
+        agent.update_target_from_model()
 
         accum_avgAoI += avgAoI / (eval_env.curr_step + count)
         accum_peakAoI += peakAoI / (eval_env.curr_step + count)
@@ -198,10 +203,10 @@ def train(
     for timestep in range(total_steps):
         done = step(agent, env)
         # QL
-        agent.decay_epsilon(timestep / total_steps)
+        #agent.decay_epsilon(timestep / total_steps)
 
         if done:
-            # agent.update_target_from_model()
+            agent.update_target_from_model()
             env.reset()
 
         if timestep % eval_frequency == 0:
@@ -268,11 +273,11 @@ def step(agent, env):
     if train_model:
         print(f"Training")
         #QL
-        agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
+        #agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
         # DDQN
-        # agent.update_mem(env._curr_state, old_action, env._curr_reward, old_state, buffer_done)
-        # if len(agent.memory) > 64:
-        #    agent.train(64)
+        agent.update_mem(env.curr_state, old_action, env.curr_reward, old_state, buffer_done)
+        if len(agent.memory) > 64:
+            agent.train(64)
     return done
 
 
@@ -280,7 +285,7 @@ def prepopulate(agent, prepop_steps, env):
     timestep = 0
 
     # QL
-    agent.decay_epsilon(0)
+    #agent.decay_epsilon(0)
     while timestep < prepop_steps:
         env.reset()
         print(f"Prepop Step: {timestep}")
@@ -292,15 +297,15 @@ def prepopulate(agent, prepop_steps, env):
 
             if buffer_done or env.truncated:
                 # DDQN
-                # agent.update_target_from_model()
+                agent.update_target_from_model()
                 done = True
 
             if train_model:
-                agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
+                #agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
                 # DDQN
-                # agent.update_mem(env._curr_state, old_action, env._curr_reward, old_state, buffer_done)
-                # if len(agent.memory) > 64:
-                #    agent.train(64)
+                agent.update_mem(eval_env.curr_state, old_action, eval_env.curr_reward, old_state, buffer_done)
+                if len(agent.memory) > 64:
+                    agent.train(64)
             timestep += 1
 
 
@@ -308,10 +313,13 @@ def run_experiment(args):
     env_str = args.env
     print("Creating Evironment")
     env = UAV_IoT_Sim.make_env(scene=env_str, num_sensors=50, num_ch=5, num_uav=1, max_num_steps=720)
-    # device = torch.device("cuda")
+    
+    gpu_devices = tf.config.experimental.list_physical_devices('GPU')
+    for device in gpu_devices:
+        tf.config.experimental.set_memory_growth(device, True)
 
     print("Creating Agent")
-    agent = model_utils.get_ql_agent(
+    agent = model_utils.get_ddqn_agent(
         env
     )
 
