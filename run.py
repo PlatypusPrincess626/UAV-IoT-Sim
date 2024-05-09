@@ -97,6 +97,9 @@ def evaluate(
         agent,
         eval_env,
         eval_episodes,
+        log_metrics=False,
+        env_str=None,
+        logger=None,
 ):
     info = None
     total_reward = 0
@@ -117,7 +120,7 @@ def evaluate(
     # QL
     #agent.decay_epsilon(1)
 
-    for _ in range(eval_episodes):
+    for i in range(eval_episodes):
         eval_env.reset()
         done = False
         ep_reward = 0
@@ -155,6 +158,31 @@ def evaluate(
                     agent.train(64)
             ep_reward += info.get("Reward_Change")
 
+            if log_metrics and i == eval_episodes-1:
+                log_vals_eval = (
+                    {
+                        f"{env_str}/CH1_Data": CH_Metrics[0][0],
+                        f"{env_str}/CH1_Age": CH_Metrics[0][1],
+                        f"{env_str}/CH2_Data": CH_Metrics[1][0],
+                        f"{env_str}/CH2_Age": CH_Metrics[1][1],
+                        f"{env_str}/CH3_Data": CH_Metrics[2][0],
+                        f"{env_str}/CH3_Age": CH_Metrics[2][1],
+                        f"{env_str}/CH4_Data": CH_Metrics[3][0],
+                        f"{env_str}/CH4_Age": CH_Metrics[3][1],
+                        f"{env_str}/CH5_Data": CH_Metrics[4][0],
+                        f"{env_str}/CH5_Age": CH_Metrics[4][1],
+
+                        f"{env_str}/Comms_Cost": comms,
+                        f"{env_str}/Flight_Cost": move,
+                        f"{env_str}/Energy_Harvested": harvest,
+                    }
+                )
+
+                logger.log(
+                    log_vals_eval,
+                    step=total_steps,
+                )
+
         # DDQN
         agent.update_target_from_model()
 
@@ -167,9 +195,9 @@ def evaluate(
             CH_Metrics[ch][0] /= eval_env.curr_step
             CH_Metrics[ch][1] /= eval_env.curr_step
 
-        accum_comms += eval_env.curr_step
-        accum_move += eval_env.curr_step
-        accum_harvest += eval_env.curr_step
+        accum_comms /= eval_env.curr_step
+        accum_move /= eval_env.curr_step
+        accum_harvest /= eval_env.curr_step
 
         total_reward += ep_reward / (eval_env.curr_step+count)
         total_steps += eval_env.curr_step
@@ -180,7 +208,7 @@ def evaluate(
     return 1 - (num_crashes / eval_episodes), total_reward / eval_episodes, \
         total_steps / eval_episodes, accum_avgAoI / eval_episodes, accum_peakAoI / eval_episodes, \
         accum_dataDist / eval_episodes, 1000 * accum_dataColl / eval_episodes, CH_Metrics, \
-        accum_comms, accum_move, accum_harvest
+        accum_comms/eval_episodes, accum_move/eval_episodes, accum_harvest/eval_episodes
 
 
 def train(
@@ -234,21 +262,6 @@ def train(
                     f"{env_str}/PeakAoI": peakAoI,
                     f"{env_str}/Distribution": dataDist,
                     f"{env_str}/TotalCollected": dataColl,
-
-                    f"{env_str}/CH1_Data": CH_Metrics[0][0],
-                    f"{env_str}/CH1_Age": CH_Metrics[0][1],
-                    f"{env_str}/CH2_Data": CH_Metrics[1][0],
-                    f"{env_str}/CH2_Age": CH_Metrics[1][1],
-                    f"{env_str}/CH3_Data": CH_Metrics[2][0],
-                    f"{env_str}/CH3_Age": CH_Metrics[2][1],
-                    f"{env_str}/CH4_Data": CH_Metrics[3][0],
-                    f"{env_str}/CH4_Age": CH_Metrics[3][1],
-                    f"{env_str}/CH5_Data": CH_Metrics[4][0],
-                    f"{env_str}/CH5_Age": CH_Metrics[4][1],
-
-                    f"{env_str}/Comms_Cost": comms,
-                    f"{env_str}/Flight_Cost": move,
-                    f"{env_str}/Energy_Harvested": harvest,
                 }
             )
 
@@ -260,6 +273,38 @@ def train(
         print(
             f"Training Steps: {timestep}, Env: {env_str}, Sucess Rate: {sr:.2f}, Return: {ret:.2f}, Episode Length: {length:.2f}"
         )
+
+    hours = (time() - start_time) / 3600
+    log_vals = {
+        "losses/TD_Error": agent.td_errors.mean(),
+        "losses/Grad_Norm": agent.grad_norms.mean(),
+        "losses/Max_Q_Value": agent.qvalue_max.mean(),
+        "losses/Mean_Q_Value": agent.qvalue_mean.mean(),
+        "losses/Min_Q_Value": agent.qvalue_min.mean(),
+        "losses/Max_Target_Value": agent.target_max.mean(),
+        "losses/Mean_Target_Value": agent.target_mean.mean(),
+        "losses/Min_Target_Value": agent.target_min.mean(),
+        "losses/hours": hours,
+    }
+    sr, ret, length, avgAoI, peakAoI, dataDist, dataColl, CH_Metrics, \
+        comms, move, harvest = evaluate(agent, env, eval_episodes, True, env_str, logger)
+
+    log_vals.update(
+        {
+            f"{env_str}/SuccessRate": sr,
+            f"{env_str}/Return": ret,
+            f"{env_str}/EpisodeLength": length,
+            f"{env_str}/AverageAoI": avgAoI,
+            f"{env_str}/PeakAoI": peakAoI,
+            f"{env_str}/Distribution": dataDist,
+            f"{env_str}/TotalCollected": dataColl,
+        }
+    )
+
+    logger.log(
+        log_vals,
+        step=total_steps,
+    )
 
 
 def step(agent, env):

@@ -171,13 +171,13 @@ class QuadUAV:
             else:
                 self.inRange = False
 
-            totalTime = self._comms.get("AmBC_Bit_Rate_bit/s", 0.0)
+            totalTime = totalData / self._comms.get("AmBC_Bit_Rate_bit/s", 0.0)
             self.energy_cost(0, totalTime, totalTime)
 
             self.update_state(self.targetHead.headSerial + 1, step, totalData)
             self.state[self.targetHead.headSerial + 1][2] = step
-            self.state[self.targetHead.headSerial + 1][1] += round(totalData / 1000)
-            self.state[0][1] += round(totalData / 1000)
+            self.state[self.targetHead.headSerial + 1][1] += totalData / 1000
+            self.state[0][1] += totalData / 1000
 
 
         else:
@@ -198,8 +198,8 @@ class QuadUAV:
 
             self.update_state(device.headSerial + 1, step, totalData)
             self.state[device.headSerial + 1][2] = step
-            self.state[device.headSerial + 1][1] += round(totalData / (1000000 * 8))
-            self.state[0][1] += round(totalData / (1000000 * 8))
+            self.state[device.headSerial + 1][1] += totalData / (1000000 * 8)
+            self.state[0][1] += totalData / (1000000 * 8)
 
         return train_model, change_archives
 
