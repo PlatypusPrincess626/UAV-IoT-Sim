@@ -2,6 +2,7 @@ import os
 import argparse
 from time import time, sleep
 from typing import Optional, Tuple
+import csv
 
 import wandb
 
@@ -113,6 +114,11 @@ def evaluate(
     accum_dataColl = 0
 
     CH_Metrics = [[0, 0] for _ in range(eval_env.num_ch)]
+
+    CH_Age = []
+    CH_Data = []
+    UAV_Metrics = []
+
     accum_comms = 0
     accum_move = 0
     accum_harvest = 0
@@ -150,6 +156,8 @@ def evaluate(
                 CH_Metrics[ch][0] += eval_env.curr_state[ch + 1][1]
                 CH_Metrics[ch][1] += eval_env.curr_step - eval_env.curr_state[ch + 1][2]
 
+
+
             if train_model:
                 #agent.update(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
                 # DDQN
@@ -159,29 +167,33 @@ def evaluate(
             ep_reward += info.get("Reward_Change")
 
             if log_metrics and i == eval_episodes-1:
-                log_vals_eval = (
-                    {
-                        f"{env_str}/CH1_Data": CH_Metrics[0][0],
-                        f"{env_str}/CH1_Age": CH_Metrics[0][1],
-                        f"{env_str}/CH2_Data": CH_Metrics[1][0],
-                        f"{env_str}/CH2_Age": CH_Metrics[1][1],
-                        f"{env_str}/CH3_Data": CH_Metrics[2][0],
-                        f"{env_str}/CH3_Age": CH_Metrics[2][1],
-                        f"{env_str}/CH4_Data": CH_Metrics[3][0],
-                        f"{env_str}/CH4_Age": CH_Metrics[3][1],
-                        f"{env_str}/CH5_Data": CH_Metrics[4][0],
-                        f"{env_str}/CH5_Age": CH_Metrics[4][1],
 
-                        f"{env_str}/Comms_Cost": comms,
-                        f"{env_str}/Flight_Cost": move,
-                        f"{env_str}/Energy_Harvested": harvest,
-                    }
-                )
+                CH_Age.append([CH_Metrics[0][1], CH_Metrics[1][1], CH_Metrics[2][1], \
+                               CH_Metrics[3][1], CH_Metrics[4][1]])
+                CH_Data.append([CH_Metrics[0][0], CH_Metrics[1][0], CH_Metrics[2][0], \
+                               CH_Metrics[3][0], CH_Metrics[4][0]])
+                UAV_Metrics.append([comms, move, harvest])
 
-                logger.log(
-                    log_vals_eval,
-                    step=total_steps,
-                )
+        if log_metrics and i == eval_episodes - 1:
+            filename = "age_metrics_" + env_str + ".csv"
+            open(filename, 'x')
+            with open(filename, 'w') as csvfile:
+                csvwriter = csv.writer(csvfile, delimiter='|')
+                csvwriter.writerows(CH_Age)
+
+        if log_metrics and i == eval_episodes - 1:
+            filename = "data_metrics_" + env_str + ".csv"
+            open(filename, 'x')
+            with open(filename, 'w') as csvfile:
+                csvwriter = csv.writer(csvfile, delimiter='|')
+                csvwriter.writerows(CH_Data)
+
+        if log_metrics and i == eval_episodes - 1:
+            filename = "uav_metrics_" + env_str + ".csv"
+            open(filename, 'x')
+            with open(filename, 'w') as csvfile:
+                csvwriter = csv.writer(csvfile, delimiter='|')
+                csvwriter.writerows(UAV_Metrics)
 
         # DDQN
         agent.update_target_from_model()
