@@ -161,7 +161,7 @@ def evaluate(
             if train_model:
                 #agent.update(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
                 # DDQN
-                agent.update_mem(eval_env.curr_state, old_action, eval_env.curr_reward, old_state, buffer_done)
+                agent.update_mem(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
                 if len(agent.memory) > 64:
                     agent.train(64)
             ep_reward += info.get("Reward_Change")
@@ -332,7 +332,7 @@ def step(agent, env):
         #QL
         #agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
         # DDQN
-        agent.update_mem(env.curr_state, old_action, env.curr_reward, old_state, buffer_done)
+        agent.update_mem(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
         if len(agent.memory) > 64:
             agent.train(64)
     return done
@@ -360,7 +360,7 @@ def prepopulate(agent, prepop_steps, env):
             if train_model:
                 #agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
                 # DDQN
-                agent.update_mem(eval_env.curr_state, old_action, eval_env.curr_reward, old_state, buffer_done)
+                agent.update_mem(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
                 if len(agent.memory) > 64:
                     agent.train(64)
             timestep += 1

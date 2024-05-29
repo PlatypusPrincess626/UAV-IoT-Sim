@@ -14,6 +14,22 @@ import random
 
 from env_utils.logger_utils import RunningAverage
 
+def modify_state(state):
+    total_data = state[0][1]
+    refined_state = [[0, 0] for _ in range(len(state))]
+    _, _, zmax = state.max(axis=0)
+
+    for i in range(len(state)-5):
+        refined_state[i][0] = state[i][1]/total_data
+        if i == 0:
+            refined_state[i][1] = state[i][2]/6800
+        else:
+            refined_state[i][1] = state[i][2]/zmax
+    for i in range(5):
+        refined_state[len(state)-1-i][0] = state[i][1]/10000
+        refined_state[len(state) - 1 - i][0] = state[i][2]/zmax
+
+    return refined_state
 
 class get_ql_agent:
     def __init__(self, env,
@@ -118,7 +134,7 @@ class get_gann_agent:
     def __init__(self,
                  env
                  ):
-        self._num_inputs = 3*(env.num_ch + 6)
+        self._num_inputs = 2*(env.num_ch + 6)
         self._num_output = env.num_ch + 5
         self.sol_idx = 0
 
@@ -166,8 +182,10 @@ class get_gann_agent:
         self.last_fitness = ga_instance.best_solution()[1].copy()
 
     def update(self, s_t, a_t, r_t, s_t_next, d_t):
-        self.last_inputs = np.expand_dims(np.array(s_t).flatten(), axis=0)
-        self.data_inputs = np.expand_dims(np.array(s_t_next).flatten(), axis=0)
+        r_s_t = modify_state(s_t)
+        r_s_t_next = modify_state(s_t_next)
+        self.last_inputs = np.expand_dims(np.array(r_s_t).flatten(), axis=0)
+        self.data_inputs = np.expand_dims(np.array(r_s_t_next).flatten(), axis=0)
         self.d_t = d_t
         self.r_t = r_t
         self.a_t = a_t
@@ -217,7 +235,7 @@ class get_gann_agent:
 
 class get_ddqn_agent():
     def __init__(self, env, alpha=0.5, gamma=0.95, epsilon=0.5, epsilon_min=0.1, epsilon_decay=0.01):
-        self.nS =((env.num_ch + 6) * 3)
+        self.nS =((env.num_ch + 6) * 2)
         self.nA = env.num_ch + 5
         self.memory = deque([], maxlen=2500)
         self.alpha = alpha
@@ -262,18 +280,22 @@ class get_ddqn_agent():
         self.model_target.set_weights(self.model.get_weights())
 
     def act(self, state):
+        r_state = modify_state(state)
         if np.random.rand() <= self.epsilon:
             return random.randrange(self.nA)  # Explore
-        action_vals = self.model.predict(np.expand_dims(np.array(state).flatten(), axis=0))  # Exploit: Use the NN to predict the correct action from this state
+        action_vals = self.model.predict(np.expand_dims(np.array(r_state).flatten(), axis=0))  # Exploit: Use the NN to predict the correct action from this state
         return np.argmax(action_vals[0])
 
     def test_action(self, state):  # Exploit
-        action_vals = self.model.predict(np.expand_dims(np.array(state).flatten(), axis=0))  # Exploit: Use the NN to predict the correct action from this state
+        r_state = modify_state(state)
+        action_vals = self.model.predict(np.expand_dims(np.array(r_state).flatten(), axis=0))  # Exploit: Use the NN to predict the correct action from this state
         return np.argmax(action_vals[0])
 
     def update_mem(self, state, action, reward, nstate, done):
         # Store the experience in memory
-        self.memory.append((state, action, reward, nstate, done))
+        r_state = modify_state(state)
+        r_nstate = modify_state(nstate)
+        self.memory.append((r_state, action, reward, r_nstate, done))
 
     def train(self, batch_size):
         # Execute the experience replay
