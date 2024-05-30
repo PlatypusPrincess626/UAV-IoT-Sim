@@ -197,7 +197,7 @@ class make_env:
         rewardPeak = 1 - (peakAge / self._aoi_threshold)
         rewardAvgAge = 1 - (peakAge - avgAge)/self._aoi_threshold
         rewardDataChange = dataChange / (max(self._curr_total_data/(self.curr_step+1), 1))
-        rewardChange = rewardDist + rewardPeak + rewardAvgAge + rewardDataChange
+        rewardChange = rewardDist + rewardPeak + rewardAvgAge + 0.5 * rewardDataChange
 
         if self.terminated:
             rewardChange -= 100
