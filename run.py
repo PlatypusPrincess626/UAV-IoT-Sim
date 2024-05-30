@@ -3,6 +3,7 @@ import argparse
 from time import time, sleep
 from typing import Optional, Tuple
 import csv
+import datetime
 
 import wandb
 
@@ -101,6 +102,7 @@ def evaluate(
         log_metrics=False,
         env_str=None,
         logger=None,
+        start_time=None
 ):
     info = None
     total_reward = 0
@@ -174,22 +176,24 @@ def evaluate(
                                CH_Metrics[3][0], CH_Metrics[4][0]])
                 UAV_Metrics.append([comms, move, harvest])
 
+        curr_date_time = datetime.datetime.now()
+
         if log_metrics and i == eval_episodes - 1:
-            filename = "age_metrics_" + env_str + ".csv"
+            filename = "age_metrics_" + curr_date_time.strftime("%d") + "_" + curr_date_time.strftime("%m") + ".csv"
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
                 csvwriter.writerows(CH_Age)
 
         if log_metrics and i == eval_episodes - 1:
-            filename = "data_metrics_" + env_str + ".csv"
+            filename = "data_metrics_" + curr_date_time.strftime("%d") + "_" + curr_date_time.strftime("%m") + ".csv"
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
                 csvwriter.writerows(CH_Data)
 
         if log_metrics and i == eval_episodes - 1:
-            filename = "uav_metrics_" + env_str + ".csv"
+            filename = "uav_metrics_" + curr_date_time.strftime("%d") + "_" + curr_date_time.strftime("%m") + ".csv"
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -299,7 +303,7 @@ def train(
         "losses/hours": hours,
     }
     sr, ret, length, avgAoI, peakAoI, dataDist, dataColl, CH_Metrics, \
-        comms, move, harvest = evaluate(agent, env, eval_episodes, True, env_str, logger)
+        comms, move, harvest = evaluate(agent, env, eval_episodes, True, env_str, logger, start_time)
 
     log_vals.update(
         {
