@@ -17,7 +17,8 @@ from env_utils.logger_utils import RunningAverage
 def modify_state(state):
     total_data = state[0][1]
     refined_state = [[0, 0] for _ in range(len(state))]
-    _, _, zmax = state.max(axis=0)
+    np_state = np.array(state)
+    _, _, zmax = np_state.max(axis=0)
 
     for i in range(len(state)-5):
         refined_state[i][0] = state[i][1]/total_data
