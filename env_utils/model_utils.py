@@ -21,7 +21,7 @@ def modify_state(state):
     _, _, zmax = np_state.max(axis=0)
 
     for i in range(len(state)-5):
-        refined_state[i][0] = state[i][1]/total_data
+        refined_state[i][0] = state[i][1]/max(total_data, 1)
         if i == 0:
             refined_state[i][1] = state[i][2]/6800
         else:
