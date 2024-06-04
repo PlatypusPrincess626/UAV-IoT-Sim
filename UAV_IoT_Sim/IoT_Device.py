@@ -222,7 +222,7 @@ class IoT_Device:
         if self.stored_data > 100:
             return False, False, self, _, state, _, self.headSerial, _
 
-        for CH in range(len(full_state - 1)):
+        for CH in range(len(full_state) - 1):
             if full_state.iloc[CH + 1, 3] == 0:
                 return False, True, full_state.iloc[CH + 1, 0], _, state, _, self.headSerial, _
 
