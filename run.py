@@ -136,6 +136,7 @@ def evaluate(
         peakAoI = 0.0
         dataDist = 0.0
         dataColl = 0.0
+        CH_Metrics = [[0, 0] for _ in range(eval_env.num_ch)]
 
         while not done:
             train_model, old_state, old_action, comms, move, harvest = eval_env.step(agent)

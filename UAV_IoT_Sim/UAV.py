@@ -107,7 +107,7 @@ class QuadUAV:
         maxDist = math.sqrt(pow(self.indX - self.targetX, 2) + pow(self.indY - self.targetY, 2))
         self.step_move_cost = 0
 
-        if self.targetX == self.indX and self.targetY == self.indY:
+        if round(self.targetX) == round(self.indX) and round(self.targetY) == round(self.indY):
             pass
         elif self.stored_energy >= ((self.max_energy / self.flight_discharge) / 60):
 
@@ -235,7 +235,7 @@ class QuadUAV:
         elif self.target.type == 1:
             self.target = self.target
 
-        elif self.stored_energy < (self.max_energy * .50):
+        elif self.stored_energy < (self.max_energy * .30):
             self.is_charging = True
             self.target = self.targetHead
 

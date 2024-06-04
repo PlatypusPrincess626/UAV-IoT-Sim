@@ -222,9 +222,8 @@ class IoT_Device:
         if self.stored_data > 100:
             return False, False, self, _, state, _, self.headSerial, _
 
-        unserviced = full_state.iloc[:, 3].isin([0])
-        for CH in range(unserviced.size - 1):
-            if unserviced.iloc[CH + 1]:
+        for CH in range(full_state.size - 1):
+            if full_state.iloc[CH + 1, 3] == 0:
                 return False, True, full_state.iloc[CH + 1, 0], _, state, _, self.headSerial, _
 
         sensMapping: List[List[int]] = [[0] * 3 for _ in range(5)]
