@@ -198,8 +198,8 @@ class QuadUAV:
 
             self.update_state(device.headSerial + 1, step, totalData)
             self.state[device.headSerial + 1][2] = step
-            self.state[device.headSerial + 1][1] += totalData / (1000000 * 8)
-            self.state[0][1] += totalData / (1000000 * 8)
+            self.state[self.targetHead.headSerial + 1][1] += totalData / 1000
+            self.state[0][1] += totalData / 1000
 
         return train_model, change_archives
 
