@@ -189,7 +189,7 @@ class make_env:
                     minColl = val
             else:
                 dataChange = max(0, self.curr_state[index][1] - self._curr_total_data)
-                self._curr_total_data += abs(dataChange)
+                self._curr_total_data += abs(round(dataChange))
         
         distOffset = maxColl - minColl
         
@@ -197,7 +197,7 @@ class make_env:
         rewardPeak = 1 - 2 * (peakAge / self._aoi_threshold)
         rewardAvgAge = 1 - 2 * (peakAge - avgAge)/self._aoi_threshold
         rewardDataChange = dataChange / (max(self._curr_total_data/(self.curr_step+1), 1))
-        rewardChange = rewardDist + rewardPeak + rewardAvgAge + 0.25 * rewardDataChange
+        rewardChange = 0.5 * rewardDist + 2 * rewardPeak + 2 * rewardAvgAge + 0.25 * rewardDataChange
 
         if self.terminated:
             rewardChange -= 100

@@ -73,7 +73,7 @@ class IoT_Device:
 
             # CH Specs
             self.max_data = 25000
-            self.stored_data = random.randint(0, 25000)
+            self.stored_data = random.randint(512, 25000)
 
             self.solarArea = 200 * 400  # 20 cm x 40 cm
             self._C = 3200  # F (Battery Supported)
@@ -85,9 +85,9 @@ class IoT_Device:
     def reset(self):
         self.stored_energy = self.max_energy
         if self.type == 1:
-            self.stored_data = random.randint(0, 256)
+            self.stored_data = random.randint(128, 256)
         else:
-            self.stored_data = random.randint(0, 25000)
+            self.stored_data = random.randint(512, 25000)
 
     # Call location
     def get_indicies(self):
