@@ -89,6 +89,8 @@ class QuadUAV:
         self.stored_energy = self.max_energy
         self.crash = False
         self.model_transit = False
+        self.target = None
+        self.targetHead = None
 
         # Reset State
         self.state = [[0, 0, 0] for _ in range(len(self.state))]
@@ -108,7 +110,7 @@ class QuadUAV:
         self.step_move_cost = 0
 
         if round(self.targetX) == round(self.indX) and round(self.targetY) == round(self.indY):
-            pass
+            self.energy_cost(0, 0, 0)
         elif self.stored_energy >= ((self.max_energy / self.flight_discharge) / 60):
 
             if maxDist <= self.maxSpd * 60:
@@ -176,8 +178,8 @@ class QuadUAV:
 
             self.update_state(self.targetHead.headSerial + 1, step, totalData)
             self.state[self.targetHead.headSerial + 1][2] = step
-            self.state[self.targetHead.headSerial + 1][1] += totalData / 1000
-            self.state[0][1] += totalData / 1000
+            self.state[self.targetHead.headSerial + 1][1] += totalData
+            self.state[0][1] += totalData
 
 
         else:
@@ -198,8 +200,8 @@ class QuadUAV:
 
             self.update_state(device.headSerial + 1, step, totalData)
             self.state[device.headSerial + 1][2] = step
-            self.state[self.targetHead.headSerial + 1][1] += totalData / 1000
-            self.state[0][1] += totalData / 1000
+            self.state[self.targetHead.headSerial + 1][1] += totalData
+            self.state[0][1] += totalData
 
         return train_model, change_archives
 

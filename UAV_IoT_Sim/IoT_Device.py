@@ -73,7 +73,7 @@ class IoT_Device:
 
             # CH Specs
             self.max_data = 25000
-            self.stored_data = random.randint(512, 25000)
+            self.stored_data = random.randint(1028, 25000)
 
             self.solarArea = 200 * 400  # 20 cm x 40 cm
             self._C = 3200  # F (Battery Supported)
@@ -83,6 +83,8 @@ class IoT_Device:
             self.stored_energy = self.max_energy
 
     def reset(self):
+        self.indX = random.randint(0, 100)
+        self.indY = random.randint(0, 100)
         self.stored_energy = self.max_energy
         if self.type == 1:
             self.stored_data = random.randint(128, 256)
@@ -211,15 +213,19 @@ class IoT_Device:
             return -1
 
     def charge_time(self, X: int, Y: int):
-        if self.indX == X and self.indY == Y and (self.stored_energy > 6.8 / (2.5 * 60) or self.solar_powered):
-            if not self.solar_powered:
+        if self.indX == X and self.indY == Y:
+            if self.solar_powered:
+                return 60.0
+            elif self.stored_energy > 6.8 / (2.5 * 60):
                 self.stored_energy -= 6.8 / (2.5 * 60 * 60)
-            return 60.0
+                return 60.0
+            else:
+                return 0
         else:
             return 0
 
     def get_dest(self, state, full_state, model, step, _=None):
-        if self.stored_data > 100:
+        if self.stored_data > 1000:
             return False, False, self, _, state, _, self.headSerial, _
 
         for CH in range(len(full_state) - 1):
