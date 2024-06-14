@@ -28,7 +28,7 @@ def modify_state(state):
             refined_state[i][1] = state[i][2]/max(zmax, 1)
     for i in range(5):
         refined_state[len(state)-1-i][0] = state[i][1]/10000
-        refined_state[len(state) - 1 - i][0] = state[i][2]/zmax
+        refined_state[len(state) - 1 - i][0] = state[i][2]/max(zmax, 1)
 
     return refined_state
 
