@@ -89,7 +89,7 @@ class IoT_Device:
         if self.type == 1:
             self.stored_data = random.randint(128, 256)
         else:
-            self.stored_data = random.randint(512, 25000)
+            self.stored_data = random.randint(1028, 25000)
 
     # Call location
     def get_indicies(self):
