@@ -123,7 +123,7 @@ class IoT_Device:
         powDensity = alpha * (1 - interference) * f.integral(self.spctrlLow, self.spctrlHigh)
         power = powDensity * self.solarArea / (1000 * 1000)
 
-        if power > 0:
+        if round(power * 1000) > 0:
             self.stored_energy += round(power * 1000)
             self.solar_powered = True
 
@@ -212,12 +212,12 @@ class IoT_Device:
         else:
             return -1
 
-    def charge_time(self, X: int, Y: int):
+    def charge_time(self, X: int, Y: int, charge):
         if self.indX == X and self.indY == Y:
-            if self.solar_powered:
+            if self.solar_powered and charge:
                 return 60.0
-            elif self.stored_energy > round(6.8 / (2.5 * 60) * 1000):
-                self.stored_energy -= round(6.8 / (2.5 * 60 * 60) * 1000)
+            elif self.stored_energy > round((6.8 / (2.5 * 60)) * 1000) and charge:
+                self.stored_energy -= round(6.8 / (2.5 * 60) * 1000)
                 return 60.0
             else:
                 return 0

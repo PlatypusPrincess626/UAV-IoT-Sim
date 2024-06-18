@@ -89,6 +89,7 @@ class QuadUAV:
         self.stored_energy = self.max_energy
         self.crash = False
         self.model_transit = False
+        self.is_charging = False
         self.target = None
         self.targetHead = None
 
@@ -208,7 +209,7 @@ class QuadUAV:
     def receive_energy(self):
         self.energy_harvested = 0
         if self.target.type == 2:
-            t = self.target.charge_time(int(self.indX), int(self.indY))
+            t = self.target.charge_time(int(self.indX), int(self.indY), self.is_charging)
 
             self.stored_energy += t * (self.max_energy / (self.charge_rate * 60 * 60))
             self.energy_harvested = t * (self.max_energy / (self.charge_rate * 60 * 60))
@@ -220,7 +221,7 @@ class QuadUAV:
         used_model = False
 
         if self.target is None:
-            minDist = 10000
+            minDist = 10000.0
             minCH = self.full_state.iloc[1, 0]
             for CH in range(len(self.full_state) - 1):
                 dist = math.sqrt(pow((self.indX - self.full_state.iloc[CH + 1, 0].indX), 2) \
@@ -241,7 +242,7 @@ class QuadUAV:
             self.is_charging = True
             self.target = self.targetHead
 
-        elif self.is_charging and self.stored_energy > (self.max_energy * .80):
+        elif self.is_charging and self.stored_energy > (self.max_energy * .60):
             self.is_charging = False
             self.target = self.target
 
