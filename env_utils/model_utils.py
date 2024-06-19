@@ -88,7 +88,7 @@ class get_ql_agent:
     def decay_epsilon(self, n):
         """
         Decays the get_ddqn_agent's exploration rate according to n, which is a
-        float between 0 and 1 describing how far along training is, 
+        float between 0 and 1 describing how far along training is,
         with 0 meaning 'just started' and 1 meaning 'done'.
         """
         self.epsilon = max(
@@ -235,7 +235,7 @@ class get_gann_agent:
 
 
 class get_ddqn_agent():
-    def __init__(self, env, alpha=0.5, gamma=0.95, epsilon=0.5, epsilon_min=0.1, epsilon_decay=0.01):
+    def __init__(self, env, epsilon_i=1.0, epsilon_f=0.0, n_epsilon=0.1, alpha=0.5, gamma=0.95, epsilon=0.5, epsilon_min=0.1, epsilon_decay=0.01):
         self.nS =((env.num_ch + 6) * 2)
         self.nA = env.num_ch + 5
         self.memory = deque([], maxlen=2500)
@@ -249,6 +249,9 @@ class get_ddqn_agent():
         self.model_target = self.build_model()  # Second (target) neural network
         self.update_target_from_model()  # Update weights
         self.loss = []
+        self.epsilon_i = epsilon_i
+        self.epsilon_f = epsilon_f
+        self.n_epsilon = n_epsilon
 
         self.td_errors = RunningAverage(100)
         self.grad_norms = RunningAverage(100)
@@ -276,6 +279,16 @@ class get_ddqn_agent():
                           learning_rate=self.alpha))  # Optimaizer: Adam (Feel free to check other options)
         return model
 
+    def decay_epsilon(self, n):
+        """
+        Decays the get_ddqn_agent's exploration rate according to n, which is a
+        float between 0 and 1 describing how far along training is,
+        with 0 meaning 'just started' and 1 meaning 'done'.
+        """
+        self.epsilon = max(
+            self.epsilon_f,
+            self.epsilon_i - (n / self.n_epsilon) * (self.epsilon_i - self.epsilon_f))
+
     def update_target_from_model(self):
         # Update the target model from the base model
         self.model_target.set_weights(self.model.get_weights())
@@ -284,6 +297,7 @@ class get_ddqn_agent():
         r_state = modify_state(state)
         if np.random.rand() <= self.epsilon:
             return random.randrange(self.nA)  # Explore
+
         action_vals = self.model.predict(np.expand_dims(np.array(r_state).flatten(), axis=0))  # Exploit: Use the NN to predict the correct action from this state
         return np.argmax(action_vals[0])
 

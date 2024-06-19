@@ -185,16 +185,7 @@ class QuadUAV:
 
         else:
             dataReturn = max(0, device.ch_upload(int(self.indX), int(self.indY)))
-
-            if (self._comms.get("LoRa_Bit_Rate_bit/s") * 56) > dataReturn >= 0:
-                if math.sqrt(pow((self.indX - self.target.indX), 2) + pow((self.indY - self.target.indY), 2) < \
-                             self._comms.get("LoRa_Max_Distance_m")):
-                    totalData += max(0, dataReturn)
-                else:
-                    self.inRange = False
-            else:
-                totalData += max(0, dataReturn)
-                self.inRange = True
+            totalData += dataReturn
 
             totalTime = totalData / self._comms.get("LoRa_Bit_Rate_bit/s")
             self.energy_cost(0, totalTime, 0)
