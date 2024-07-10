@@ -173,7 +173,7 @@ class IoT_Device:
                 self.sens_table.iloc[sensor + channel, 1] = False
 
         self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 30 * totalChannels * 1000)
-        self.max_AoI = self.sens_table.loc['AoI'].max()
+        self.max_AoI = self.sens_table.loc[:,'AoI'].max()
 
     def ch_upload(self, X: int, Y: int):
         if self.solar_powered:
