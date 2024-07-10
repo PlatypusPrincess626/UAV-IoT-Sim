@@ -184,14 +184,14 @@ class QuadUAV:
 
 
         else:
-            dataReturn = max(0, device.ch_upload(int(self.indX), int(self.indY)))
+            dataReturn, AoI = max(0, device.ch_upload(int(self.indX), int(self.indY)))
             totalData += dataReturn
 
             totalTime = totalData / self._comms.get("LoRa_Bit_Rate_bit/s")
             self.energy_cost(0, totalTime, 0)
 
             self.update_state(device.headSerial + 1, step, totalData)
-            self.state[device.headSerial + 1][2] = step
+            self.state[device.headSerial + 1][2] = AoI
             self.state[self.targetHead.headSerial + 1][1] += totalData
             self.state[0][1] += totalData
 
