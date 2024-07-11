@@ -69,7 +69,7 @@ class QuadUAV:
         self.charge_rate = 2.5  # 150 min charging time
         self.flight_discharge = 0.5  # 30 min flight time
         self.amp = self.max_energy / self.charge_rate  # Roughly 2.72 A optimal current
-        self.stored_energy = self.max_energy  # Initialize at full battery
+        self.stored_energy = self.max_energy * 1000  # Initialize at full battery
         self.is_charging = False
 
         # State used for model
@@ -86,7 +86,7 @@ class QuadUAV:
 
     def reset(self):
         # Reset Flags
-        self.stored_energy = self.max_energy
+        self.stored_energy = self.max_energy * 1000
         self.crash = False
         self.model_transit = False
         self.is_charging = False
@@ -112,7 +112,7 @@ class QuadUAV:
 
         if round(self.targetX) == round(self.indX) and round(self.targetY) == round(self.indY):
             self.energy_cost(0, 0, 0)
-        elif self.stored_energy >= ((self.max_energy / self.flight_discharge) / 60):
+        elif self.stored_energy >= ((self.max_energy / self.flight_discharge) / 60 * 1000):
 
             if maxDist <= self.maxSpd * 60:
                 env.moveUAV(round(self.indX), round(self.indY), round(self.targetX), round(self.targetY))
@@ -147,7 +147,7 @@ class QuadUAV:
         self.step_move_cost = flight * ((self.max_energy / self.flight_discharge) / (60 * 60))
         self.step_comms_cost += lora * self._comms.get("LoRa_Current_mA") + ambc * self._comms.get("AmBC_Current_mA")
 
-        self.stored_energy -= total_cost
+        self.stored_energy -= total_cost * 1000
         self.state[0][2] = self.stored_energy
         self.full_state.iloc[0, 2] = self.stored_energy
 
@@ -202,8 +202,8 @@ class QuadUAV:
         if self.target.type == 2:
             t = self.target.charge_time(int(self.indX), int(self.indY), self.is_charging)
 
-            self.stored_energy += t * (self.max_energy / (self.charge_rate * 60 * 60))
-            self.energy_harvested = t * (self.max_energy / (self.charge_rate * 60 * 60))
+            self.stored_energy += t * (self.max_energy / (self.charge_rate * 60 * 60) * 1000)
+            self.energy_harvested = t * (self.max_energy / (self.charge_rate * 60 * 60) * 1000)
             self.state[0][2] = self.stored_energy
             self.full_state.iloc[0, 3] = self.stored_energy
 
@@ -229,11 +229,11 @@ class QuadUAV:
         elif self.target.type == 1:
             self.target = self.target
 
-        elif self.stored_energy < (self.max_energy * .30):
+        elif self.stored_energy < (self.max_energy * .30 * 1000):
             self.is_charging = True
             self.target = self.targetHead
 
-        elif self.is_charging and self.stored_energy > (self.max_energy * .60):
+        elif self.is_charging and self.stored_energy > (self.max_energy * .60 * 1000):
             self.is_charging = False
             self.target = self.target
 
