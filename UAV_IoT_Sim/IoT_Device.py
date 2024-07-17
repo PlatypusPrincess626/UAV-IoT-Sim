@@ -46,13 +46,13 @@ class IoT_Device:
             self.h = 0
 
             # Sensor Specifications
-            self.max_col_rate = 64000  # 64 bits per sample
+            self.max_col_rate = 64_000  # 64 bits per sample
             self.sample_freq = 15  # 15 minutes between sampling
             self.sample_len = 30  # 30 sec sample duration
-            self.max_data = 256000  # 256 kB maximum data storage
+            self.max_data = 256_000  # 256 kB maximum data storage
             self.stored_data = random.randint(0, 256000)
             self.sens_pow = 0.0022  # 2.2 mW power consumption
-            self.sens_amp = self.sens_pow / self._comms.get("AmBC_Voltage_V")
+            self.sens_amp = self.sens_pow / self._comms.get("AmBC_Voltage_V") * 1_000
 
             # Battery Specifics
             self.solarArea = 20 * 40  # 20 mm x 40 mm
@@ -60,7 +60,7 @@ class IoT_Device:
             self.max_energy = 1.28  # Ah
             self.charge_rate = 2.56  # A/h
             self.discharge_rate = 0.08  # A/h
-            self.stored_energy = round(self.max_energy * 1000000)
+            self.stored_energy = round(self.max_energy * 1_000_000)
 
         else:
             self.type = 2
@@ -73,25 +73,25 @@ class IoT_Device:
             self.h = 0
 
             # CH Specs
-            self.max_data = 25000000
-            self.stored_data = random.randint(1028000, 25000000)
+            self.max_data = 25_000_000
+            self.stored_data = random.randint(1_028_000, 25_000_000)
 
             self.solarArea = 200 * 400  # 20 cm x 40 cm
             self._C = 3200  # F (Battery Supported)
             self.max_energy = 1.51  # Ah
             self.charge_rate = 3.02  # A/s
             self.discharge_rate = 0.755  # s
-            self.stored_energy = round(self.max_energy * 1000000)
+            self.stored_energy = round(self.max_energy * 1_000_000)
 
     def reset(self):
         self.indX = random.randint(0, 100)
         self.indY = random.randint(0, 100)
         self.mean_AoI = 0
-        self.stored_energy = round(self.max_energy * 1000000)
+        self.stored_energy = round(self.max_energy * 1_000_000)
         if self.type == 1:
-            self.stored_data = random.randint(128, 256)
+            self.stored_data = random.randint(128_000, 256_000)
         else:
-            self.stored_data = random.randint(1028, 25000)
+            self.stored_data = random.randint(1_028_000, 25_000_000)
 
     # Call location
     def get_indicies(self):
@@ -108,10 +108,10 @@ class IoT_Device:
                 return True
             else:
                 return False
-        elif self.stored_energy > round(self.sens_amp * 30 * 1000000):
+        elif self.stored_energy > round(self.sens_amp * 30):
             if step % self.sample_freq == 0:
                 self.stored_data = min(self.stored_data + self.max_col_rate, self.max_data)
-                self.stored_energy -= round(self.sens_amp * 30 * 1000000)
+                self.stored_energy -= round(self.sens_amp * 30)
                 return True
             else:
                 return False
@@ -124,9 +124,10 @@ class IoT_Device:
         f = InterpolatedUnivariateSpline(spectra['wavelength'], spectra['poa_global'])
         powDensity = alpha * (1 - interference) * f.integral(self.spctrlLow, self.spctrlHigh)
         power = powDensity * self.solarArea / (1000 * 1000)
+        print(f"{power}")
 
-        if round(power * 1000000) > 0:
-            self.stored_energy += round(power * 1000000)
+        if power * 1_000_000 > 0:
+            self.stored_energy += round(power/self._comms.get("LoRa_Voltage_V") * 1_000_000)
             self.solar_powered = True
 
     # Uploading data from a sensor
@@ -172,7 +173,7 @@ class IoT_Device:
             else:
                 self.sens_table.iloc[sensor + channel, 1] = False
 
-        self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 30 * totalChannels * 1000000)
+        self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 30 * totalChannels * 1_000_000)
         self.mean_AoI = self.sens_table.iat[0, 2]
         for sens in range(len(self.sens_table) - 1):
             if step - self.sens_table.iat[sens + 1, 2] > step - self.mean_AoI:
@@ -188,15 +189,15 @@ class IoT_Device:
                     self.stored_data -= min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
                     sent_data = min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
 
-                    self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 60 * 1000000)
+                    self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 60 * 1_000_000)
                     return sent_data, self.mean_AoI
 
                 else:
-                    self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 60 * 1000000)
+                    self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 60 * 1_000_000)
                     return 0, self.mean_AoI
 
             else:
-                self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 60 * 1000000)
+                self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 60 * 1_000_000)
                 return -1, self.mean_AoI
         elif self.stored_energy > round(self._comms.get("LoRa_Current_A") * 60 * 1000000):
             if math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)) <= \
@@ -206,15 +207,15 @@ class IoT_Device:
                     self.stored_data -= min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
                     sent_data = min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
 
-                    self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 60 * 1000000)
+                    self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 60 * 1_000_000)
                     return sent_data, self.mean_AoI
 
                 else:
-                    self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 60 * 1000000)
+                    self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 60 * 1_000_000)
                     return 0, self.mean_AoI
 
             else:
-                self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 60 * 1000000)
+                self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 60 * 1_000_000)
                 return -1, self.mean_AoI
         else:
             return -1, self.mean_AoI
@@ -223,8 +224,8 @@ class IoT_Device:
         if self.indX == X and self.indY == Y:
             if self.solar_powered and charge:
                 return 60.0
-            elif self.stored_energy > round((6.8 / (2.5 * 60)) * 1000000) and charge:
-                self.stored_energy -= round(6.8 / (2.5 * 60) * 1000000)
+            elif self.stored_energy > round((6.8 / (2.5 * 60)) * 1_000_000) and charge:
+                self.stored_energy -= round(6.8 / (2.5 * 60) * 1_000_000)
                 return 60.0
             else:
                 return 0
