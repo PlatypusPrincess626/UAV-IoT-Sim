@@ -91,7 +91,7 @@ class make_env:
             if self.curr_step < self._max_steps:
                 x = self.curr_step/60 + 2
                 alpha = 1.041834 - 0.6540587 * x + 0.4669073 * pow(x, 2) - 0.1225805 * pow(x, 3) + 0.0137882 * pow(x, 4) - 0.0005703625 * pow(x, 5)
-            	
+
                 for sens in range(self._num_sensors):
                     self._env.sensorTable.iloc[sens, 0].harvest_energy(alpha, self._env, self.curr_step)
                     self._env.sensorTable.iloc[sens, 0].harvest_data(self.curr_step)

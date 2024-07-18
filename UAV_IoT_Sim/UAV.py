@@ -15,7 +15,7 @@ class QuadUAV:
         self._comms = {
             "LoRa_Max_Distance_m": 5000,
             "LoRa_Bit_Rate_bit/s": 24975,
-            "LoRa_Current_mA": 0.8,
+            "LoRa_Current_mA": 800,
             "LoRa_Voltage_V": 3.7,
             "LoRa_Power_W": 0.8 * 3.7,
 
@@ -23,7 +23,7 @@ class QuadUAV:
             "AmBC_Bit_Rate_bit/s": 1592,
             "AmBC_Power_W": 0.00352 / 1000,
             "AmBC_Voltage_V": 3.3,
-            "AmBC_Current_mA": 0.00352 / 3.3
+            "AmBC_Current_mA": 1.2
         }
 
         # Positioning
@@ -69,7 +69,7 @@ class QuadUAV:
         self.charge_rate = 2.5  # 150 min charging time
         self.flight_discharge = 0.5  # 30 min flight time
         self.amp = self.max_energy / self.charge_rate  # Roughly 2.72 A optimal current
-        self.stored_energy = self.max_energy * 1000  # Initialize at full battery
+        self.stored_energy = self.max_energy * 1_000  # Initialize at full battery
         self.is_charging = False
 
         # State used for model
@@ -86,7 +86,7 @@ class QuadUAV:
 
     def reset(self):
         # Reset Flags
-        self.stored_energy = self.max_energy * 1000
+        self.stored_energy = self.max_energy * 1_000
         self.crash = False
         self.model_transit = False
         self.is_charging = False
@@ -112,7 +112,8 @@ class QuadUAV:
 
         if round(self.targetX) == round(self.indX) and round(self.targetY) == round(self.indY):
             self.energy_cost(0, 0, 0)
-        elif self.stored_energy >= (((self.max_energy / self.flight_discharge) / 60) * 1000):
+
+        elif self.stored_energy >= (self.max_energy / (self.flight_discharge * 60) * 1_000):
 
             if maxDist <= self.maxSpd * 60:
                 env.moveUAV(round(self.indX), round(self.indY), round(self.targetX), round(self.targetY))
@@ -138,16 +139,16 @@ class QuadUAV:
 
         total_cost = 0
         # Cost of air travel
-        total_cost += flight * ((self.max_energy / self.flight_discharge) / (60 * 60))
+        total_cost += round(flight * 1_000 * (self.max_energy / (self.flight_discharge * 60 * 60)))
         # Cost of AmBC
-        total_cost += lora * self._comms.get("LoRa_Current_mA")
+        total_cost += round(lora * self._comms.get("LoRa_Current_mA"))
         # Cost of LoRa
-        total_cost += ambc * self._comms.get("AmBC_Current_mA")
+        total_cost += round(ambc * self._comms.get("AmBC_Current_mA"))
 
-        self.step_move_cost = flight * 1000 * ((self.max_energy / self.flight_discharge) / (60 * 60))
-        self.step_comms_cost += lora * 1000 * self._comms.get("LoRa_Current_mA") + ambc * 1000 * self._comms.get("AmBC_Current_mA")
+        self.step_move_cost = flight * (self.max_energy / (self.flight_discharge * 60 * 60))
+        self.step_comms_cost += lora * self._comms.get("LoRa_Current_mA") + ambc * self._comms.get("AmBC_Current_mA")
 
-        self.stored_energy -= round(total_cost * 1000)
+        self.stored_energy -= total_cost
         self.state[0][2] = self.stored_energy
         self.full_state.iloc[0, 2] = self.stored_energy
 
@@ -202,8 +203,8 @@ class QuadUAV:
         if self.target.type == 2:
             t = self.target.charge_time(int(self.indX), int(self.indY), self.is_charging)
 
-            self.stored_energy += t * 1000 * (self.max_energy / (self.charge_rate * 60 * 60))
-            self.energy_harvested = t * 1000 * (self.max_energy / (self.charge_rate * 60 * 60))
+            self.stored_energy += t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60))
+            self.energy_harvested = t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60))
             self.state[0][2] = self.stored_energy
             self.full_state.iloc[0, 3] = self.stored_energy
 
@@ -229,11 +230,11 @@ class QuadUAV:
         elif self.target.type == 1:
             self.target = self.target
 
-        elif self.stored_energy < (self.max_energy * .30 * 1000):
+        elif self.stored_energy < (self.max_energy * .30 * 1_000):
             self.is_charging = True
             self.target = self.targetHead
 
-        elif self.is_charging and self.stored_energy > (self.max_energy * .60 * 1000):
+        elif self.is_charging and self.stored_energy > (self.max_energy * .60 * 1_000):
             self.is_charging = False
             self.target = self.target
 
