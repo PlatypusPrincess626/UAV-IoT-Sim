@@ -231,7 +231,7 @@ class IoT_Device:
             return 0
 
     def get_dest(self, state, full_state, model, step, _=None):
-        if self.stored_data > 1000:
+        if self.stored_data > self.max_data * 0.20:
             return False, False, self, _, state, _, self.headSerial, _
 
         for CH in range(len(full_state) - 1):
