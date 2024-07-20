@@ -110,7 +110,7 @@ class QuadUAV:
         maxDist = math.sqrt(pow(self.indX - self.targetX, 2) + pow(self.indY - self.targetY, 2))
         self.step_move_cost = 0
 
-        if round(self.targetX) == round(self.indX) and round(self.targetY) == round(self.indY):
+        if abs(self.targetX - self.indX) < 1.0 and abs(self.targetY - self.indY) < 1.0:
             self.energy_cost(0, 0, 0)
 
         elif self.stored_energy >= (self.max_energy / (self.flight_discharge * 60) * 1_000):
@@ -145,7 +145,7 @@ class QuadUAV:
         # Cost of LoRa
         total_cost += round(ambc * self._comms.get("AmBC_Current_mA"))
 
-        self.step_move_cost = flight * (self.max_energy / (self.flight_discharge * 60 * 60))
+        self.step_move_cost += flight * (self.max_energy / (self.flight_discharge * 60 * 60))
         self.step_comms_cost += lora * self._comms.get("LoRa_Current_mA") + ambc * self._comms.get("AmBC_Current_mA")
 
         self.stored_energy -= total_cost
@@ -199,12 +199,11 @@ class QuadUAV:
         return train_model, change_archives
 
     def receive_energy(self):
-        self.energy_harvested = 0
         if self.target.type == 2:
             t = self.target.charge_time(int(self.indX), int(self.indY), self.is_charging)
 
             self.stored_energy += t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60))
-            self.energy_harvested = t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60))
+            self.energy_harvested += t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60))
             self.state[0][2] = self.stored_energy
             self.full_state.iloc[0, 3] = self.stored_energy
 

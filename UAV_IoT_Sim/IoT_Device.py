@@ -55,7 +55,7 @@ class IoT_Device:
             self.sens_amp = self.sens_pow / self._comms.get("AmBC_Voltage_V") * 1_000
 
             # Battery Specifics
-            self.solarArea = 20 * 40  # 20 mm x 40 mm
+            self.solarArea = 0.02 * 0.04  # 20 mm x 40 mm
             self._C = 1  # F
             self.max_energy = 1_280  # Ah
             self.charge_rate = 2.56  # A/h
@@ -76,7 +76,7 @@ class IoT_Device:
             self.max_data = 25_000_000
             self.stored_data = random.randint(1_028_000, 25_000_000)
 
-            self.solarArea = 200 * 400  # 20 cm x 40 cm
+            self.solarArea = 2 * 4  # 20 cm x 40 cm
             self._C = 3200  # F (Battery Supported)
             self.max_energy = 1_510  # Ah
             self.charge_rate = 3.02  # A/s
@@ -122,8 +122,8 @@ class IoT_Device:
         spectra = env.getIrradiance(self.lat, self.long, self.tilt, self.azimuth, step)
         interference = env.getInterference(self.indX, self.indY, self.type)
         f = InterpolatedUnivariateSpline(spectra['wavelength'], spectra['poa_global'])
-        powDensity = alpha * (1 - interference) * f.integral(self.spctrlLow, self.spctrlHigh)
-        power = (powDensity * self.solarArea / (1000 * 1000)) * 1_000_000
+        powDensity = f.integral(self.spctrlLow, self.spctrlHigh) / (self.spctrlHigh - self.spctrlLow)
+        power = alpha * (1 - interference) * (powDensity * self.solarArea)
 
         if power > 0.0:
             self.stored_energy += round(power/self._comms.get("LoRa_Voltage_V") * 1_000_000)
@@ -219,10 +219,10 @@ class IoT_Device:
             return -1, self.mean_AoI
 
     def charge_time(self, X: int, Y: int, charge):
-        if round(self.indX) == round(X) and round(self.indY) == round(Y):
-            if self.solar_powered and charge:
+        if abs(self.indX - X) < 1.0 and abs(self.indY - Y) < 1.0:
+            if self.solar_powered:
                 return 60.0
-            elif self.stored_energy > round((6.8 / (2.5 * 60) * 1_000_000)) and charge:
+            elif self.stored_energy > round((6.8 / (2.5 * 60) * 1_000_000)):
                 self.stored_energy -= round((6.8 / (2.5 * 60) * 1_000_000))
                 return 60.0
             else:
