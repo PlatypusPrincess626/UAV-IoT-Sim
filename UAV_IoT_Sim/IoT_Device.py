@@ -73,7 +73,7 @@ class IoT_Device:
             self.h = 0
 
             # CH Specs
-            self.max_data = 25_000_000
+            self.max_data = 12_500_000
             self.stored_data = random.randint(1_028_000, 25_000_000)
 
             self.solarArea = 2 * 4  # 20 cm x 40 cm
@@ -157,22 +157,22 @@ class IoT_Device:
         rotation = step % rotations
         sensor = rotation * 2
         activeChannels = []
-        sensor1 = self.sens_table.iloc[sensor, 0]
+        sensor1 = self.sens_table.iat[sensor, 0]
         activeChannels.append(max(0, sensor1.ws_upload_data(self.indX, self.indY)))
 
         if rotation < (rotations - 1) or len(self.sens_table.index) % 2 == 0:
-            sensor2 = self.sens_table.iloc[sensor + 1, 0]
+            sensor2 = self.sens_table.iat[sensor + 1, 0]
             activeChannels.append(max(0, sensor2.ws_upload_data(self.indX, self.indY)))
 
         totalChannels = 0
         for channel in range(len(activeChannels)):
             if activeChannels[channel] > 0:
-                self.sens_table.iloc[sensor + channel, 1] = True
-                self.sens_table.iloc[sensor + channel, 2] = step
+                self.sens_table.iat[sensor + channel, 1] = True
+                self.sens_table.iat[sensor + channel, 2] = step
                 self.stored_data += activeChannels[channel]
                 totalChannels += 1
             else:
-                self.sens_table.iloc[sensor + channel, 1] = False
+                self.sens_table.iat[sensor + channel, 1] = False
 
         self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 30 * totalChannels)
         self.mean_AoI = self.sens_table.iat[0, 2]
@@ -222,8 +222,8 @@ class IoT_Device:
         if abs(self.indX - X) < 1.0 and abs(self.indY - Y) < 1.0:
             if self.solar_powered:
                 return 60.0
-            elif self.stored_energy > round((6.8 / (2.5 * 60) * 1_000_000)):
-                self.stored_energy -= round((6.8 / (2.5 * 60) * 1_000_000))
+            elif self.stored_energy > round(6_800_000 / (2.5 * 60)):
+                self.stored_energy -= round(6_800_000 / (2.5 * 60))
                 return 60.0
             else:
                 return 0
@@ -231,34 +231,34 @@ class IoT_Device:
             return 0
 
     def get_dest(self, state, full_state, model, step, _=None):
-        if self.stored_data > self.max_data * 0.20:
+        if self.stored_data > self.max_data * 0.25:
             return False, False, self, _, state, _, self.headSerial, _
 
         for CH in range(len(full_state) - 1):
-            if full_state.iloc[CH + 1, 3] == 0:
-                return False, True, full_state.iloc[CH + 1, 0], _, state, _, self.headSerial, _
+            if full_state.iat[CH + 1, 3] < 1.0:
+                return False, True, full_state.iat[CH + 1, 0], _, state, _, self.headSerial, _
 
         sensMapping: List[List[int]] = [[0] * 3 for _ in range(5)]
         count = 0
         for sens in range(len(self.sens_table)):
-            if not (self.sens_table.iloc[sens, 1]) and (count < 5):
+            if not (self.sens_table.iat[sens, 1]) and (count < 5):
                 sensMapping[count][0], sensMapping[count][1], sensMapping[count][2] = sens, \
-                    math.sqrt(pow((self.indX - self.sens_table.iloc[sens, 0].indX), 2) + \
-                              pow((self.indY - self.sens_table.iloc[sens, 0].indY), 2)), (-5 + count)
+                    math.sqrt(pow((self.indX - self.sens_table.iat[sens, 0].indX), 2) + \
+                              pow((self.indY - self.sens_table.iat[sens, 0].indY), 2)), (-5 + count)
                 state[sensMapping[count][2]][1], state[sensMapping[count][2]][2] = sensMapping[count][1], \
-                    self.sens_table.iloc[sens, 2]
+                    self.sens_table.iat[sens, 2]
             count += 1
 
         action = model.act(state)
 
         if action < (len(full_state) - 1):
-            return True, True, full_state.iloc[action + 1, 0], _, state, _, action, _
+            return True, True, full_state.iat[action + 1, 0], _, state, _, action, _
         else:
-            sensor = self.sens_table.iloc[sensMapping[action - len(full_state) + 1][0], 0]
-            self.sens_table.iloc[sensMapping[action - len(full_state) + 1][0], 2] = step
+            sensor = self.sens_table.iat[sensMapping[action - len(full_state) + 1][0], 0]
+            self.sens_table.iat[sensMapping[action - len(full_state) + 1][0], 2] = step
             state1 = state
             for Iter in range(5):
                 state[len(full_state) + Iter][1], state[len(full_state) + Iter][2] = 0, 0
 
             action2 = model.act(state) % (len(full_state) - 1)
-            return True, True, sensor, full_state.iloc[action2 + 1, 0], state1, state, action, action2
+            return True, True, sensor, full_state.iat[action2 + 1, 0], state1, state, action, action2

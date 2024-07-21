@@ -101,12 +101,16 @@ class QuadUAV:
         count = 0
         for row in range(len(self.state) - 1):
             self.state[row + 1][0] = count
-            self.full_state[row, 2] = 0
-            self.full_state[row, 3] = 0
+            self.full_state[row + 1, 2] = 0
+            self.full_state[row + 1, 3] = 0
             count += 1
 
     # Internal UAV Mechanics
     def navigate_step(self, env: object):
+        self.step_move_cost = 0
+        self.step_comms_cost = 0
+        self.energy_harvested = 0
+
         maxDist = math.sqrt(pow(self.indX - self.targetX, 2) + pow(self.indY - self.targetY, 2))
         self.step_move_cost = 0
 
@@ -136,7 +140,6 @@ class QuadUAV:
             self.crash = True
 
     def energy_cost(self, flight: float = 0.0, lora: float = 0.0, ambc: float = 0.0):
-
         total_cost = 0
         # Cost of air travel
         total_cost += round(flight * 1_000 * (self.max_energy / (self.flight_discharge * 60 * 60)))
@@ -150,7 +153,7 @@ class QuadUAV:
 
         self.stored_energy -= total_cost
         self.state[0][2] = self.stored_energy
-        self.full_state.iloc[0, 2] = self.stored_energy
+        self.full_state.iat[0, 2] = self.stored_energy
 
     # Finish with battery drain
     # UAV-IoT Communication
@@ -205,21 +208,21 @@ class QuadUAV:
             self.stored_energy += t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60))
             self.energy_harvested += t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60))
             self.state[0][2] = self.stored_energy
-            self.full_state.iloc[0, 3] = self.stored_energy
+            self.full_state.iat[0, 3] = self.stored_energy
 
     def set_dest(self, model, step, _=None):
         train_model = False
         used_model = False
 
         if self.target is None:
-            minDist = 10000.0
-            minCH = self.full_state.iloc[1, 0]
+            minDist = 10_000.0
+            minCH = self.full_state.iat[1, 0]
             for CH in range(len(self.full_state) - 1):
-                dist = math.sqrt(pow((self.indX - self.full_state.iloc[CH + 1, 0].indX), 2) \
-                                 + pow((self.indY - self.full_state.iloc[CH + 1, 0].indY), 2))
+                dist = math.sqrt(pow((self.indX - self.full_state.iat[CH + 1, 0].indX), 2) \
+                                 + pow((self.indY - self.full_state.iat[CH + 1, 0].indY), 2))
                 if dist < minDist:
                     minDist = dist
-                    minCH = self.full_state.iloc[CH + 1, 0]
+                    minCH = self.full_state.iat[CH + 1, 0]
 
             self.target = minCH
             self.targetHead = minCH
@@ -274,6 +277,6 @@ class QuadUAV:
                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
     def update_state(self, device, step, data):
-        self.full_state.iloc[device, 3] = step
-        self.full_state.iloc[device, 2] += data
-        self.full_state.iloc[0, 2] += data
+        self.full_state.iat[device, 3] = step
+        self.full_state.iat[device, 2] += data
+        self.full_state.iat[0, 2] += data
