@@ -1,6 +1,7 @@
 # Import Dependencies
 import random
 from typing import List
+import math
 
 import numpy
 import math
@@ -179,7 +180,7 @@ class IoT_Device:
         for sens in range(len(self.sens_table) - 1):
             if step - self.sens_table.iat[sens + 1, 2] > step - self.mean_AoI:
                 self.mean_AoI += self.sens_table.iat[sens + 1, 2]
-        self.mean_AoI = ceil(self.mean_AoI / len(self.sens_table))
+        self.mean_AoI = math.ceil(self.mean_AoI / len(self.sens_table))
 
     def ch_upload(self, X: int, Y: int):
         if self.solar_powered:
