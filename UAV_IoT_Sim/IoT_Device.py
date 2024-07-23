@@ -78,7 +78,7 @@ class IoT_Device:
 
             self.solarArea = 2 * 4  # 20 cm x 40 cm
             self._C = 3200  # F (Battery Supported)
-            self.max_energy = 1_510  # Ah
+            self.max_energy = 6_800  # Ah
             self.charge_rate = 3.02  # A/s
             self.discharge_rate = 0.755  # s
             self.stored_energy = round(self.max_energy * 1_000)
@@ -179,7 +179,7 @@ class IoT_Device:
         for sens in range(len(self.sens_table) - 1):
             if step - self.sens_table.iat[sens + 1, 2] > step - self.mean_AoI:
                 self.mean_AoI += self.sens_table.iat[sens + 1, 2]
-        self.mean_AoI = round(self.mean_AoI / len(self.sens_table))
+        self.mean_AoI = ceil(self.mean_AoI / len(self.sens_table))
 
     def ch_upload(self, X: int, Y: int):
         if self.solar_powered:
