@@ -232,12 +232,12 @@ class IoT_Device:
             return 0
 
     def get_dest(self, state, full_state, model, step, _=None):
-        if self.stored_data > self.max_data * 0.25:
-            return False, False, self, _, state, _, self.headSerial, _
-
         for CH in range(len(full_state) - 1):
             if full_state.iat[CH + 1, 3] < 1.0:
-                return False, True, full_state.iat[CH + 1, 0], _, state, _, self.headSerial, _
+                return False, True, full_state.iat[CH + 1, 0], _, state, _, CH, _
+
+        if self.stored_data > self.max_data * 0.25:
+            return False, False, self, _, state, _, self.headSerial, _
 
         sensMapping: List[List[int]] = [[0] * 3 for _ in range(5)]
         count = 0

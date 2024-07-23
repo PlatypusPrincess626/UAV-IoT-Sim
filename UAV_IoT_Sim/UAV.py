@@ -92,6 +92,9 @@ class QuadUAV:
         self.is_charging = False
         self.target = None
         self.targetHead = None
+        self.step_move_cost = 0
+        self.step_comms_cost = 0
+        self.energy_harvested = 0
 
         # Reset State
         self.state = [[0, 0, 0] for _ in range(len(self.state))]
@@ -117,12 +120,13 @@ class QuadUAV:
         if abs(self.targetX - self.indX) < 1.0 and abs(self.targetY - self.indY) < 1.0:
             self.energy_cost(0, 0, 0)
 
-        elif self.stored_energy >= (self.max_energy / (self.flight_discharge * 60) * 1_000):
+        elif self.stored_energy > (1_000 * self.max_energy / (self.flight_discharge * 60)):
 
             if maxDist <= self.maxSpd * 60:
                 env.moveUAV(round(self.indX), round(self.indY), round(self.targetX), round(self.targetY))
                 self.indX = self.targetX
                 self.indY = self.targetY
+                time = maxDist / (self.maxSpd * 60)
 
             else:
                 vectAngle = math.atan((self.targetY - self.indY) / (self.targetX - self.indX))  # Returns radians
@@ -133,8 +137,9 @@ class QuadUAV:
                             )
                 self.indX += direction * self.maxSpd * 60 * math.cos(vectAngle)
                 self.indY += direction * self.maxSpd * 60 * math.sin(vectAngle)
+                time = maxDist / (self.maxSpd * 60)
 
-            self.energy_cost(60, 0, 0)
+            self.energy_cost(time, 0, 0)
 
         else:
             self.crash = True
@@ -148,7 +153,7 @@ class QuadUAV:
         # Cost of LoRa
         total_cost += round(ambc * self._comms.get("AmBC_Current_mA"))
 
-        self.step_move_cost += flight * (self.max_energy / (self.flight_discharge * 60 * 60))
+        self.step_move_cost += flight * 1_000 * (self.max_energy / (self.flight_discharge * 60 * 60))
         self.step_comms_cost += lora * self._comms.get("LoRa_Current_mA") + ambc * self._comms.get("AmBC_Current_mA")
 
         self.stored_energy -= total_cost
