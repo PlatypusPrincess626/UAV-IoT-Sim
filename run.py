@@ -180,21 +180,21 @@ def evaluate(
         curr_date_time = datetime.datetime.now()
 
         if log_metrics and i == eval_episodes - 1:
-            filename = "age_metrics_" + curr_date_time.strftime("%d") + "_" + curr_date_time.strftime("%m") + "2.csv"
+            filename = "age_metrics_" + curr_date_time.strftime("%d") + "_" + curr_date_time.strftime("%m") + ".csv"
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
                 csvwriter.writerows(CH_Age)
 
         if log_metrics and i == eval_episodes - 1:
-            filename = "data_metrics_" + curr_date_time.strftime("%d") + "_" + curr_date_time.strftime("%m") + "2.csv"
+            filename = "data_metrics_" + curr_date_time.strftime("%d") + "_" + curr_date_time.strftime("%m") + ".csv"
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
                 csvwriter.writerows(CH_Data)
 
         if log_metrics and i == eval_episodes - 1:
-            filename = "uav_metrics_" + curr_date_time.strftime("%d") + "_" + curr_date_time.strftime("%m") + "2.csv"
+            filename = "uav_metrics_" + curr_date_time.strftime("%d") + "_" + curr_date_time.strftime("%m") + ".csv"
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')

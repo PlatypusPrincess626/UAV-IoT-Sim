@@ -236,7 +236,7 @@ class IoT_Device:
             if full_state.iat[CH + 1, 3] < 1.0:
                 return False, True, full_state.iat[CH + 1, 0], _, state, _, CH, _
 
-        if self.stored_data > self.max_data * 0.25:
+        if self.stored_data > self.max_data * 0.50:
             return False, False, self, _, state, _, self.headSerial, _
 
         sensMapping: List[List[int]] = [[0] * 3 for _ in range(5)]
