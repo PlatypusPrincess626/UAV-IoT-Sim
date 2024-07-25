@@ -240,9 +240,6 @@ class QuadUAV:
             self.targetX = minCH.indX
             self.targetY = minCH.indY
 
-        elif self.target.type == 1:
-            self.target = self.target
-
         elif self.stored_energy < (self.max_energy * .30 * 1_000) and self.no_hold:
             self.is_charging = True
             self.target = self.targetHead
@@ -251,6 +248,8 @@ class QuadUAV:
             self.is_charging = False
             self.target = self.target
 
+        elif self.target.type == 1:
+            self.target = self.target
 
         # Here model_transit will change
         # Investigate what is needed on return
@@ -274,7 +273,7 @@ class QuadUAV:
                 self.target = dest1
                 self.targetX = dest1.indX
                 self.targetY = dest1.indY
-                return (train_model, used_model, state1, action1, \
+                return (train_model, used_model, state1, action1,
                         self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
             else:
@@ -282,10 +281,10 @@ class QuadUAV:
                 self.targetHead = dest1
                 self.targetX = dest1.indX
                 self.targetY = dest1.indY
-                return (train_model, used_model, state1, action1, \
+                return (train_model, used_model, state1, action1,
                         self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
-        return (train_model, used_model, self.state, self.targetHead.headSerial, \
+        return (train_model, used_model, self.state, self.targetHead.headSerial,
                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
     def update_state(self, device, step, data):

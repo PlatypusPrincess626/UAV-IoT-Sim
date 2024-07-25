@@ -171,9 +171,9 @@ def evaluate(
 
             if log_metrics and i == eval_episodes-1:
 
-                CH_Age.append([CH_Metrics[0][1], CH_Metrics[1][1], CH_Metrics[2][1], \
+                CH_Age.append([CH_Metrics[0][1], CH_Metrics[1][1], CH_Metrics[2][1],
                                CH_Metrics[3][1], CH_Metrics[4][1]])
-                CH_Data.append([CH_Metrics[0][0], CH_Metrics[1][0], CH_Metrics[2][0], \
+                CH_Data.append([CH_Metrics[0][0], CH_Metrics[1][0], CH_Metrics[2][0],
                                CH_Metrics[3][0], CH_Metrics[4][0]])
                 UAV_Metrics.append([comms, move, harvest])
 
