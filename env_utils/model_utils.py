@@ -23,7 +23,7 @@ def modify_state(state):
     for i in range(len(state)-5):
         refined_state[i][0] = state[i][1]/max(total_data, 1)
         if i == 0:
-            refined_state[i][1] = state[i][2]/6800
+            refined_state[i][1] = state[i][2]/6_800_000
         else:
             refined_state[i][1] = state[i][2]/max(zmax, 1)
     for i in range(5):

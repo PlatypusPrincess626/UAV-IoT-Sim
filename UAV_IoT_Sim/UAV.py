@@ -48,6 +48,7 @@ class QuadUAV:
         # State
         self.crash = False
         self.model_transit = False
+        self.no_hold = True
         self.origin_state = None
         self.origin_action = None
 
@@ -65,7 +66,7 @@ class QuadUAV:
         )
 
         # Battery Usage
-        self.max_energy = 6800  # 6800 mAh
+        self.max_energy = 6_800  # 6800 mAh
         self.charge_rate = 2.5  # 150 min charging time
         self.flight_discharge = 0.5  # 30 min flight time
         self.amp = self.max_energy / self.charge_rate  # Roughly 2.72 A optimal current
@@ -87,9 +88,12 @@ class QuadUAV:
     def reset(self):
         # Reset Flags
         self.stored_energy = self.max_energy * 1_000
+
         self.crash = False
         self.model_transit = False
         self.is_charging = False
+        self.no_hold = True
+
         self.target = None
         self.targetHead = None
         self.step_move_cost = 0
@@ -115,7 +119,6 @@ class QuadUAV:
         self.energy_harvested = 0
 
         maxDist = math.sqrt(pow(self.indX - self.targetX, 2) + pow(self.indY - self.targetY, 2))
-        self.step_move_cost = 0
 
         if abs(self.targetX - self.indX) < 1.0 and abs(self.targetY - self.indY) < 1.0:
             self.energy_cost(0, 0, 0)
@@ -210,6 +213,9 @@ class QuadUAV:
         if self.target.type == 2:
             t = self.target.charge_time(int(self.indX), int(self.indY), self.is_charging)
 
+            if self.is_charging and t < 60.0:
+                self.no_hold = False
+
             self.stored_energy += t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60))
             self.energy_harvested += t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60))
             self.state[0][2] = self.stored_energy
@@ -237,11 +243,11 @@ class QuadUAV:
         elif self.target.type == 1:
             self.target = self.target
 
-        elif self.stored_energy < (self.max_energy * .30 * 1_000):
+        elif self.stored_energy < (self.max_energy * .30 * 1_000) and self.no_hold:
             self.is_charging = True
             self.target = self.targetHead
 
-        elif self.is_charging and self.stored_energy > (self.max_energy * .60 * 1_000):
+        elif self.is_charging and self.stored_energy > (self.max_energy * .60 * 1_000) and self.no_hold:
             self.is_charging = False
             self.target = self.target
 
@@ -252,6 +258,7 @@ class QuadUAV:
             used_model, changed_transit, dest1, dest2, state1, state2, action1, action2 = \
                 self.target.get_dest(self.state, self.full_state, model, step)
 
+            self.no_hold = True
             if self.model_transit and changed_transit:
                 train_model = True
 

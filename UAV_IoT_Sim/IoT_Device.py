@@ -221,11 +221,13 @@ class IoT_Device:
 
     def charge_time(self, X: int, Y: int, charge):
         if abs(self.indX - X) < 1.0 and abs(self.indY - Y) < 1.0:
-            if self.solar_powered:
+            if self.solar_powered and charge:
                 return 60.0
-            elif self.stored_energy > round(6_800_000 / (2.5 * 60)):
+            elif self.stored_energy > self.max_energy * 0.25 and charge:
                 self.stored_energy -= round(6_800_000 / (2.5 * 60))
                 return 60.0
+            elif self.stored_energy > self.max_energy * 0.5:
+                return 30.0
             else:
                 return 0
         else:
