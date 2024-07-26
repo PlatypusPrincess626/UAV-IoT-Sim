@@ -126,7 +126,7 @@ class IoT_Device:
         powDensity = f.integral(self.spctrlLow, self.spctrlHigh) / (self.spctrlHigh - self.spctrlLow)
         power = alpha * (1 - interference) * (powDensity * self.solarArea)
 
-        if power > 0.0:
+        if power * 1_000_000 > 0.0:
             self.stored_energy += round(power/self._comms.get("LoRa_Voltage_V") * 1_000_000)
             self.solar_powered = True
         else:
