@@ -57,7 +57,7 @@ class IoT_Device:
             self.sens_amp = self.sens_pow / self._comms.get("AmBC_Voltage_V") * 1_000
 
             # Battery Specifics
-            self.solarArea = 0.02 * 0.04  # 20 mm x 40 mm
+            self.solarArea = 0.2 * 0.4  # 20 mm x 40 mm
             self._C = 1  # F
             self.max_energy = 1_280  # Ah
             self.charge_rate = 2.56  # A/h
@@ -135,7 +135,7 @@ class IoT_Device:
         else:
             self.solar_powered = False
 
-        print(self.solar_powered)
+        print(power)
 
     # Uploading data from a sensor
     def ws_upload_data(self, X, Y):

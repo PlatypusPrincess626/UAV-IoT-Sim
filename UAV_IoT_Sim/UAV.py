@@ -174,7 +174,6 @@ class QuadUAV:
         device = self.target
         train_model = False
         change_archives = False
-        self.step_comms_cost = 0
 
         if self.target.type == 1:
             dataReturn = max(0, device.ws_upload_data(int(self.indX), int(self.indY)))
