@@ -126,7 +126,7 @@ class IoT_Device:
         spectra = env.getIrradiance(self.lat, self.long, self.tilt, self.azimuth, step)
         interference = env.getInterference(self.indX, self.indY, self.type)
         f = InterpolatedUnivariateSpline(spectra['wavelength'], spectra['poa_global'])
-        powDensity = f.integral(self.spctrlLow, self.spctrlHigh) / (self.spctrlHigh - self.spctrlLow)
+        powDensity = f.integral(self.spctrlLow, self.spctrlHigh)
         power = abs(alpha / 100) * (1 - interference) * (powDensity * self.solarArea)
 
         if power * 1_000_000 > 0.0:
