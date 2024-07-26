@@ -142,7 +142,7 @@ class sim_env:
             obstType = random.randint(-3,-1)
             while obstType < 0:
                 place = random.randint(0, dims*dims-1)
-                if envObj[place]==0:
+                if envObj[place] == 0:
                     envObj[place] = obstType
                     obstType = 0
 
@@ -151,13 +151,12 @@ class sim_env:
         sensorList = []
         # Random Sensor Placement for now
         for sensor in range(self.total_sensors):
-            place = random.randint(0, dims*dims-1)
             obstType = 1
             while obstType > 0:
                 place = random.randint(0, dims*dims-1)
-                if envObj[place]==0:
-                    sensorList.append([IoT_Device.IoT_Device(int(place%dims), math.floor(place/dims), obstType,\
-                                                           self.envMap.iat[place,0], self.envMap.iat[place,1])])
+                if envObj[place] == 0:
+                    sensorList.append([IoT_Device.IoT_Device(int(place % dims), math.floor(place/dims), obstType,
+                                                             self.envMap.iat[place, 0], self.envMap.iat[place, 1])])
                     envObj[place] = obstType
                     envSensors[place] = obstType
                     obstType = 0
@@ -182,9 +181,10 @@ class sim_env:
             place = row * dims + column - 1
             obstType = 2
             while obstType > 0:
-                if envObj[place]==0:
-                    clusterheadList.append([IoT_Device.IoT_Device(int(place%dims), math.floor(place/dims), obstType,\
-                                                           self.envMap.iat[place,0], self.envMap.iat[place,1], countCH), []])
+                if envObj[place] == 0:
+                    clusterheadList.append([IoT_Device.IoT_Device(int(place % dims), math.floor(place/dims), obstType,
+                                                                  self.envMap.iat[place, 0], self.envMap.iat[place, 1],
+                                                                  countCH), []])
                     countCH += 1
                     envObj[place] = obstType
                     obstType = 0

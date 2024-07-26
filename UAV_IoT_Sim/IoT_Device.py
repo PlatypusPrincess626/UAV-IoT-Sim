@@ -127,13 +127,15 @@ class IoT_Device:
         interference = env.getInterference(self.indX, self.indY, self.type)
         f = InterpolatedUnivariateSpline(spectra['wavelength'], spectra['poa_global'])
         powDensity = f.integral(self.spctrlLow, self.spctrlHigh) / (self.spctrlHigh - self.spctrlLow)
-        power = alpha * (1 - interference) * (powDensity * self.solarArea)
+        power = abs(alpha / 100) * (1 - interference) * (powDensity * self.solarArea)
 
         if power * 1_000_000 > 0.0:
             self.stored_energy += round(power/self._comms.get("LoRa_Voltage_V") * 1_000_000)
             self.solar_powered = True
         else:
             self.solar_powered = False
+
+        print(self.solar_powered)
 
     # Uploading data from a sensor
     def ws_upload_data(self, X, Y):
