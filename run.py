@@ -131,6 +131,7 @@ def evaluate(
     for i in range(eval_episodes):
         eval_env.reset()
         done = False
+        crashed = False
         ep_reward = 0
         avgAoI = 0.0
         peakAoI = 0.0
@@ -142,6 +143,7 @@ def evaluate(
             train_model, old_state, old_action, comms, move, harvest = eval_env.step(agent)
             buffer_done = eval_env.terminated
             info = eval_env.curr_info
+            crashed = eval_env.terminated
 
             if buffer_done or eval_env.truncated:
                 done = True
@@ -218,7 +220,7 @@ def evaluate(
 
         total_reward += ep_reward / (eval_env.curr_step+count)
         total_steps += eval_env.curr_step
-        if info.get("Crashed", False):
+        if crashed:
             num_crashes += 1
 
     

@@ -38,6 +38,7 @@ class QuadUAV:
         self.targetY = float(Y)
         self.lat = lat
         self.long = long
+        self.last_AoI = 0
 
         # Movement
         self.maxSpd = 15  # 15 m/s max speed cap
@@ -99,6 +100,7 @@ class QuadUAV:
         self.step_move_cost = 0
         self.step_comms_cost = 0
         self.energy_harvested = 0
+        self.last_AoI = 0
 
         # Reset State
         self.state = [[0, 0, 0] for _ in range(len(self.state))]
@@ -106,11 +108,13 @@ class QuadUAV:
         self.full_state[0, 2] = 0
         self.full_state[0, 3] = 0
         count = 0
-        for row in range(len(self.state) - 1):
-            self.state[row + 1][0] = count
+        for row in range(len(self.full_state) - 1):
             self.full_state[row + 1, 2] = 0
             self.full_state[row + 1, 3] = 0
-            count += 1
+
+        for row in range(len(self.state) - 1):
+            self.state[row + 1][1] = 0
+            self.state[row + 1][2] = 0
 
     # Internal UAV Mechanics
     def navigate_step(self, env: object):
@@ -156,12 +160,12 @@ class QuadUAV:
         # Cost of LoRa
         total_cost += round(ambc * self._comms.get("AmBC_Current_mA"))
 
-        self.step_move_cost += flight * 1_000 * (self.max_energy / (self.flight_discharge * 60 * 60))
-        self.step_comms_cost += lora * self._comms.get("LoRa_Current_mA") + ambc * self._comms.get("AmBC_Current_mA")
+        self.step_move_cost += round(flight * 1_000 * (self.max_energy / (self.flight_discharge * 60 * 60)))
+        self.step_comms_cost += round(lora * self._comms.get("LoRa_Current_mA") + ambc * self._comms.get("AmBC_Current_mA"))
 
         self.stored_energy -= total_cost
         self.state[0][2] = self.stored_energy
-        self.full_state.iat[0, 2] = self.stored_energy
+        self.full_state.iat[0, 3] = self.stored_energy
 
     # Finish with battery drain
     # UAV-IoT Communication
@@ -189,21 +193,21 @@ class QuadUAV:
             totalTime = totalData / self._comms.get("AmBC_Bit_Rate_bit/s", 0.0)
             self.energy_cost(0, totalTime, totalTime)
 
-            self.update_state(self.targetHead.headSerial + 1, step, totalData)
+            self.update_state(self.targetHead.headSerial + 1, self.last_AoI, totalData)
             self.state[self.targetHead.headSerial + 1][1] += totalData
             self.state[0][1] += totalData
 
 
         else:
-            dataReturn, AoI = device.ch_upload(int(self.indX), int(self.indY))
+            dataReturn, self.last_AoI = device.ch_upload(int(self.indX), int(self.indY))
             dataReturn = max(0, dataReturn)
             totalData += dataReturn
 
             totalTime = totalData / self._comms.get("LoRa_Bit_Rate_bit/s")
             self.energy_cost(0, totalTime, 0)
 
-            self.update_state(device.headSerial + 1, step, totalData)
-            self.state[device.headSerial + 1][2] = AoI
+            self.update_state(device.headSerial + 1, self.last_AoI, totalData)
+            self.state[device.headSerial + 1][2] = self.last_AoI
             self.state[self.targetHead.headSerial + 1][1] += totalData
             self.state[0][1] += totalData
 
@@ -216,8 +220,8 @@ class QuadUAV:
             if self.is_charging and t < 60.0:
                 self.no_hold = False
 
-            self.stored_energy += t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60))
-            self.energy_harvested += t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60))
+            self.stored_energy += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
+            self.energy_harvested += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
             self.state[0][2] = self.stored_energy
             self.full_state.iat[0, 3] = self.stored_energy
 
@@ -229,7 +233,7 @@ class QuadUAV:
             minDist = 10_000.0
             minCH = self.full_state.iat[1, 0]
             for CH in range(len(self.full_state) - 1):
-                dist = math.sqrt(pow((self.indX - self.full_state.iat[CH + 1, 0].indX), 2) \
+                dist = math.sqrt(pow((self.indX - self.full_state.iat[CH + 1, 0].indX), 2)
                                  + pow((self.indY - self.full_state.iat[CH + 1, 0].indY), 2))
                 if dist < minDist:
                     minDist = dist
@@ -287,7 +291,7 @@ class QuadUAV:
         return (train_model, used_model, self.state, self.targetHead.headSerial,
                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
-    def update_state(self, device, step, data):
-        self.full_state.iat[device, 3] = step
+    def update_state(self, device, AoI, data):
+        self.full_state.iat[device, 3] = AoI
         self.full_state.iat[device, 2] += data
         self.full_state.iat[0, 2] += data

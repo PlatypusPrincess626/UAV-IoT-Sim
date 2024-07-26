@@ -51,7 +51,8 @@ class IoT_Device:
             self.sample_freq = 15  # 15 minutes between sampling
             self.sample_len = 30  # 30 sec sample duration
             self.max_data = 256_000  # 256 kB maximum data storage
-            self.stored_data = random.randint(0, 256000)
+            self.reset_max = round(self.max_data * 0.25)
+            self.stored_data = random.randint(0, self.reset_max)
             self.sens_pow = 2.2  # 2.2 W power consumption
             self.sens_amp = self.sens_pow / self._comms.get("AmBC_Voltage_V") * 1_000
 
@@ -75,7 +76,9 @@ class IoT_Device:
 
             # CH Specs
             self.max_data = 12_500_000
-            self.stored_data = random.randint(1_028_000, 25_000_000)
+            self.reset_min = round(self.max_data * 0.10)
+            self.reset_max = round(self.max_data * 0.25)
+            self.stored_data = random.randint(self.reset_min, self.reset_max)
 
             self.solarArea = 2 * 4  # 20 cm x 40 cm
             self._C = 3200  # F (Battery Supported)
@@ -90,9 +93,9 @@ class IoT_Device:
         self.mean_AoI = 0
         self.stored_energy = round(self.max_energy * 1_000)
         if self.type == 1:
-            self.stored_data = random.randint(128_000, 256_000)
+            self.stored_data = random.randint(0, self.reset_max)
         else:
-            self.stored_data = random.randint(1_028_000, 25_000_000)
+            self.stored_data = random.randint(self.reset_min, self.reset_max)
 
     # Call location
     def get_indicies(self):
