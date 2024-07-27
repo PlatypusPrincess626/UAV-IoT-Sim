@@ -165,10 +165,10 @@ class QuadUAV:
         # Cost of air travel
         total_cost += round(flight * 1_000 * (self.max_energy / (self.flight_discharge * 60 * 60)))
         # Cost of LoRa
-        total_cost += round(lora * self._comms.get("LoRa_Current_mA"))
+        total_cost += round(lora * self._comms.get("LoRa_Current_A"))
 
         self.step_move_cost += round(flight * 1_000 * (self.max_energy / (self.flight_discharge * 60 * 60)))
-        self.step_comms_cost += round(lora * self._comms.get("LoRa_Current_mA"))
+        self.step_comms_cost += round(lora * self._comms.get("LoRa_Current_A"))
 
         self.stored_energy -= total_cost
         self.state[0][2] = self.stored_energy
