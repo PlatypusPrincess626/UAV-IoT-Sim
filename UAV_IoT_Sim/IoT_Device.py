@@ -39,8 +39,8 @@ class IoT_Device:
         self.spctrlLow = 0  # Spectral bandwidth for power calculations
         self.spctrlHigh = numpy.inf
         self.solar_powered = True
-        self.cpu_pow = 20  # microwatts/ 2 micro Joule
-        self.cpu_amps = 6_000  # micro-amps
+        self.cpu_pow = 5.5  # microwatts/ 2 micro Joule
+        self.cpu_amps = 1_667  # micro-amps
 
         if devType == 1:
             self.type = 1
@@ -141,7 +141,7 @@ class IoT_Device:
         else:
             self.solar_powered = False
 
-        power_upkeep = round(self.cpu_amps * 60 + self._comms.get("AmBC_Current_A") * 60)
+        power_upkeep = round(self.cpu_amps * 60 + self._comms.get("AmBC_Current_A") * 4)
         if self.type == 2:
             power_upkeep += round(self._comms.get("Lora_Upkeep_A") * 60)
         self.stored_energy -= power_upkeep

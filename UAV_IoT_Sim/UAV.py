@@ -70,8 +70,8 @@ class QuadUAV:
 
         # Battery Usage
         self.max_energy = 6_800  # 6800 mAh
-        self.cpu_pow = 20  # microwatts/ 2 micro Joule
-        self.cpu_amps = 6_000  # micro-amps
+        self.cpu_pow = 5.5  # milli-watts/ 2 micro Joule
+        self.cpu_amps = 1_667  # micro-amps
 
         self.charge_rate = 2.5  # 150 min charging time
         self.flight_discharge = 0.5  # 30 min flight time
