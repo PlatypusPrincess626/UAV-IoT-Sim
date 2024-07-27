@@ -23,7 +23,7 @@ class make_env:
         self._max_steps = max_num_steps
 
         for uav in range(self._num_uav):
-            self.full_state = uav.full_state
+            self.full_state = self._env.UAVTable.iloc[uav, 0].full_state
         
         self.curr_step = 0
         self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
