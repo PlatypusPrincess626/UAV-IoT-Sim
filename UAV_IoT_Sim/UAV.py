@@ -15,15 +15,17 @@ class QuadUAV:
         self._comms = {
             "LoRa_Max_Distance_m": 5000,
             "LoRa_Bit_Rate_bit/s": 24975,
-            "LoRa_Current_mA": 800,
+            "LoRa_Current_A": 5400,  # micro-amps transmitting
             "LoRa_Voltage_V": 3.7,
-            "LoRa_Power_W": 0.8 * 3.7,
+            "LoRa_Power_W": 0.020,  # transmitting
+            "LoRa_Upkeep_W": 0.004,  # static
+            "Lora_Upkeep_A": 1200,  # micro-amps
 
             "AmBC_Max_Distance_m": 500,
             "AmBC_Bit_Rate_bit/s": 1592,
-            "AmBC_Power_W": 0.00352 / 1000,
+            "AmBC_Power_W": 0.00259,  # upkeep
             "AmBC_Voltage_V": 3.3,
-            "AmBC_Current_mA": 1.2
+            "AmBC_Current_A": 785  # micro-amps upkeep
         }
 
         # Positioning
@@ -68,6 +70,9 @@ class QuadUAV:
 
         # Battery Usage
         self.max_energy = 6_800  # 6800 mAh
+        self.cpu_pow = 20  # microwatts/ 2 micro Joule
+        self.cpu_amps = 6_000  # micro-amps
+
         self.charge_rate = 2.5  # 150 min charging time
         self.flight_discharge = 0.5  # 30 min flight time
         self.amp = self.max_energy / self.charge_rate  # Roughly 2.72 A optimal current
@@ -118,14 +123,18 @@ class QuadUAV:
 
     # Internal UAV Mechanics
     def navigate_step(self, env: object):
-        self.step_move_cost = 0
-        self.step_comms_cost = 0
+        self.step_move_cost = round(self.cpu_amps * 60)
+        self.step_comms_cost = round(self._comms.get("AmBC_Current_A") * 60 + self._comms.get("Lora_Upkeep_A") * 60)
         self.energy_harvested = 0
+
+        power_upkeep = round(self.cpu_amps * 60 + self._comms.get("AmBC_Current_A") * 60 +
+                        self._comms.get("Lora_Upkeep_A") * 60)
+        self.stored_energy -= power_upkeep
 
         maxDist = math.sqrt(pow(self.indX - self.targetX, 2) + pow(self.indY - self.targetY, 2))
 
         if abs(self.targetX - self.indX) < 1.0 and abs(self.targetY - self.indY) < 1.0:
-            self.energy_cost(0, 0, 0)
+            self.energy_cost(0, 0)
 
         elif self.stored_energy > (1_000 * self.max_energy / (self.flight_discharge * 60)):
 
@@ -146,22 +155,20 @@ class QuadUAV:
                 self.indY += direction * self.maxSpd * 60 * math.sin(vectAngle)
                 time = maxDist / (self.maxSpd * 60)
 
-            self.energy_cost(time, 0, 0)
+            self.energy_cost(time, 0)
 
         else:
             self.crash = True
 
-    def energy_cost(self, flight: float = 0.0, lora: float = 0.0, ambc: float = 0.0):
+    def energy_cost(self, flight: float = 0.0, lora: float = 0.0):
         total_cost = 0
         # Cost of air travel
         total_cost += round(flight * 1_000 * (self.max_energy / (self.flight_discharge * 60 * 60)))
-        # Cost of AmBC
-        total_cost += round(lora * self._comms.get("LoRa_Current_mA"))
         # Cost of LoRa
-        total_cost += round(ambc * self._comms.get("AmBC_Current_mA"))
+        total_cost += round(lora * self._comms.get("LoRa_Current_mA"))
 
         self.step_move_cost += round(flight * 1_000 * (self.max_energy / (self.flight_discharge * 60 * 60)))
-        self.step_comms_cost += round(lora * self._comms.get("LoRa_Current_mA") + ambc * self._comms.get("AmBC_Current_mA"))
+        self.step_comms_cost += round(lora * self._comms.get("LoRa_Current_mA"))
 
         self.stored_energy -= total_cost
         self.state[0][2] = self.stored_energy
@@ -190,7 +197,7 @@ class QuadUAV:
                 self.inRange = False
 
             totalTime = totalData / self._comms.get("AmBC_Bit_Rate_bit/s", 0.0)
-            self.energy_cost(0, totalTime, totalTime)
+            self.energy_cost(0, totalTime)
 
             self.update_state(self.targetHead.headSerial + 1, self.last_AoI, totalData)
             self.state[self.targetHead.headSerial + 1][1] += totalData
@@ -203,7 +210,7 @@ class QuadUAV:
             totalData += dataReturn
 
             totalTime = totalData / self._comms.get("LoRa_Bit_Rate_bit/s")
-            self.energy_cost(0, totalTime, 0)
+            self.energy_cost(0, totalTime)
 
             self.update_state(device.headSerial + 1, self.last_AoI, totalData)
             self.state[device.headSerial + 1][2] = self.last_AoI

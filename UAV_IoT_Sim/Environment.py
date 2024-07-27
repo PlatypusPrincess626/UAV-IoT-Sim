@@ -216,7 +216,7 @@ class sim_env:
             while obstType > 0:
                 place = random.randint(0, dims*dims-1)
                 if envObj[place]==0:
-                    uavList.append([UAV.QuadUAV(int(place%dims), math.floor(place/dims), self.envMap.iat[place,0],\
+                    uavList.append([UAV.QuadUAV(int(place%dims), math.floor(place/dims), self.envMap.iat[place,0],
                                                         self.envMap.iat[place,1], count, uavCHList)])
                     envObj[place] = obstType
                     obstType = 0

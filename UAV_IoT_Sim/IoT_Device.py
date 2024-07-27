@@ -21,20 +21,26 @@ class IoT_Device:
         self._comms = {
             "LoRa_Max_Distance_m": 5000,
             "LoRa_Bit_Rate_bit/s": 24975,
-            "LoRa_Current_A": 800,
+            "LoRa_Current_A": 5400,  # micro-amps transmitting
             "LoRa_Voltage_V": 3.7,
-            "LoRa_Power_W": 0.0008 * 3.7,
+            "LoRa_Power_W": 0.020,  # transmitting
+            "LoRa_Upkeep_W": 0.004,  # static
+            "Lora_Upkeep_A": 1200,  # micro-amps
 
             "AmBC_Max_Distance_m": 500,
             "AmBC_Bit_Rate_bit/s": 1592,
-            "AmBC_Power_W": 0.00352 / 1000,
+            "AmBC_Power_W": 0.00259,  # upkeep
             "AmBC_Voltage_V": 3.3,
-            "AmBC_Current_A": 1.2
+            "AmBC_Current_A": 785  # micro-amps upkeep
         }
+
+        # Total amount for each device/ clusterhead
 
         self.spctrlLow = 0  # Spectral bandwidth for power calculations
         self.spctrlHigh = numpy.inf
         self.solar_powered = True
+        self.cpu_pow = 20  # microwatts/ 2 micro Joule
+        self.cpu_amps = 6_000  # micro-amps
 
         if devType == 1:
             self.type = 1
@@ -47,9 +53,13 @@ class IoT_Device:
             self.h = 0
 
             # Sensor Specifications
-            self.max_col_rate = 64_000  # 64 bits per sample
-            self.sample_freq = 15  # 15 minutes between sampling
-            self.sample_len = 30  # 30 sec sample duration
+            self.max_col_rate = 16  # 16 bits / 2 bytes per sample
+            self.sample_freq = 0.25  # 15 seconds between sampling
+            self.sample_len = 1  # 30 sec sample duration
+            self.sample_rate_per_s = 300
+            self.bits_per_min = round(self.max_col_rate * self.sample_len * self.sample_rate_per_s / self.sample_freq)
+
+
             self.max_data = 256_000  # 256 kB maximum data storage
             self.reset_max = round(self.max_data * 0.25)
             self.stored_data = random.randint(0, self.reset_max)
@@ -107,18 +117,14 @@ class IoT_Device:
 
     def harvest_data(self, step):
         if self.solar_powered:
-            if step % self.sample_freq == 0:
-                self.stored_data = min(self.stored_data + self.max_col_rate, self.max_data)
-                return True
-            else:
-                return False
-        elif self.stored_energy > round(self.sens_amp * 30):
-            if step % self.sample_freq == 0:
-                self.stored_data = min(self.stored_data + self.max_col_rate, self.max_data)
-                self.stored_energy -= round(self.sens_amp * 30)
-                return True
-            else:
-                return False
+            self.stored_data = min(self.bits_per_min, self.max_data)
+            return True
+
+        elif self.stored_energy > round(self.sens_amp * 4):
+            self.stored_data = min(self.bits_per_min, self.max_data)
+            self.stored_energy -= round(self.sens_amp * 4)
+            return True
+
         else:
             return False
 
@@ -135,13 +141,16 @@ class IoT_Device:
         else:
             self.solar_powered = False
 
-        print(power)
+        power_upkeep = round(self.cpu_amps * 60 + self._comms.get("AmBC_Current_A") * 60)
+        if self.type == 2:
+            power_upkeep += round(self._comms.get("Lora_Upkeep_A") * 60)
+        self.stored_energy -= power_upkeep
 
     # Uploading data from a sensor
     def ws_upload_data(self, X, Y):
         if math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)) <= \
                 self._comms.get("AmBC_Max_Distance_m"):
-            return min(self._comms.get("AmBC_Bit_Rate_bit/s") * 30, self.stored_data)
+            return min(self._comms.get("AmBC_Bit_Rate_bit/s") * 26, self.stored_data)
         else:
             return -1
 

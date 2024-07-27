@@ -130,6 +130,13 @@ def evaluate(
 
     for i in range(eval_episodes):
         eval_env.reset()
+
+        if log_metrics and i == eval_episodes - 1:
+            CH_Age.append([eval_env.full_state[1, 1], eval_env.full_state[2, 1], eval_env.full_state[3, 1],
+                           eval_env.full_state[4, 1], eval_env.full_state[5, 1]])
+            CH_Data.append([eval_env.full_state[1, 1], eval_env.full_state[2, 1], eval_env.full_state[3, 1],
+                           eval_env.full_state[4, 1], eval_env.full_state[5, 1]])
+
         done = False
         crashed = False
         ep_reward = 0
@@ -160,8 +167,6 @@ def evaluate(
             for ch in range(len(CH_Metrics)):
                 CH_Metrics[ch][0] = eval_env.curr_state[ch + 1][1]
                 CH_Metrics[ch][1] = eval_env.curr_step - eval_env.curr_state[ch + 1][2]
-
-
 
             if train_model:
                 #agent.update(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)

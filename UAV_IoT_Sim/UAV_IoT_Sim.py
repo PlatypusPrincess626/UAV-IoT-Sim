@@ -16,10 +16,14 @@ class make_env:
     ):
         self.scene = scene
         self._env = Environment.sim_env(scene, num_sensors, num_uav, num_ch, max_num_steps)
+
         self._num_sensors = num_sensors
         self.num_ch = num_ch
         self._num_uav = num_uav
         self._max_steps = max_num_steps
+
+        for uav in range(self._num_uav):
+            self.full_state = uav.full_state
         
         self.curr_step = 0
         self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
@@ -49,7 +53,7 @@ class make_env:
     def reset(self):
         if self.scene == "test":
             for sensor in range(self._num_sensors):
-                self._env.sensorTable.iloc[sensor,0].reset()
+                self._env.sensorTable.iloc[sensor, 0].reset()
             for CH in range(self.num_ch):
                 self._env.CHTable.iloc[CH, 0].reset()
             for uav in range(self._num_uav):
