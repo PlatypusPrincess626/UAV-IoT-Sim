@@ -189,14 +189,14 @@ def evaluate(
                 csvwriter.writerows(CH_Age)
 
         if log_metrics and i == eval_episodes - 1:
-            filename = "data_metrics_" + curr_date_time.strftime("%d") + "_" + curr_date_time.strftime("%m") + ".csv"
+            filename = "data_metrics_" + curr_date_time.strftime("%d") + "_" + curr_date_time.strftime("%m") + "_QL.csv"
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
                 csvwriter.writerows(CH_Data)
 
         if log_metrics and i == eval_episodes - 1:
-            filename = "uav_metrics_" + curr_date_time.strftime("%d") + "_" + curr_date_time.strftime("%m") + ".csv"
+            filename = "uav_metrics_" + curr_date_time.strftime("%d") + "_" + curr_date_time.strftime("%m") + "_QL.csv"
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -370,7 +370,7 @@ def prepopulate(agent, prepop_steps, env):
                 # DDQN
                 # agent.update_mem(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
                 # if len(agent.memory) > 64:
-                #     agent.train(64)
+                #    agent.train(64)
             timestep += 1
 
 
