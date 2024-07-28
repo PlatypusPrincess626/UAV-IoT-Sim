@@ -135,7 +135,7 @@ class get_gann_agent:
     def __init__(self,
                  env
                  ):
-        self._num_inputs = 2*(env.num_ch + 6)
+        self._num_inputs = 2 * (env.num_ch + 6)
         self._num_output = env.num_ch + 5
         self.sol_idx = 0
 
@@ -226,7 +226,8 @@ class get_gann_agent:
         self.sol, self.sol_fit, self.sol_idx = ga_instance.best_solution()
 
     def act(self, s_t):
-        inputs = np.expand_dims(np.array(s_t).flatten(), axis=0)
+        mod_s_t = modify_state(s_t)
+        inputs = np.expand_dims(np.array(mod_s_t).flatten(), axis=0)
 
         predictions = pygad.nn.predict(last_layer=self.GANN_instance.population_networks[self.sol_idx],
                                        data_inputs=inputs)
