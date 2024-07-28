@@ -131,12 +131,6 @@ def evaluate(
     for i in range(eval_episodes):
         eval_env.reset()
 
-        if log_metrics and i == eval_episodes - 1:
-            CH_Age.append([eval_env.full_state[1, 1], eval_env.full_state[2, 1], eval_env.full_state[3, 1],
-                           eval_env.full_state[4, 1], eval_env.full_state[5, 1]])
-            CH_Data.append([eval_env.full_state[1, 1], eval_env.full_state[2, 1], eval_env.full_state[3, 1],
-                           eval_env.full_state[4, 1], eval_env.full_state[5, 1]])
-
         done = False
         crashed = False
         ep_reward = 0
@@ -177,6 +171,7 @@ def evaluate(
             ep_reward += info.get("Reward_Change")
 
             if log_metrics and i == eval_episodes-1:
+                print(eval_env.ch_sensors)
 
                 CH_Age.append([CH_Metrics[0][1], CH_Metrics[1][1], CH_Metrics[2][1],
                                CH_Metrics[3][1], CH_Metrics[4][1]])

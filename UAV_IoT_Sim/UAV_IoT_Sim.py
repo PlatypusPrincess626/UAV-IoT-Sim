@@ -21,9 +21,6 @@ class make_env:
         self.num_ch = num_ch
         self._num_uav = num_uav
         self._max_steps = max_num_steps
-
-        for uav in range(self._num_uav):
-            self.full_state = self._env.UAVTable.iloc[uav, 0].full_state
         
         self.curr_step = 0
         self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
@@ -31,6 +28,10 @@ class make_env:
 
         self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
         self.archived_action = 0
+
+        self.ch_sensors = [0 for _ in range(self.num_ch)]
+        for CH in range(self.num_ch):
+            self.ch_sensors[CH] = self._env.CHTable.iloc[CH, 0].num_sensors
 
         self.curr_reward = 0
         self.curr_info = {

@@ -77,6 +77,7 @@ class IoT_Device:
         else:
             self.type = 2
             self.sens_table = None
+            self.num_sensors = 0
             self.headSerial = clusterheadNum
             self.typeStr = "Clusterhead"
 
@@ -156,8 +157,10 @@ class IoT_Device:
 
     # Clusterhead-Specific Tasks
     def set_sensor_data(self, sens_list: list):
+        self.num_sensors = len(sens_list)
         sens_active = [True] * (len(sens_list))
         sens_aoi = [0] * (len(sens_list))
+
         self.sens_table = pd.concat(
             [pd.DataFrame(sens_list), pd.DataFrame(sens_active), pd.DataFrame(sens_aoi)],
             axis=1
