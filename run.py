@@ -182,21 +182,24 @@ def evaluate(
         curr_date_time = datetime.datetime.now()
 
         if log_metrics and i == eval_episodes - 1:
-            filename = "age_metrics_" + curr_date_time.strftime("%d") + "_" + curr_date_time.strftime("%m") + "_QL.csv"
+            filename = ("age_metrics_" + curr_date_time.strftime("%d") + "_" +
+                        curr_date_time.strftime("%m") + "_GANN.csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
                 csvwriter.writerows(CH_Age)
 
         if log_metrics and i == eval_episodes - 1:
-            filename = "data_metrics_" + curr_date_time.strftime("%d") + "_" + curr_date_time.strftime("%m") + "_QL.csv"
+            filename = ("data_metrics_" + curr_date_time.strftime("%d") + "_" +
+                        curr_date_time.strftime("%m") + "_GANN.csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
                 csvwriter.writerows(CH_Data)
 
         if log_metrics and i == eval_episodes - 1:
-            filename = "uav_metrics_" + curr_date_time.strftime("%d") + "_" + curr_date_time.strftime("%m") + "_QL.csv"
+            filename = ("uav_metrics_" + curr_date_time.strftime("%d") + "_" +
+                        curr_date_time.strftime("%m") + "_GANN.csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -384,7 +387,7 @@ def run_experiment(args):
         tf.config.experimental.set_memory_growth(device, True)
 
     print("Creating Agent")
-    agent = model_utils.get_ql_agent(
+    agent = model_utils.get_gann_agent(
         env
     )
 
