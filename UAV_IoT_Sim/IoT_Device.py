@@ -256,10 +256,16 @@ class IoT_Device:
     def get_dest(self, state, full_state, model, step, _=None):
         for CH in range(len(full_state) - 1):
             if full_state.iat[CH + 1, 3] < 1.0:
-                return False, True, full_state.iat[CH + 1, 0], _, state, _, CH, _
+                # ADF 2.0
+                # return False, True, full_state.iat[CH + 1, 0], _, state, _, CH, _
+                # ADF 1.0
+                return False, True, full_state.iat[CH + 1, 0], state, CH
 
         if self.stored_data > self.max_data * 0.50:
-            return False, False, self, _, state, _, self.headSerial, _
+            # ADF 2.0
+            # return False, False, self, _, state, _, self.headSerial, _
+            # ADF 1.0
+            return False, False, self, state, self.headSerial
 
         # ADF 2.0
         # sensMapping: List[List[int]] = [[0] * 3 for _ in range(5)]
