@@ -387,7 +387,7 @@ def run_experiment(args):
         tf.config.experimental.set_memory_growth(device, True)
 
     print("Creating Agent")
-    agent = model_utils.get_gann_agent(
+    agent = model_utils.get_ddqn_agent(
         env
     )
 
