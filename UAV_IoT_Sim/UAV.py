@@ -80,7 +80,11 @@ class QuadUAV:
         self.is_charging = False
 
         # State used for model
+        #   ADF 2.0
         self.state = [[0, 0, 0] for _ in range(len(CHList) + 6)]
+        #   ADF 1.0
+        self.state = [[0, 0, 0] for _ in range(len(CHList) + 1)]
+
         self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy
         count = 0
         for row in range(len(self.state) - 1):
@@ -262,37 +266,60 @@ class QuadUAV:
             self.target = self.target
 
         # Here model_transit will change
-        # Investigate what is needed on return
+        #   ADF 2.0
+        # else:
+        #     used_model, changed_transit, dest1, dest2, state1, state2, action1, action2 = \
+        #         self.target.get_dest(self.state, self.full_state, model, step)
+        #
+        #     self.no_hold = True
+        #     if self.model_transit and changed_transit:
+        #         train_model = True
+        #
+        #     self.state = state1
+        #     self.action = action1
+        #     if used_model:
+        #         self.model_transit = True
+        #     else:
+        #         self.model_transit = False
+        #
+        #     if dest1.type == 1:
+        #         self.targetHead = dest2
+        #         self.target = dest1
+        #         self.targetX = dest1.indX
+        #         self.targetY = dest1.indY
+        #         return (train_model, used_model, state1, action1,
+        #                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
+        #
+        #     else:
+        #         self.target = dest1
+        #         self.targetHead = dest1
+        #         self.targetX = dest1.indX
+        #         self.targetY = dest1.indY
+        #         return (train_model, used_model, state1, action1,
+        #                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
+
+        #   ADF 1.0
         else:
-            used_model, changed_transit, dest1, dest2, state1, state2, action1, action2 = \
+            used_model, changed_transit, dest, state, action = \
                 self.target.get_dest(self.state, self.full_state, model, step)
 
             self.no_hold = True
             if self.model_transit and changed_transit:
                 train_model = True
 
-            self.state = state1
-            self.action = action1
+            self.state = state
+            self.action = action
             if used_model:
                 self.model_transit = True
             else:
                 self.model_transit = False
 
-            if dest1.type == 1:
-                self.targetHead = dest2
-                self.target = dest1
-                self.targetX = dest1.indX
-                self.targetY = dest1.indY
-                return (train_model, used_model, state1, action1,
-                        self.step_comms_cost, self.step_move_cost, self.energy_harvested)
-
-            else:
-                self.target = dest1
-                self.targetHead = dest1
-                self.targetX = dest1.indX
-                self.targetY = dest1.indY
-                return (train_model, used_model, state1, action1,
-                        self.step_comms_cost, self.step_move_cost, self.energy_harvested)
+            self.target = dest
+            self.targetHead = dest
+            self.targetX = dest.indX
+            self.targetY = dest.indY
+            return (train_model, used_model, state, action,
+                    self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
         return (train_model, used_model, self.state, self.targetHead.headSerial,
                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
