@@ -183,7 +183,7 @@ def evaluate(
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("age_metrics_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_GANN.csv")
+                        curr_date_time.strftime("%m") + "_ADF1.csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -191,7 +191,7 @@ def evaluate(
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("data_metrics_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_GANN.csv")
+                        curr_date_time.strftime("%m") + "_ADF1.csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -199,7 +199,7 @@ def evaluate(
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("uav_metrics_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_GANN.csv")
+                        curr_date_time.strftime("%m") + "_ADF1.csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
