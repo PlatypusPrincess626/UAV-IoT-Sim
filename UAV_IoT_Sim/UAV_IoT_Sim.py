@@ -27,11 +27,11 @@ class make_env:
         self.archived_action = 0
 
         # # ADF 2.0
-        # self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
-        # self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
+        self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
+        self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
         # ADF 1.0
-        self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
-        self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
+        # self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
+        # self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
 
         self.ch_sensors = [0 for _ in range(self.num_ch)]
         for CH in range(self.num_ch):
@@ -70,11 +70,11 @@ class make_env:
             self.archived_action = 0
 
             # # ADF 2.0
-            # self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
-            # self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
+            self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
+            self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
             # ADF 1.0
-            self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
-            self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
+            # self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
+            # self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
 
             self.curr_reward = 0
             self.curr_info = {
@@ -100,9 +100,9 @@ class make_env:
         comms, move, harvest = 0, 0, 0
 
         # # ADF 2.0
-        # old_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
+        old_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
         # ADF 1.0
-        old_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
+        # old_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
 
         if not self.terminated:
             if self.curr_step < self._max_steps:

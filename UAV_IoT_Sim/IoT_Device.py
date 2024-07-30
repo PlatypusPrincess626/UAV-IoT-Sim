@@ -39,8 +39,8 @@ class IoT_Device:
         self.spctrlLow = 0  # Spectral bandwidth for power calculations
         self.spctrlHigh = numpy.inf
         self.solar_powered = True
-        self.cpu_pow = 5.5  # microwatts/ 2 micro Joule
-        self.cpu_amps = 1_667  # micro-amps
+        self.cpu_pow = 3.7  # microwatts/ 2 micro Joule
+        self.cpu_amps = 1_000  # micro-amps
 
         if devType == 1:
             self.type = 1
@@ -141,9 +141,9 @@ class IoT_Device:
         else:
             self.solar_powered = False
 
-        power_upkeep = round(self.cpu_amps * 60 + self._comms.get("AmBC_Current_A") * 4)
+        power_upkeep = round(self.cpu_amps + self._comms.get("AmBC_Current_A"))
         if self.type == 2:
-            power_upkeep += round(self._comms.get("Lora_Upkeep_A") * 60)
+            power_upkeep += round(self._comms.get("Lora_Upkeep_A"))
         self.stored_energy -= power_upkeep
 
     # Uploading data from a sensor
@@ -194,13 +194,13 @@ class IoT_Device:
         self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 30 * totalChannels)
 
         # ADF 2.0
-        # self.mean_AoI = self.sens_table.iat[0, 2]
-        # for sens in range(len(self.sens_table) - 1):
-        #     if step - self.sens_table.iat[sens + 1, 2] > step - self.mean_AoI:
-        #         self.mean_AoI += self.sens_table.iat[sens + 1, 2]
-        # self.mean_AoI = math.ceil(self.mean_AoI / len(self.sens_table))
+        self.mean_AoI = self.sens_table.iat[0, 2]
+        for sens in range(len(self.sens_table) - 1):
+            if step - self.sens_table.iat[sens + 1, 2] > step - self.mean_AoI:
+                self.mean_AoI += self.sens_table.iat[sens + 1, 2]
+        self.mean_AoI = math.ceil(self.mean_AoI / len(self.sens_table))
         # ADF 1.0
-        self.mean_AoI = step
+        # self.mean_AoI = step
 
     def ch_upload(self, X: int, Y: int):
         if self.solar_powered:
@@ -254,45 +254,45 @@ class IoT_Device:
             return 0
 
     def get_dest(self, state, full_state, model, step, _=None):
-        for CH in range(len(full_state) - 1):
+        for CH in range(len(full_state.index) - 1):
             if full_state.iat[CH + 1, 3] < 1.0:
                 # ADF 2.0
-                # return False, True, full_state.iat[CH + 1, 0], _, state, _, CH, _
+                return False, True, full_state.iat[CH + 1, 0], _, state, _, CH, _
                 # ADF 1.0
-                return False, True, full_state.iat[CH + 1, 0], state, CH
+                # return False, True, full_state.iat[CH + 1, 0], state, CH
 
         if self.stored_data > self.max_data * 0.50:
             # ADF 2.0
-            # return False, False, self, _, state, _, self.headSerial, _
+            return False, False, self, _, state, _, self.headSerial, _
             # ADF 1.0
-            return False, False, self, state, self.headSerial
+            # return False, False, self, state, self.headSerial
 
         # ADF 2.0
-        # sensMapping: List[List[int]] = [[0] * 3 for _ in range(5)]
-        # count = 0
-        # for sens in range(len(self.sens_table)):
-        #     if not (self.sens_table.iat[sens, 1]) and (count < 5):
-        #         sensMapping[count][0], sensMapping[count][1], sensMapping[count][2] = sens, \
-        #             math.sqrt(pow((self.indX - self.sens_table.iat[sens, 0].indX), 2) + \
-        #                       pow((self.indY - self.sens_table.iat[sens, 0].indY), 2)), (-5 + count)
-        #         state[sensMapping[count][2]][1], state[sensMapping[count][2]][2] = sensMapping[count][1], \
-        #             self.sens_table.iat[sens, 2]
-        #     count += 1
+        sensMapping: List[List[int]] = [[0] * 3 for _ in range(5)]
+        count = 0
+        for sens in range(len(self.sens_table)):
+            if not (self.sens_table.iat[sens, 1]) and (count < 5):
+                sensMapping[count][0], sensMapping[count][1], sensMapping[count][2] = sens, \
+                    math.sqrt(pow((self.indX - self.sens_table.iat[sens, 0].indX), 2) + \
+                              pow((self.indY - self.sens_table.iat[sens, 0].indY), 2)), (-5 + count)
+                state[sensMapping[count][2]][1], state[sensMapping[count][2]][2] = sensMapping[count][1], \
+                    self.sens_table.iat[sens, 2]
+            count += 1
 
         action = model.act(state)
 
         # ADF 2.0
-        # if action < (len(full_state) - 1):
-        #     return True, True, full_state.iat[action + 1, 0], _, state, _, action, _
-        # else:
-        #     sensor = self.sens_table.iat[sensMapping[action - len(full_state) + 1][0], 0]
-        #     self.sens_table.iat[sensMapping[action - len(full_state) + 1][0], 2] = step
-        #     state1 = state
-        #     for Iter in range(5):
-        #         state[len(full_state) + Iter][1], state[len(full_state) + Iter][2] = 0, 0
-        #
-        #     action2 = model.act(state) % (len(full_state) - 1)
-        #     return True, True, sensor, full_state.iat[action2 + 1, 0], state1, state, action, action2
+        if action < (len(full_state.index) - 1):
+            return True, True, full_state.iat[action + 1, 0], _, state, _, action, _
+        else:
+            sensor = self.sens_table.iat[sensMapping[action - len(full_state.index) + 1][0], 0]
+            self.sens_table.iat[sensMapping[action - len(full_state.index) + 1][0], 2] = step
+            state1 = state
+            for Iter in range(5):
+                state[len(full_state.index) + Iter][1], state[len(full_state.index) + Iter][2] = 0, 0
+
+            action2 = model.act(state) % (len(full_state.index) - 1)
+            return True, True, sensor, full_state.iat[action2 + 1, 0], state1, state, action, action2
 
         # ADF 1.0
-        return True, True, full_state.iat[action + 1, 0], state, action
+        # return True, True, full_state.iat[action + 1, 0], state, action

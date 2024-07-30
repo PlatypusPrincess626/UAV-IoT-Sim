@@ -36,6 +36,7 @@ class QuadUAV:
         # Trajectory
         self.target = None
         self.targetHead = None
+        self.targetSerial = 0
         self.targetX = float(X)
         self.targetY = float(Y)
         self.lat = lat
@@ -70,10 +71,10 @@ class QuadUAV:
 
         # Battery Usage
         self.max_energy = 6_800  # 6800 mAh
-        self.cpu_pow = 5.5  # milli-watts/ 2 micro Joule
-        self.cpu_amps = 1_667  # micro-amps
+        self.cpu_pow = 3.7  # milli-watts/ 2 micro Joule
+        self.cpu_amps = 1_000 # micro-amps
 
-        self.charge_rate = 2.5  # 150 min charging time
+        self.charge_rate = 1  # 60 min charging time
         self.flight_discharge = 0.5  # 30 min flight time
         self.amp = self.max_energy / self.charge_rate  # Roughly 2.72 A optimal current
         self.stored_energy = self.max_energy * 1_000  # Initialize at full battery
@@ -83,7 +84,7 @@ class QuadUAV:
         #   ADF 2.0
         self.state = [[0, 0, 0] for _ in range(len(CHList) + 6)]
         #   ADF 1.0
-        self.state = [[0, 0, 0] for _ in range(len(CHList) + 1)]
+        # self.state = [[0, 0, 0] for _ in range(len(CHList) + 1)]
 
         self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy
         count = 0
@@ -112,12 +113,11 @@ class QuadUAV:
         self.last_AoI = 0
 
         # Reset State
-        self.state = [[0, 0, 0] for _ in range(len(self.state))]
         self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy
         self.full_state[0, 2] = 0
         self.full_state[0, 3] = 0
         count = 0
-        for row in range(len(self.full_state) - 1):
+        for row in range(len(self.full_state.index) - 1):
             self.full_state[row + 1, 2] = 0
             self.full_state[row + 1, 3] = 0
 
@@ -127,12 +127,12 @@ class QuadUAV:
 
     # Internal UAV Mechanics
     def navigate_step(self, env: object):
-        self.step_move_cost = round(self.cpu_amps * 60)
-        self.step_comms_cost = round(self._comms.get("AmBC_Current_A") * 60 + self._comms.get("Lora_Upkeep_A") * 60)
+        self.step_move_cost = round(self.cpu_amps)
+        self.step_comms_cost = round(self._comms.get("AmBC_Current_A") + self._comms.get("Lora_Upkeep_A"))
         self.energy_harvested = 0
 
-        power_upkeep = round(self.cpu_amps * 60 + self._comms.get("AmBC_Current_A") * 60 +
-                        self._comms.get("Lora_Upkeep_A") * 60)
+        power_upkeep = round(self.cpu_amps + self._comms.get("AmBC_Current_A") +
+                        self._comms.get("Lora_Upkeep_A"))
         self.stored_energy -= power_upkeep
 
         maxDist = math.sqrt(pow(self.indX - self.targetX, 2) + pow(self.indY - self.targetY, 2))
@@ -203,8 +203,9 @@ class QuadUAV:
             totalTime = totalData / self._comms.get("AmBC_Bit_Rate_bit/s", 0.0)
             self.energy_cost(0, totalTime)
 
-            self.update_state(self.targetHead.headSerial + 1, self.last_AoI, totalData)
-            self.state[self.targetHead.headSerial + 1][1] += totalData
+            self.update_state(self.targetSerial + 1, self.last_AoI, totalData)
+            self.state[self.targetSerial + 1][2] = self.last_AoI
+            self.state[self.targetSerial + 1][1] += totalData
             self.state[0][1] += totalData
 
 
@@ -216,9 +217,9 @@ class QuadUAV:
             totalTime = totalData / self._comms.get("LoRa_Bit_Rate_bit/s")
             self.energy_cost(0, totalTime)
 
-            self.update_state(device.headSerial + 1, self.last_AoI, totalData)
-            self.state[device.headSerial + 1][2] = self.last_AoI
-            self.state[self.targetHead.headSerial + 1][1] += totalData
+            self.update_state(self.targetSerial + 1, self.last_AoI, totalData)
+            self.state[self.targetSerial + 1][2] = self.last_AoI
+            self.state[self.targetSerial + 1][1] += totalData
             self.state[0][1] += totalData
 
         return train_model, change_archives
@@ -242,7 +243,7 @@ class QuadUAV:
         if self.target is None:
             minDist = 10_000.0
             minCH = self.full_state.iat[1, 0]
-            for CH in range(len(self.full_state) - 1):
+            for CH in range(len(self.full_state.index) - 1):
                 dist = math.sqrt(pow((self.indX - self.full_state.iat[CH + 1, 0].indX), 2)
                                  + pow((self.indY - self.full_state.iat[CH + 1, 0].indY), 2))
                 if dist < minDist:
@@ -267,59 +268,61 @@ class QuadUAV:
 
         # Here model_transit will change
         #   ADF 2.0
-        # else:
-        #     used_model, changed_transit, dest1, dest2, state1, state2, action1, action2 = \
-        #         self.target.get_dest(self.state, self.full_state, model, step)
-        #
-        #     self.no_hold = True
-        #     if self.model_transit and changed_transit:
-        #         train_model = True
-        #
-        #     self.state = state1
-        #     self.action = action1
-        #     if used_model:
-        #         self.model_transit = True
-        #     else:
-        #         self.model_transit = False
-        #
-        #     if dest1.type == 1:
-        #         self.targetHead = dest2
-        #         self.target = dest1
-        #         self.targetX = dest1.indX
-        #         self.targetY = dest1.indY
-        #         return (train_model, used_model, state1, action1,
-        #                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
-        #
-        #     else:
-        #         self.target = dest1
-        #         self.targetHead = dest1
-        #         self.targetX = dest1.indX
-        #         self.targetY = dest1.indY
-        #         return (train_model, used_model, state1, action1,
-        #                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
-
-        #   ADF 1.0
         else:
-            used_model, changed_transit, dest, state, action = \
+            used_model, changed_transit, dest1, dest2, state1, state2, action1, action2 = \
                 self.target.get_dest(self.state, self.full_state, model, step)
 
             self.no_hold = True
             if self.model_transit and changed_transit:
                 train_model = True
 
-            self.state = state
-            self.action = action
+            self.state = state1
+            self.action = action1
             if used_model:
                 self.model_transit = True
             else:
                 self.model_transit = False
 
-            self.target = dest
-            self.targetHead = dest
-            self.targetX = dest.indX
-            self.targetY = dest.indY
-            return (train_model, used_model, state, action,
-                    self.step_comms_cost, self.step_move_cost, self.energy_harvested)
+            if dest1.type == 1:
+                self.targetSerial = self.targetHead.headSerial
+                self.targetHead = dest2
+                self.target = dest1
+                self.targetX = dest1.indX
+                self.targetY = dest1.indY
+                return (train_model, used_model, state1, action1,
+                        self.step_comms_cost, self.step_move_cost, self.energy_harvested)
+
+            else:
+                self.target = dest1
+                self.targetHead = dest1
+                self.targetSerial = self.targetHead.headSerial
+                self.targetX = dest1.indX
+                self.targetY = dest1.indY
+                return (train_model, used_model, state1, action1,
+                        self.step_comms_cost, self.step_move_cost, self.energy_harvested)
+
+        #   ADF 1.0
+        # else:
+        #     used_model, changed_transit, dest, state, action = \
+        #         self.target.get_dest(self.state, self.full_state, model, step)
+        #
+        #     self.no_hold = True
+        #     if self.model_transit and changed_transit:
+        #         train_model = True
+        #
+        #     self.state = state
+        #     self.action = action
+        #     if used_model:
+        #         self.model_transit = True
+        #     else:
+        #         self.model_transit = False
+        #
+        #     self.target = dest
+        #     self.targetHead = dest
+        #     self.targetX = dest.indX
+        #     self.targetY = dest.indY
+        #     return (train_model, used_model, state, action,
+        #             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
         return (train_model, used_model, self.state, self.targetHead.headSerial,
                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
