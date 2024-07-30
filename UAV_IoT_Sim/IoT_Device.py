@@ -257,6 +257,7 @@ class IoT_Device:
         for CH in range(len(full_state.index) - 1):
             if full_state.iat[CH + 1, 3] < 1.0:
                 # ADF 2.0
+                print("Boo")
                 return False, True, full_state.iat[CH + 1, 0], _, state, _, CH, _
                 # ADF 1.0
                 # return False, True, full_state.iat[CH + 1, 0], state, CH
