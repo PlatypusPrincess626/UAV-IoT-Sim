@@ -184,9 +184,9 @@ class make_env:
         minAge = self._aoi_threshold
 
         # ADF 2.0
-        # for index in range(len(self.curr_state) - 6):
+        for index in range(len(self.curr_state) - 6):
         # ADF 1.0
-        for index in range(len(self.curr_state) - 1):
+        # for index in range(len(self.curr_state) - 1):
             age = self.curr_step - self.curr_state[index + 1][2]
             if age > self._aoi_threshold:
                 age = self._aoi_threshold
@@ -203,9 +203,9 @@ class make_env:
         index: int
 
         # ADF 2.0
-        # for index in range(len(self.curr_state) - 5):
+        for index in range(len(self.curr_state) - 5):
         # ADF 1.0
-        for index in range(len(self.curr_state)):
+        # for index in range(len(self.curr_state)):
             if index > 0:
                 val = self.curr_state[index][1] / (max(self._curr_total_data, 1))
                 if val > maxColl:

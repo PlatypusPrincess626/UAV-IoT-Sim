@@ -244,7 +244,7 @@ class IoT_Device:
             if self.solar_powered and charge:
                 return 60.0
             elif self.stored_energy > self.max_energy * 0.25 and charge:
-                self.stored_energy -= round(6_800_000 / (2.5 * 60))
+                self.stored_energy -= round(6_800_000 / (1 * 60))
                 return 60.0
             elif self.stored_energy > self.max_energy * 0.5:
                 return 30.0
@@ -257,6 +257,7 @@ class IoT_Device:
         for CH in range(len(full_state.index) - 1):
             if full_state.iat[CH + 1, 3] < 1.0:
                 # ADF 2.0
+                print(CH, full_state.iat[CH + 1, 1], full_state.iat[CH + 1, 3])
                 return False, True, full_state.iat[CH + 1, 0], _, state, _, CH, _
                 # ADF 1.0
                 # return False, True, full_state.iat[CH + 1, 0], state, CH

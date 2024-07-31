@@ -171,8 +171,6 @@ def evaluate(
             ep_reward += info.get("Reward_Change")
 
             if log_metrics and i == eval_episodes-1:
-                print(eval_env.ch_sensors)
-
                 CH_Age.append([CH_Metrics[0][1], CH_Metrics[1][1], CH_Metrics[2][1],
                                CH_Metrics[3][1], CH_Metrics[4][1]])
                 CH_Data.append([CH_Metrics[0][0], CH_Metrics[1][0], CH_Metrics[2][0],
@@ -182,6 +180,7 @@ def evaluate(
         curr_date_time = datetime.datetime.now()
 
         if log_metrics and i == eval_episodes - 1:
+            print(eval_env.ch_sensors)
             filename = ("age_metrics_" + curr_date_time.strftime("%d") + "_" +
                         curr_date_time.strftime("%m") + "_ADF1.csv")
             open(filename, 'x')

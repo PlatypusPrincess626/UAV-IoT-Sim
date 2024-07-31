@@ -79,6 +79,7 @@ class QuadUAV:
         self.amp = self.max_energy / self.charge_rate  # Roughly 2.72 A optimal current
         self.stored_energy = self.max_energy * 1_000  # Initialize at full battery
         self.is_charging = False
+        self.full_state[0, 3] = self.stored_energy
 
         # State used for model
         #   ADF 2.0
@@ -86,7 +87,7 @@ class QuadUAV:
         #   ADF 1.0
         # self.state = [[0, 0, 0] for _ in range(len(CHList) + 1)]
 
-        self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy
+        self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy*1_000
         count = 0
         for row in range(len(self.state) - 1):
             self.state[row + 1][0] = count
@@ -113,9 +114,9 @@ class QuadUAV:
         self.last_AoI = 0
 
         # Reset State
-        self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy
+        self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy * 1_000
         self.full_state[0, 2] = 0
-        self.full_state[0, 3] = 0
+        self.full_state[0, 3] = self.stored_energy
         count = 0
         for row in range(len(self.full_state.index) - 1):
             self.full_state[row + 1, 2] = 0

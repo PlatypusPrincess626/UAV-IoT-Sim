@@ -205,9 +205,9 @@ class sim_env:
                     sensor[0].set_head(location[2], len(clusterheadList[location[2]][1]))
                     break
                     
-        for CH in clusterheadList:
-            uavCHList.append([CH[0], len(CH[1])])
-            CH[0].set_sensor_data(CH[1])
+        for CH in range(len(clusterheadList)):
+            uavCHList.append([clusterheadList[CH][0], len(clusterheadList[CH][1])])
+            uavCHList[CH][0].set_sensor_data(clusterheadList[CH][1])
         
         uavList = []
         count = 0
@@ -289,19 +289,19 @@ class sim_env:
     def moveUAV(self, X: int, Y: int, newX: int, newY: int): # Estimated Position of UAV (nearest meter)
         place = Y * self.dim + X
         newPlace = newY * self.dim + newX
-        if self.envMap.iloc[place, 2] == 3:
-            self.envMap.iloc[place, 2] = 0
-        elif self.envMap.iloc[place, 2] == 9:
-            self.envMap.iloc[place, 2] = 1
+        if self.envMap.iat[place, 2] == 3:
+            self.envMap.iat[place, 2] = 0
+        elif self.envMap.iat[place, 2] == 9:
+            self.envMap.iat[place, 2] = 1
         else:
-            self.envMap.iloc[place, 2] /= 3
+            self.envMap.iat[place, 2] /= 3
             
-        if self.envMap.iloc[newPlace, 2] == 0:
-            self.envMap.iloc[newPlace, 2] = 3
-        elif self.envMap.iloc[newPlace, 2] == 1:
-            self.envMap.iloc[newPlace, 2] = 9
+        if self.envMap.iat[newPlace, 2] == 0:
+            self.envMap.iat[newPlace, 2] = 3
+        elif self.envMap.iat[newPlace, 2] == 1:
+            self.envMap.iat[newPlace, 2] = 9
         else:
-            self.envMap.iloc[newPlace, 2] *= 3
+            self.envMap.iat[newPlace, 2] *= 3
     
     def getIrradiance(self, lat, long, tilt, azimuth, step):
         solpos = solarposition.get_solarposition(self.times[step], lat, long)
