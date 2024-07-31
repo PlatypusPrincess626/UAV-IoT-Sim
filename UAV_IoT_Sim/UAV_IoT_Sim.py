@@ -181,15 +181,16 @@ class make_env:
         '''
         totalAge = 0
         peakAge = 0
-        minAge = self._aoi_threshold
+        minAge = self.curr_step
 
         # ADF 2.0
         for index in range(len(self.curr_state) - 6):
         # ADF 1.0
         # for index in range(len(self.curr_state) - 1):
-            age = self.curr_step - self.curr_state[index + 1][2]
-            if age > self._aoi_threshold:
-                age = self._aoi_threshold
+            age = self.curr_state[index + 1][2]
+            # age = self.curr_step - self.curr_state[index + 1][2]
+            # if age > self._aoi_threshold:
+            #     age = self._aoi_threshold
             totalAge += age
             if age > peakAge:
                 peakAge = age

@@ -183,7 +183,7 @@ class IoT_Device:
 
         totalChannels = 0
         for channel in range(len(activeChannels)):
-            if activeChannels[channel] > 0:
+            if activeChannels[channel] >= 0:
                 self.sens_table.iat[sensor + channel, 1] = True
                 self.sens_table.iat[sensor + channel, 2] = step
                 self.stored_data += activeChannels[channel]
@@ -196,8 +196,7 @@ class IoT_Device:
         # ADF 2.0
         self.mean_AoI = self.sens_table.iat[0, 2]
         for sens in range(len(self.sens_table) - 1):
-            if step - self.sens_table.iat[sens + 1, 2] > step - self.mean_AoI:
-                self.mean_AoI += self.sens_table.iat[sens + 1, 2]
+            self.mean_AoI += self.sens_table.iat[sens + 1, 2]
         self.mean_AoI = math.ceil(self.mean_AoI / len(self.sens_table))
         # ADF 1.0
         # self.mean_AoI = step
@@ -261,10 +260,8 @@ class IoT_Device:
             # return False, False, self, state, self.headSerial
 
         for CH in range(len(full_state.index) - 1):
-            print(CH, full_state.iat[CH + 1, 1], full_state.iat[CH + 1, 3])
             if full_state.iat[CH + 1, 3] < 1.0:
                 # ADF 2.0
-                print(CH, full_state.iat[CH + 1, 1], full_state.iat[CH + 1, 3])
                 return False, True, full_state.iat[CH + 1, 0], _, state, _, CH, _
                 # ADF 1.0
                 # return False, True, full_state.iat[CH + 1, 0], state, CH
