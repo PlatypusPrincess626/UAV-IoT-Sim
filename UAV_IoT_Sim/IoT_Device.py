@@ -261,6 +261,7 @@ class IoT_Device:
             # return False, False, self, state, self.headSerial
 
         for CH in range(len(full_state.index) - 1):
+            print(CH, full_state.iat[CH + 1, 1], full_state.iat[CH + 1, 3])
             if full_state.iat[CH + 1, 3] < 1.0:
                 # ADF 2.0
                 print(CH, full_state.iat[CH + 1, 1], full_state.iat[CH + 1, 3])
