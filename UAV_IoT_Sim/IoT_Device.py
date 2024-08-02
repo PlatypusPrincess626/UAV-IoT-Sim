@@ -15,7 +15,7 @@ class IoT_Device:
         self.indY = Y
         self.lat = lat
         self.long = long
-        self.mean_AoI = 0
+        self.max_AoI = 0
 
         # Communication Specifications
         self._comms = {
@@ -101,7 +101,7 @@ class IoT_Device:
     def reset(self):
         self.indX = random.randint(0, 100)
         self.indY = random.randint(0, 100)
-        self.mean_AoI = 0
+        self.max_AoI = 0
         self.stored_energy = round(self.max_energy * 1_000)
         if self.type == 1:
             self.stored_data = random.randint(0, self.reset_max)
@@ -198,10 +198,10 @@ class IoT_Device:
         self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 30 * totalChannels)
 
         # ADF 2.0
-        self.mean_AoI = self.sens_table.iat[0, 2]
+        self.max_AoI = self.sens_table.iat[0, 2]
         for sens in range(len(self.sens_table) - 1):
-            self.mean_AoI += self.sens_table.iat[sens + 1, 2]
-        self.mean_AoI = math.ceil(self.mean_AoI / len(self.sens_table))
+            if self.sens_table.iat[sens, 2] > self.max_AoI:
+                self.max_AoI = self.sens_table.iat[sens, 2]
         # ADF 1.0
         # self.mean_AoI = step
 
@@ -214,13 +214,13 @@ class IoT_Device:
                     self.stored_data -= min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
                     sent_data = min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
 
-                    return sent_data, self.mean_AoI
+                    return sent_data, self.max_AoI
 
                 else:
-                    return 0, self.mean_AoI
+                    return 0, self.max_AoI
 
             else:
-                return -1, self.mean_AoI
+                return -1, self.max_AoI
         elif self.stored_energy > round(self._comms.get("LoRa_Current_A") * 60):
             if math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)) <= \
                     self._comms.get("LoRa_Max_Distance_m"):
@@ -230,17 +230,17 @@ class IoT_Device:
                     sent_data = min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
 
                     self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 60)
-                    return sent_data, self.mean_AoI
+                    return sent_data, self.max_AoI
 
                 else:
                     self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 60)
-                    return 0, self.mean_AoI
+                    return 0, self.max_AoI
 
             else:
                 self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 60)
-                return -1, self.mean_AoI
+                return -1, self.max_AoI
         else:
-            return -1, self.mean_AoI
+            return -1, self.max_AoI
 
     def charge_time(self, X: int, Y: int, charge):
         if abs(self.indX - X) < 1.0 and abs(self.indY - Y) < 1.0:

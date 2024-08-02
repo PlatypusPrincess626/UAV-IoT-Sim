@@ -29,7 +29,7 @@ class make_env:
         # # ADF 2.0
         self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
         self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
-        # ADF 1.0
+        # ADF 1.00
         # self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
         # self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
 
@@ -218,12 +218,14 @@ class make_env:
                 self._curr_total_data += abs(round(dataChange))
         
         distOffset = maxColl - minColl
-        
+
+
         rewardDist = 1 - distOffset
         rewardPeak = (1 - peakAge / (self.curr_step + 1))
         rewardAvgAge = (1 - (peakAge - avgAge) / (self.curr_step + 1))
         rewardDataChange = dataChange / 1_498_500
-        rewardChange = 0.5 * rewardDist + 2 * rewardPeak + 1.5 * rewardAvgAge + 0.1 * rewardDataChange
+
+        rewardChange = 0.5 * rewardDist + 2 * rewardPeak + 0 * rewardAvgAge + 0.1 * rewardDataChange
 
         if self.terminated:
             rewardChange -= 100
