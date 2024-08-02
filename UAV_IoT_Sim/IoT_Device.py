@@ -106,10 +106,9 @@ class IoT_Device:
             self.stored_data = random.randint(0, self.reset_max)
         else:
             self.stored_data = self.reset_max
-
-        for sens in range(len(self.sens_table.index)):
-            self.sens_table.iat[sens, 1] = True
-            self.sens_table.iat[sens, 2] = 0
+            for sens in range(self.sens_table):
+                self.sens_table.iat[sens, 1] = True
+                self.sens_table.iat[sens, 2] = 0
 
     # Call location
     def get_indicies(self):
