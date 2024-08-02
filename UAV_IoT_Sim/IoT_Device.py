@@ -60,8 +60,9 @@ class IoT_Device:
             self.bits_per_min = round(self.max_col_rate * self.sample_len * self.sample_rate_per_s / self.sample_freq)
 
             self.max_data = 256_000  # 256 kB maximum data storage
+            self.reset_min = round(self.max_data * 0.10)
             self.reset_max = round(self.max_data * 0.25)
-            self.stored_data = random.randint(0, self.reset_max)
+            self.stored_data = random.randint(self.reset_min, self.reset_max)
             self.sens_pow = 2.2  # 2.2 W power consumption
             self.sens_amp = self.sens_pow / self._comms.get("AmBC_Voltage_V") * 1_000
 
@@ -275,11 +276,11 @@ class IoT_Device:
         for sens in range(len(self.sens_table)):
             if not (self.sens_table.iat[sens, 1]) and (count < 5):
                 sensMapping[count][0], sensMapping[count][1], sensMapping[count][2] = sens, \
-                    math.sqrt(pow((self.indX - self.sens_table.iat[sens, 0].indX), 2) + \
+                    math.sqrt(pow((self.indX - self.sens_table.iat[sens, 0].indX), 2) +
                               pow((self.indY - self.sens_table.iat[sens, 0].indY), 2)), (-5 + count)
                 state[sensMapping[count][2]][1], state[sensMapping[count][2]][2] = sensMapping[count][1], \
                     self.sens_table.iat[sens, 2]
-            count += 1
+                count += 1
 
         action = model.act(state)
 
