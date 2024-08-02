@@ -106,7 +106,7 @@ class IoT_Device:
             self.stored_data = random.randint(0, self.reset_max)
         else:
             self.stored_data = self.reset_max
-            for sens in range(self.sens_table):
+            for sens in range(self.num_sensors):
                 self.sens_table.iat[sens, 1] = True
                 self.sens_table.iat[sens, 2] = 0
 
