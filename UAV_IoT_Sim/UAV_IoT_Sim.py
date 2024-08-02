@@ -220,10 +220,10 @@ class make_env:
         distOffset = maxColl - minColl
         
         rewardDist = 1 - distOffset
-        rewardPeak = max((1 - peakAge / self.curr_step), 0.1 * (1 - peakAge / self.curr_step))
-        rewardAvgAge = max((1 - (peakAge - avgAge)/self.curr_step), 0.1 * (1 - (peakAge - avgAge)/self.curr_step))
+        rewardPeak = (1 - peakAge / self.curr_step)
+        rewardAvgAge = (1 - (peakAge - avgAge)/self.curr_step)
         rewardDataChange = dataChange / 1_498_500
-        rewardChange = 0.5 * rewardDist + rewardPeak + rewardAvgAge + 0.1 * rewardDataChange
+        rewardChange = 0.5 * rewardDist + 2 * rewardPeak + 1.5 * rewardAvgAge + 0.1 * rewardDataChange
 
         if self.terminated:
             rewardChange -= 100
