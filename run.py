@@ -163,11 +163,11 @@ def evaluate(
                 CH_Metrics[ch][1] = eval_env.curr_step - eval_env.curr_state[ch + 1][2]
 
             if train_model:
-                # agent.update(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
+                agent.update(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
                 # DDQN
-                agent.update_mem(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
-                if len(agent.memory) > 64:
-                    agent.train(64)
+                # agent.update_mem(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
+                # if len(agent.memory) > 64:
+                #     agent.train(64)
             ep_reward += info.get("Reward_Change")
 
             if log_metrics and i == eval_episodes-1:
@@ -205,7 +205,7 @@ def evaluate(
                 csvwriter.writerows(UAV_Metrics)
 
         # DDQN
-        agent.update_target_from_model()
+        # agent.update_target_from_model()
 
         accum_avgAoI += avgAoI / (eval_env.curr_step + count)
         accum_peakAoI += peakAoI / (eval_env.curr_step + count)
@@ -256,7 +256,7 @@ def train(
 
         if done:
             # DDQN
-            agent.update_target_from_model()
+            # agent.update_target_from_model()
             env.reset()
 
         if timestep % eval_frequency == 0:
@@ -340,11 +340,11 @@ def step(agent, env):
     if train_model:
         print(f"Training")
         #QL
-        #agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
+        agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
         # DDQN
-        agent.update_mem(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
-        if len(agent.memory) > 64:
-            agent.train(64)
+        # agent.update_mem(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
+        # if len(agent.memory) > 64:
+        #     agent.train(64)
     return done
 
 
@@ -364,15 +364,15 @@ def prepopulate(agent, prepop_steps, env):
 
             if buffer_done or env.truncated:
                 # DDQN
-                agent.update_target_from_model()
+                #agent.update_target_from_model()
                 done = True
 
             if train_model:
-                # agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
+                agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
                 # DDQN
-                agent.update_mem(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
-                if len(agent.memory) > 64:
-                    agent.train(64)
+                # agent.update_mem(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
+                # if len(agent.memory) > 64:
+                #     agent.train(64)
             timestep += 1
 
 
@@ -386,7 +386,7 @@ def run_experiment(args):
         tf.config.experimental.set_memory_growth(device, True)
 
     print("Creating Agent")
-    agent = model_utils.get_ddqn_agent(
+    agent = model_utils.get_ql_agent(
         env
     )
 

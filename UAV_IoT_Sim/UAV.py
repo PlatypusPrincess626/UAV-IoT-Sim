@@ -29,16 +29,16 @@ class QuadUAV:
         }
 
         # Positioning
-        self.indX = float(X)
-        self.indY = float(Y)
+        self.indX = int(X)
+        self.indY = int(Y)
         self.maxH = 20
 
         # Trajectory
         self.target = None
         self.targetHead = None
         self.targetSerial = 0
-        self.targetX = float(X)
-        self.targetY = float(Y)
+        self.targetX = int(X)
+        self.targetY = int(Y)
         self.lat = lat
         self.long = long
         self.last_AoI = 0
