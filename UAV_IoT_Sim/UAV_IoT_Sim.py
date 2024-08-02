@@ -187,7 +187,7 @@ class make_env:
         for index in range(len(self.curr_state) - 6):
         # ADF 1.0
         # for index in range(len(self.curr_state) - 1):
-            age = self.curr_state[index + 1][2]
+            age = self.curr_step - self.curr_state[index + 1][2]
             # age = self.curr_step - self.curr_state[index + 1][2]
             # if age > self._aoi_threshold:
             #     age = self._aoi_threshold
@@ -220,8 +220,8 @@ class make_env:
         distOffset = maxColl - minColl
         
         rewardDist = 1 - distOffset
-        rewardPeak = max((1 - peakAge / self._aoi_threshold), 0.1 * (1 - peakAge / self._aoi_threshold))
-        rewardAvgAge = max((1 - (peakAge - avgAge)/self._aoi_threshold), 0.1 * (1 - (peakAge - avgAge)/self._aoi_threshold))
+        rewardPeak = max((1 - peakAge / self.curr_step), 0.1 * (1 - peakAge / self.curr_step))
+        rewardAvgAge = max((1 - (peakAge - avgAge)/self.curr_step), 0.1 * (1 - (peakAge - avgAge)/self.curr_step))
         rewardDataChange = dataChange / 1_498_500
         rewardChange = 0.5 * rewardDist + rewardPeak + rewardAvgAge + 0.1 * rewardDataChange
 

@@ -21,7 +21,7 @@ class IoT_Device:
         self._comms = {
             "LoRa_Max_Distance_m": 5000,
             "LoRa_Bit_Rate_bit/s": 24975,
-            "LoRa_Current_A": 5400,  # micro-amps transmitting
+            "LoRa_Current_A": 4200,  # micro-amps transmitting
             "LoRa_Voltage_V": 3.7,
             "LoRa_Power_W": 0.020,  # transmitting
             "LoRa_Upkeep_W": 0.004,  # static
@@ -88,7 +88,7 @@ class IoT_Device:
             self.max_data = 12_500_000
             self.reset_min = round(self.max_data * 0.10)
             self.reset_max = round(self.max_data * 0.25)
-            self.stored_data = random.randint(self.reset_min, self.reset_max)
+            self.stored_data = self.reset_max
 
             self.solarArea = 2 * 4  # 20 cm x 40 cm
             self._C = 3200  # F (Battery Supported)
@@ -105,7 +105,11 @@ class IoT_Device:
         if self.type == 1:
             self.stored_data = random.randint(0, self.reset_max)
         else:
-            self.stored_data = random.randint(self.reset_min, self.reset_max)
+            self.stored_data = self.reset_max
+
+        for sens in range(len(self.sens_table.index)):
+            self.sens_table.iat[sens, 1] = True
+            self.sens_table.iat[sens, 2] = 0
 
     # Call location
     def get_indicies(self):
@@ -253,7 +257,7 @@ class IoT_Device:
             return 0
 
     def get_dest(self, state, full_state, model, step, _=None):
-        if self.stored_data > self.max_data * 0.50:
+        if self.stored_data >= self.max_data * 0.25:
             # ADF 2.0
             return False, False, self, _, state, _, self.headSerial, _
             # ADF 1.0
