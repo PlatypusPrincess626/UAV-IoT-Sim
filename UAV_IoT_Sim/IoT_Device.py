@@ -200,11 +200,11 @@ class IoT_Device:
         # ADF 2.0
         self.max_AoI = self.sens_table.iat[0, 2]
         for sens in range(len(self.sens_table) - 1):
-            # if self.sens_table.iat[sens, 2] > self.max_AoI:
-            #     self.max_AoI = self.sens_table.iat[sens, 2]
+            if self.sens_table.iat[sens, 2] > self.max_AoI:
+                self.max_AoI = self.sens_table.iat[sens, 2]
 
-            self.max_AoI += self.sens_table.iat[sens, 2]
-        self.max_AoI = self.max_AoI / self.num_sensors
+        #     self.max_AoI += self.sens_table.iat[sens, 2]
+        # self.max_AoI = self.max_AoI / self.num_sensors
         # ADF 1.0
         # self.mean_AoI = step
 
@@ -266,7 +266,7 @@ class IoT_Device:
             # ADF 1.0
             # return False, False, self, state, self.headSerial
 
-        for CH in range(len(state.index) - 6):
+        for CH in range(len(state) - 6):
             if state[CH + 1][2] < 1.0:
                 # ADF 2.0
                 return False, True, full_state.iat[CH + 1, 0], _, state, _, CH, _
