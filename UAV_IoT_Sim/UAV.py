@@ -208,6 +208,7 @@ class QuadUAV:
             self.state[self.targetSerial + 1][2] = self.last_AoI
             self.state[self.targetSerial + 1][1] += totalData
             self.state[0][1] += totalData
+            self.targetSerial = self.targetHead.headSerial
 
 
         else:
@@ -255,6 +256,7 @@ class QuadUAV:
             self.targetHead = minCH
             self.targetX = minCH.indX
             self.targetY = minCH.indY
+            self.targetSerial = self.targetHead.headSerial
 
         elif self.stored_energy < (self.max_energy * .30 * 1_000) and self.no_hold:
             self.is_charging = True
@@ -270,6 +272,7 @@ class QuadUAV:
         # Here model_transit will change
         #   ADF 2.0
         else:
+            # False, True, full_state.iat[CH + 1, 0], _, state, _, CH, _
             used_model, changed_transit, dest1, dest2, state1, state2, action1, action2 = \
                 self.target.get_dest(self.state, self.full_state, model, step)
 
