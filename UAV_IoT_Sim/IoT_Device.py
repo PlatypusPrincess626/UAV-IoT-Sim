@@ -272,8 +272,8 @@ class IoT_Device:
         else:
             return 0
 
-    def get_dest(self, state, full_sensor_list, model, step, _=None):
-        if self.stored_data >= self.max_data * 0.25:
+    def get_dest(self, state, full_sensor_list, model, step, no_hold, _=None):
+        if self.stored_data >= self.max_data * 0.25 and no_hold:
             # ADF 2.0
             return False, False, self, _, state, _, self.headSerial, _
             # ADF 1.0
