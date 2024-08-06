@@ -355,10 +355,10 @@ def prepopulate(agent, prepop_steps, env):
     agent.decay_epsilon(0)
     while timestep < prepop_steps:
         env.reset()
-        print(f"Prepop Step: {timestep}")
         done = False
 
         while not done:
+            print(f"Prepop Step: {timestep}")
             train_model, old_state, old_action, comms, move, harvest = env.step(agent)
             buffer_done = env.terminated
 
