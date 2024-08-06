@@ -243,6 +243,9 @@ class QuadUAV:
                 self.no_hold = False
 
             self.stored_energy += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
+            if self.stored_energy >= self.max_energy:
+                self.stored_energy = self.max_energy
+
             self.energy_harvested += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
             self.state[0][2] = self.stored_energy
 
@@ -286,12 +289,7 @@ class QuadUAV:
                 self.target.get_dest(self.state, self.full_sensor_list, model, step, self.no_hold, self.force_change)
 
             self.no_hold = True
-            if self.force_change:
-                self.force_change = False
-                self.force_count = 0
 
-            elif self.force_count > 10:
-                self.force_change = True
 
             if self.model_transit and changed_transit:
                 train_model = True
@@ -307,6 +305,13 @@ class QuadUAV:
                 if dest2.headSerial == self.targetSerial and self.inRange:
                     self.force_count += 1
 
+                if self.force_change and dest2.headSerial != self.targetSerial:
+                    self.force_change = False
+                    self.force_count = 0
+
+                elif self.force_count > 10:
+                    self.force_change = True
+
                 self.targetSerial = self.targetHead.headSerial
                 self.targetHead = dest2
                 self.target = dest1
@@ -318,6 +323,13 @@ class QuadUAV:
             else:
                 if dest1.headSerial == self.targetSerial and self.inRange:
                     self.force_count += 1
+
+                if self.force_change and dest1.headSerial != self.targetSerial:
+                    self.force_change = False
+                    self.force_count = 0
+
+                elif self.force_count > 10:
+                    self.force_change = True
 
                 self.target = dest1
                 self.targetHead = dest1
