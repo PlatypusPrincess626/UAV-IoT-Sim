@@ -57,15 +57,19 @@ class QuadUAV:
         self.origin_action = None
 
         # Pandas version of state used for environment comparisons
-        self.uav = np.array([[self, len(CHList), float(0.0), float(0.0)]])
-        self.CH_state = np.concatenate((np.array(CHList), np.array([[0, 0]] * (len(CHList)))), axis=1)
-        self.full_state = pd.DataFrame(np.concatenate((self.uav, self.CH_state)))
+        ch_list = []
+        sensor_list = []
+        ch_list.append(self)
+        sensor_list.append(len(CHList))
 
-        self.full_state = self.full_state.sort_index()
-        self.full_state = self.full_state.reset_index()
-        self.full_state.drop('index', axis=1, inplace=True)
-        self.full_state.rename(
-            columns={0: "Device", 1: "Num_Sensors", 2: "Total_Data", 3: "AoI"},
+        for ch in range(len(CHList)):
+            ch_list.append(CHList[ch][0])
+            sensor_list.append(CHList[ch][1])
+
+        self.full_sensor_list = pd.DataFrame(np.array(ch_list))
+        self.sensor_count = pd.DataFrame(np.array(sensor_list))
+        self.full_sensor_list.rename(
+            columns={0: "Device"},
             inplace=True
         )
 
@@ -79,7 +83,6 @@ class QuadUAV:
         self.amp = self.max_energy / self.charge_rate  # Roughly 2.72 A optimal current
         self.stored_energy = self.max_energy * 1_000  # Initialize at full battery
         self.is_charging = False
-        self.full_state[0, 3] = self.stored_energy
 
         # State used for model
         #   ADF 2.0
@@ -87,7 +90,7 @@ class QuadUAV:
         #   ADF 1.0
         # self.state = [[0, 0, 0] for _ in range(len(CHList) + 1)]
 
-        self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy*1_000
+        self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy * 1_000
         count = 0
         for row in range(len(self.state) - 1):
             self.state[row + 1][0] = count
@@ -115,12 +118,6 @@ class QuadUAV:
 
         # Reset State
         self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy * 1_000
-        self.full_state[0, 2] = 0
-        self.full_state[0, 3] = self.stored_energy
-        count = 0
-        for row in range(len(self.full_state.index) - 1):
-            self.full_state[row + 1, 2] = 0
-            self.full_state[row + 1, 3] = 0
 
         for row in range(len(self.state) - 1):
             self.state[row + 1][1] = 0
@@ -177,7 +174,6 @@ class QuadUAV:
 
         self.stored_energy -= total_cost
         self.state[0][2] = self.stored_energy
-        self.full_state.iat[0, 3] = self.stored_energy
 
     # Finish with battery drain
     # UAV-IoT Communication
@@ -204,7 +200,6 @@ class QuadUAV:
             totalTime = totalData / self._comms.get("AmBC_Bit_Rate_bit/s", 0.0)
             self.energy_cost(0, totalTime)
 
-            self.update_state(self.targetSerial + 1, self.last_AoI, totalData)
             self.state[self.targetSerial + 1][2] = self.last_AoI
             self.state[self.targetSerial + 1][1] += totalData
             self.state[0][1] += totalData
@@ -219,7 +214,6 @@ class QuadUAV:
             totalTime = totalData / self._comms.get("LoRa_Bit_Rate_bit/s")
             self.energy_cost(0, totalTime)
 
-            self.update_state(self.targetSerial + 1, self.last_AoI, totalData)
             self.state[self.targetSerial + 1][2] = self.last_AoI
             self.state[self.targetSerial + 1][1] += totalData
             self.state[0][1] += totalData
@@ -236,7 +230,6 @@ class QuadUAV:
             self.stored_energy += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
             self.energy_harvested += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
             self.state[0][2] = self.stored_energy
-            self.full_state.iat[0, 3] = self.stored_energy
 
     def set_dest(self, model, step, _=None):
         train_model = False
@@ -244,13 +237,13 @@ class QuadUAV:
 
         if self.target is None:
             minDist = 10_000.0
-            minCH = self.full_state.iat[1, 0]
-            for CH in range(len(self.full_state.index) - 1):
-                dist = math.sqrt(pow((self.indX - self.full_state.iat[CH + 1, 0].indX), 2)
-                                 + pow((self.indY - self.full_state.iat[CH + 1, 0].indY), 2))
+            minCH = self.full_sensor_list.iat[1, 0]
+            for CH in range(len(self.full_sensor_list.index) - 1):
+                dist = math.sqrt(pow((self.indX - self.full_sensor_list.iat[CH + 1, 0].indX), 2)
+                                 + pow((self.indY - self.full_sensor_list.iat[CH + 1, 0].indY), 2))
                 if dist < minDist:
                     minDist = dist
-                    minCH = self.full_state.iat[CH + 1, 0]
+                    minCH = self.full_sensor_list.iat[CH + 1, 0]
 
             self.target = minCH
             self.targetHead = minCH
@@ -274,7 +267,7 @@ class QuadUAV:
         else:
             # False, True, full_state.iat[CH + 1, 0], _, state, _, CH, _
             used_model, changed_transit, dest1, dest2, state1, state2, action1, action2 = \
-                self.target.get_dest(self.state, self.full_state, model, step)
+                self.target.get_dest(self.state, self.full_sensor_list, model, step)
 
             self.no_hold = True
             if self.model_transit and changed_transit:
@@ -331,7 +324,3 @@ class QuadUAV:
         return (train_model, used_model, self.state, self.targetHead.headSerial,
                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
-    def update_state(self, device, AoI, data):
-        self.full_state.iat[device, 3] = AoI
-        self.full_state.iat[device, 2] += data
-        self.full_state.iat[0, 2] += data

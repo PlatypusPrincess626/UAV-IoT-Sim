@@ -35,7 +35,7 @@ class make_env:
 
         self.ch_sensors = [0 for _ in range(self.num_ch)]
         for CH in range(self.num_ch):
-            self.ch_sensors[CH] = self._env.CHTable.iloc[CH, 0].num_sensors
+            self.ch_sensors[CH] = self._env.CHTable.iat[CH, 0].num_sensors
 
         self.curr_reward = 0
         self.curr_info = {
@@ -58,11 +58,11 @@ class make_env:
     def reset(self):
         if self.scene == "test":
             for sensor in range(self._num_sensors):
-                self._env.sensorTable.iloc[sensor, 0].reset()
+                self._env.sensorTable.iat[sensor, 0].reset()
             for CH in range(self.num_ch):
-                self._env.CHTable.iloc[CH, 0].reset()
+                self._env.CHTable.iat[CH, 0].reset()
             for uav in range(self._num_uav):
-                self._env.UAVTable.iloc[uav, 0].reset()
+                self._env.UAVTable.iat[uav, 0].reset()
             # self._env.initInterference()
 
             self.curr_step = 0
@@ -110,15 +110,15 @@ class make_env:
                 alpha = abs(104 - 65 * x + 47 * pow(x, 2) - 12 * pow(x, 3) + pow(x, 4))
 
                 for sens in range(self._num_sensors):
-                    self._env.sensorTable.iloc[sens, 0].harvest_energy(alpha, self._env, self.curr_step)
-                    self._env.sensorTable.iloc[sens, 0].harvest_data(self.curr_step)
+                    self._env.sensorTable.iat[sens, 0].harvest_energy(alpha, self._env, self.curr_step)
+                    self._env.sensorTable.iat[sens, 0].harvest_data(self.curr_step)
 
                 for CH in range(self.num_ch):
-                    self._env.CHTable.iloc[CH, 0].harvest_energy(alpha, self._env, self.curr_step)
-                    self._env.CHTable.iloc[CH, 0].ch_download(self.curr_step)
+                    self._env.CHTable.iat[CH, 0].harvest_energy(alpha, self._env, self.curr_step)
+                    self._env.CHTable.iat[CH, 0].ch_download(self.curr_step)
 
                 for uav in range(self._num_uav):
-                    uav = self._env.UAVTable.iloc[uav, 0]
+                    uav = self._env.UAVTable.iat[uav, 0]
                     train_model, used_model, state, action, comms, move, harvest = uav.set_dest(model, self.curr_step)
                     uav.navigate_step(self._env)
                     train_model, change_archives = uav.receive_data(self.curr_step)
@@ -133,8 +133,8 @@ class make_env:
 
                     if change_archives:
                         for Iter in range(5):
-                            self.archived_state[len(uav.full_state) + Iter][1], \
-                                self.archived_state[len(uav.full_state) + Iter][2] = 0, 0
+                            self.archived_state[len(uav.full_sensor_list) + Iter][1], \
+                                self.archived_state[len(uav.full_sensor_list) + Iter][2] = 0, 0
                         self.archived_action = action
 
                     if used_model:

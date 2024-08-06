@@ -80,6 +80,9 @@ def asStride(arr, sub_shape, stride):
 class sim_env:
     def __init__(self, scene, num_sensors, num_uav, num_clusterheads, max_num_steps):
         
+        self.UAVTable = None
+        self.CHTable = None
+        self.sensorTable = None
         self.dataStaticInter = None
         self.total_sensors = num_sensors
         self.total_uav = num_uav
@@ -220,17 +223,17 @@ class sim_env:
         
         self.sensorTable = pd.DataFrame(sensorList)
         self.sensorTable.rename(
-             columns={0:"Sensor"},
+             columns={0: "Sensor"},
              inplace=True
         )
         self.CHTable = pd.DataFrame(clusterheadList)
         self.CHTable.rename(
-             columns={0:"CH",1:"Sensor_List"},
+             columns={0: "CH", 1: "Sensor_List"},
              inplace=True
         )
         self.UAVTable = pd.DataFrame(uavList)
         self.UAVTable.rename(
-             columns={0:"UAV"},
+             columns={0: "UAV"},
              inplace=True
         )
         return envObj

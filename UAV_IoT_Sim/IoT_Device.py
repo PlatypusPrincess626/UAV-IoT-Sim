@@ -77,6 +77,9 @@ class IoT_Device:
         else:
             self.type = 2
             self.sens_table = None
+            self.active_table = None
+            self.age_table = None
+
             self.num_sensors = 0
             self.headSerial = clusterheadNum
             self.typeStr = "Clusterhead"
@@ -108,8 +111,8 @@ class IoT_Device:
         else:
             self.stored_data = self.reset_max
             for sens in range(self.num_sensors):
-                self.sens_table.iat[sens, 1] = True
-                self.sens_table.iat[sens, 2] = 0
+                self.active_table[sens] = True
+                self.age_table[sens] = 0
 
     # Call location
     def get_indicies(self):
@@ -167,15 +170,17 @@ class IoT_Device:
     # Clusterhead-Specific Tasks
     def set_sensor_data(self, sens_list: list):
         self.num_sensors = len(sens_list)
-        self.sens_table = pd.DataFrame(np.concatenate((np.array(sens_list), np.array([[True]] * (len(sens_list))),
-                                                       np.array([[0]] * (len(sens_list)))), axis=1))
-        # sens_active = [[True]] * (len(sens_list))
-        # sens_aoi = [[0]] * (len(sens_list))
 
-        # self.sens_table = pd.concat(
-        #     [pd.DataFrame(sens_list), pd.DataFrame(sens_active), pd.DataFrame(sens_aoi)],
-        #     axis=1
-        # )
+        active_list = []
+        age_list = []
+        for sens in range(len(sens_list)):
+            active_list.append(True)
+            age_list.append(0)
+
+        self.sens_table = pd.DataFrame(np.array(sens_list))
+        self.active_table = np.array(active_list)
+        self.age_table = np.array(age_list)
+
         self.sens_table.rename(
             columns={0: "Sensor", 1: "Connection_Status", 2: "AoI"},
             inplace=True
@@ -196,22 +201,22 @@ class IoT_Device:
         totalChannels = 0
         for channel in range(len(activeChannels)):
             if activeChannels[channel] >= 0:
-                self.sens_table.iat[sensor + channel, 1] = True
-                self.sens_table.iat[sensor + channel, 2] = step
+                self.active_table[sensor + channel] = True
+                self.age_table[sensor + channel] = step
                 self.stored_data += activeChannels[channel]
                 totalChannels += 1
             else:
-                self.sens_table.iat[sensor + channel, 1] = False
+                self.active_table[sensor + channel] = False
 
         self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 30 * totalChannels)
 
         # ADF 2.0
-        self.max_AoI = self.sens_table.iat[0, 2]
-        for sens in range(len(self.sens_table) - 1):
-            # if self.sens_table.iat[sens, 2] > self.max_AoI:
-            #     self.max_AoI = self.sens_table.iat[sens, 2]
+        self.max_AoI = self.age_table[0]
+        for sens in range(len(self.sens_table.index) - 1):
+            # if self.age_table[sens] > self.max_AoI:
+            #     self.max_AoI = self.age_table[sens]
 
-            self.max_AoI += self.sens_table.iat[sens, 2]
+            self.max_AoI += self.age_table[sens]
         self.max_AoI = self.max_AoI / self.num_sensors
         # ADF 1.0
         # self.mean_AoI = step
@@ -267,7 +272,7 @@ class IoT_Device:
         else:
             return 0
 
-    def get_dest(self, state, full_state, model, step, _=None):
+    def get_dest(self, state, full_sensor_list, model, step, _=None):
         if self.stored_data >= self.max_data * 0.25:
             # ADF 2.0
             return False, False, self, _, state, _, self.headSerial, _
@@ -277,36 +282,44 @@ class IoT_Device:
         for CH in range(len(state) - 6):
             if state[CH + 1][2] < 1.0:
                 # ADF 2.0
-                return False, True, full_state.iat[CH + 1, 0], _, state, _, CH, _
+                return False, True, full_sensor_list.iat[CH + 1, 0], _, state, _, CH, _
                 # ADF 1.0
-                # return False, True, full_state.iat[CH + 1, 0], state, CH
+                # return False, True, full_sensor_list.iat[CH + 1, 0], state, CH
 
         # ADF 2.0
         sensMapping: List[List[int]] = [[0, 0, 0] for _ in range(5)]
         count = 0
         for sens in range(self.num_sensors):
-            if not (self.sens_table.iat[sens, 1]) and (count < 5):
-                sensMapping[count][0], sensMapping[count][1], sensMapping[count][2] = sens, \
-                    math.sqrt(pow((self.indX - self.sens_table.iat[sens, 0].indX), 2) +
-                              pow((self.indY - self.sens_table.iat[sens, 0].indY), 2)), (-5 + count)
-                state[sensMapping[count][2]][1], state[sensMapping[count][2]][2] = sensMapping[count][1], \
-                    self.sens_table.iat[sens, 2]
+            if not (self.active_table[sens]) and (count < 5):
+                sensMapping[count][0], sensMapping[count][1], sensMapping[count][2] = \
+                    (sens,
+                     math.sqrt(pow((self.indX - self.sens_table.iat[sens, 0].indX), 2) +
+                               pow((self.indY - self.sens_table.iat[sens, 0].indY), 2)),
+                     (-5 + count)
+                     )
+
+                state[sensMapping[count][2]][1], state[sensMapping[count][2]][2] = \
+                    sensMapping[count][1], self.age_table[sens]
+
                 count += 1
 
         action = model.act(state)
 
         # ADF 2.0
         if action < (len(state) - 6):
-            return True, True, full_state.iat[action + 1, 0], _, state, _, action, _
+            return True, True, full_sensor_list.iat[action + 1, 0], _, state, _, action, _
         else:
-            sensor = self.sens_table.iat[sensMapping[action - len(full_state.index) + 1][0], 0]
-            self.sens_table.iat[sensMapping[action - len(full_state.index) + 1][0], 2] = step
+            sensor = self.sens_table.iat[sensMapping[action - len(full_sensor_list.index) + 1][0], 0]
+
+            self.age_table[sensMapping[action - len(full_sensor_list.index) + 1][0]] = step
             state1 = state
+
             for Iter in range(5):
                 state[len(state) - 5 + Iter][1], state[len(state) - 5 + Iter][2] = 0, 0
 
-            action2 = model.act(state) % (len(full_state.index) - 1)
-            return True, True, sensor, full_state.iat[action2 + 1, 0], state1, state, action, action2
+            action2 = model.act(state) % (len(full_sensor_list.index) - 1)
+
+            return True, True, sensor, full_sensor_list.iat[action2 + 1, 0], state1, state, action, action2
 
         # ADF 1.0
-        # return True, True, full_state.iat[action + 1, 0], state, action
+        # return True, True, full_sensor_list.iat[action + 1, 0], state, action
