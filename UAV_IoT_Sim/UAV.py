@@ -253,6 +253,7 @@ class QuadUAV:
         print(self.state)
         train_model = False
         used_model = False
+        print(self.force_change)
 
         if self.target is None:
             minDist = 10_000.0
