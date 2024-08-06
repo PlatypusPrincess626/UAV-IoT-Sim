@@ -304,6 +304,9 @@ class QuadUAV:
                 self.model_transit = False
 
             if dest1.type == 1:
+                if dest2.headSerial == self.targetSerial and self.inRange:
+                    self.force_count += 1
+
                 self.targetSerial = self.targetHead.headSerial
                 self.targetHead = dest2
                 self.target = dest1
