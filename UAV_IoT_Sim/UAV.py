@@ -310,7 +310,7 @@ class QuadUAV:
                     self.force_change = False
                     self.force_count = 0
 
-                if self.force_count > 10:
+                if self.force_count > 30:
                     self.force_change = True
 
                 self.targetSerial = self.targetHead.headSerial
