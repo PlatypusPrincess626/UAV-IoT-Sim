@@ -305,8 +305,12 @@ class IoT_Device:
 
         action = model.act(state)
         if force_change:
+            lowest = state[self.headSerial + 1][2]
             while targetSerial == action:
-                action = model.act(state)
+                for sens in range(len(state) - 1):
+                    if state[sens + 1][2] < lowest:
+                        lowest = state[sens + 1][2]
+                        action = sens
 
         # ADF 2.0
         if action < (len(state) - 6):
@@ -322,7 +326,14 @@ class IoT_Device:
 
             action2 = model.act(state) % (len(full_sensor_list.index) - 1)
             if force_change:
-                while targetSerial == action2:
+                while targetSerial == action:
+                    lowest = state[self.headSerial + 1][2]
+                    for ch in range(len(state) - 6):
+                        if state[ch + 1][2] < lowest:
+                            lowest = state[ch + 1][2]
+                            action = ch
+
+
                     action2 = model.act(state) % (len(full_sensor_list.index) - 1)
 
             return True, True, sensor, full_sensor_list.iat[action2 + 1, 0], state1, state, action, action2
