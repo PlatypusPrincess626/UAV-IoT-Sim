@@ -213,7 +213,7 @@ class IoT_Device:
         # ADF 2.0
         self.max_AoI = self.age_table[0]
         for sens in range(len(self.sens_table.index) - 1):
-            if self.age_table[sens] > self.max_AoI:
+            if self.age_table[sens] < self.max_AoI:
                 self.max_AoI = self.age_table[sens]
 
         #     self.max_AoI += self.age_table[sens]
