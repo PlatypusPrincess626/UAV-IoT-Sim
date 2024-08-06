@@ -243,8 +243,8 @@ class QuadUAV:
                 self.no_hold = False
 
             self.stored_energy += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
-            if self.stored_energy >= self.max_energy:
-                self.stored_energy = self.max_energy
+            if self.stored_energy >= self.max_energy * 1_000:
+                self.stored_energy = self.max_energy * 1_000
 
             self.energy_harvested += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
             self.state[0][2] = self.stored_energy
@@ -289,7 +289,6 @@ class QuadUAV:
                 self.target.get_dest(self.state, self.full_sensor_list, model, step, self.no_hold, self.force_change)
 
             self.no_hold = True
-
 
             if self.model_transit and changed_transit:
                 train_model = True
