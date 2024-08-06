@@ -307,7 +307,7 @@ class IoT_Device:
         if force_change:
             lowest = state[self.headSerial + 1][2]
             while targetSerial == action:
-                for sens in range(len(state) - 1):
+                for sens in range(len(state) - 6):
                     if state[sens + 1][2] < lowest:
                         lowest = state[sens + 1][2]
                         action = sens
