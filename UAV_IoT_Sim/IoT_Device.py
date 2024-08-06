@@ -331,10 +331,7 @@ class IoT_Device:
                     for ch in range(len(state) - 6):
                         if state[ch + 1][2] < lowest:
                             lowest = state[ch + 1][2]
-                            action = ch
-
-
-                    action2 = model.act(state) % (len(full_sensor_list.index) - 1)
+                            action2 = ch
 
             return True, True, sensor, full_sensor_list.iat[action2 + 1, 0], state1, state, action, action2
 
