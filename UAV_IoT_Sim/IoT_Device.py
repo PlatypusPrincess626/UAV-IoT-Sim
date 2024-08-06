@@ -1,10 +1,10 @@
 # Import Dependencies
 import random
 from typing import List
-import math
 
 import numpy
 import math
+import numpy as np
 import pandas as pd
 from scipy.interpolate import InterpolatedUnivariateSpline
 
@@ -134,7 +134,13 @@ class IoT_Device:
 
     def harvest_energy(self, alpha, env, step):
         spectra = env.getIrradiance(self.lat, self.long, self.tilt, self.azimuth, step)
-        interference = env.getInterference(self.indX, self.indY, self.type)
+        # interference = env.getInterference(self.indX, self.indY, self.type)
+        if self.type == 1:
+            interference = random.randint(1, 10_000) / 10_000
+        else:
+            interference = 0
+
+
         f = InterpolatedUnivariateSpline(spectra['wavelength'], spectra['poa_global'])
         powDensity = f.integral(self.spctrlLow, self.spctrlHigh)
         power = abs(alpha / 100) * (1 - interference) * (powDensity * self.solarArea)
@@ -161,13 +167,15 @@ class IoT_Device:
     # Clusterhead-Specific Tasks
     def set_sensor_data(self, sens_list: list):
         self.num_sensors = len(sens_list)
-        sens_active = [True] * (len(sens_list))
-        sens_aoi = [0] * (len(sens_list))
+        self.sens_table = pd.DataFrame(np.concatenate((np.array(sens_list), np.array([[True]] * (len(sens_list))),
+                                                       np.array([[0]] * (len(sens_list)))), axis=1))
+        # sens_active = [[True]] * (len(sens_list))
+        # sens_aoi = [[0]] * (len(sens_list))
 
-        self.sens_table = pd.concat(
-            [pd.DataFrame(sens_list), pd.DataFrame(sens_active), pd.DataFrame(sens_aoi)],
-            axis=1
-        )
+        # self.sens_table = pd.concat(
+        #     [pd.DataFrame(sens_list), pd.DataFrame(sens_active), pd.DataFrame(sens_aoi)],
+        #     axis=1
+        # )
         self.sens_table.rename(
             columns={0: "Sensor", 1: "Connection_Status", 2: "AoI"},
             inplace=True
@@ -274,9 +282,9 @@ class IoT_Device:
                 # return False, True, full_state.iat[CH + 1, 0], state, CH
 
         # ADF 2.0
-        sensMapping: List[List[int]] = [[0] * 3 for _ in range(5)]
+        sensMapping: List[List[int]] = [[0, 0, 0] for _ in range(5)]
         count = 0
-        for sens in range(len(self.sens_table)):
+        for sens in range(self.num_sensors):
             if not (self.sens_table.iat[sens, 1]) and (count < 5):
                 sensMapping[count][0], sensMapping[count][1], sensMapping[count][2] = sens, \
                     math.sqrt(pow((self.indX - self.sens_table.iat[sens, 0].indX), 2) +
@@ -288,14 +296,14 @@ class IoT_Device:
         action = model.act(state)
 
         # ADF 2.0
-        if action < (len(full_state.index) - 1):
+        if action < (len(state) - 6):
             return True, True, full_state.iat[action + 1, 0], _, state, _, action, _
         else:
             sensor = self.sens_table.iat[sensMapping[action - len(full_state.index) + 1][0], 0]
             self.sens_table.iat[sensMapping[action - len(full_state.index) + 1][0], 2] = step
             state1 = state
             for Iter in range(5):
-                state[len(full_state.index) + Iter][1], state[len(full_state.index) + Iter][2] = 0, 0
+                state[len(state) - 5 + Iter][1], state[len(state) - 5 + Iter][2] = 0, 0
 
             action2 = model.act(state) % (len(full_state.index) - 1)
             return True, True, sensor, full_state.iat[action2 + 1, 0], state1, state, action, action2

@@ -63,7 +63,7 @@ class make_env:
                 self._env.CHTable.iloc[CH, 0].reset()
             for uav in range(self._num_uav):
                 self._env.UAVTable.iloc[uav, 0].reset()
-            self._env.initInterference()
+            # self._env.initInterference()
 
             self.curr_step = 0
             self.last_action = 0

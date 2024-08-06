@@ -6,6 +6,7 @@ import random
 from sklearn.cluster import KMeans
 from scipy import signal
 import math
+import datetime
 
 # Custom Packages
 from UAV_IoT_Sim import IoT_Device, UAV
@@ -89,6 +90,7 @@ class sim_env:
             # Test scene will be Yellowstone National Park
             self.lat_center = 44.424           # Latitude
             self.long_center = -110.589        # Longitude
+            self.stp = 0.000009  # 1 degree lat/long is ~111km
             self.pressure = 101253            # Sea Level is 1013.25 mb, Average Pressure in Yellowstone is +4.09mb
             self.water_vapor_content = 0.35   # Roughly 0.35 cm in Yellowstone
             self.tau500 = 0.75                # Aerosol Turbidity 500nm
@@ -108,46 +110,31 @@ class sim_env:
         
         if self.dim % 2 == 0:
             self.dim += 1
-        
-        stp = 0.000009   # 1 degree lat/long is ~111km
-        minLat = self.long_center - self.dim/2 * stp
-        maxLat = self.long_center + self.dim/2 * stp
-        minLong = self.lat_center - self.dim/2 * stp
-        maxLong = self.lat_center + self.dim/2 * stp
-        
-        envLats = np.arange(start = minLat, stop = maxLat, step = stp, dtype=float)
-        envLongs = np.arange(start = minLong, stop = maxLong, step = stp, dtype=float)
-        
-        
-        envMapTemp = []
-        for y in envLats:
-            for x in envLongs:
-                envMapTemp.append([x, y])
-        
-        self.envMap = pd.DataFrame(envMapTemp)
+
         
         envObj = self.placeObjects()
-        self.initInterference()
-        
-        return pd.concat([self.envMap, pd.DataFrame(envObj)], axis = 1)
+        # self.initInterference()
+
+        envObj = np.array(envObj)
+        # envObj = np.reshape(envObj, (1, envObj.size))
+        return pd.Series(envObj)
     
     # Place obstructions and devices in initial positions
     def placeObjects(self) -> list:
         
         dims = self.dim
-        envObj = [0] * (dims*dims)
+        envObj = [0] * (dims*dims + dims)
 
-        print("Placing Obstuctions")
-        for obst in range(self.numObst):
-            obstType = random.randint(-3,-1)
-            while obstType < 0:
-                place = random.randint(0, dims*dims-1)
-                if envObj[place] == 0:
-                    envObj[place] = obstType
-                    obstType = 0
+        # print("Placing Obstuctions")
+        # for obst in range(self.numObst):
+        #     obstType = random.randint(-3,-1)
+        #     while obstType < 0:
+        #         place = random.randint(0, dims*dims + dims - 1)
+        #         if envObj[place] == 0:
+        #             envObj[place] = obstType
+        #             obstType = 0
 
         print("Placing Sensors")
-        envSensors = [0] * (dims*dims)
         sensorList = []
         # Random Sensor Placement for now
         for sensor in range(self.total_sensors):
@@ -155,13 +142,15 @@ class sim_env:
             while obstType > 0:
                 place = random.randint(0, dims*dims-1)
                 if envObj[place] == 0:
-                    sensorList.append([IoT_Device.IoT_Device(int(place % dims), math.floor(place/dims), obstType,
-                                                             self.envMap.iat[place, 0], self.envMap.iat[place, 1])])
+                    sensX = int(place % dims)
+                    sensY = math.floor(place/dims)
+                    sensLong = self.lat_center + self.stp * (sensX - self.dim)
+                    sensLat = self.long_center + self.stp * (sensY - self.dim)
+
+                    sensorList.append([IoT_Device.IoT_Device(sensX, sensY, obstType, sensLong, sensLat)])
                     envObj[place] = obstType
-                    envSensors[place] = obstType
                     obstType = 0
-        
-        np.reshape(envSensors,(dims, dims))
+
         sensCoord = []
         for sensor in sensorList:
             X, Y = sensor[0].get_indicies()
@@ -182,9 +171,13 @@ class sim_env:
             obstType = 2
             while obstType > 0:
                 if envObj[place] == 0:
-                    clusterheadList.append([IoT_Device.IoT_Device(int(place % dims), math.floor(place/dims), obstType,
-                                                                  self.envMap.iat[place, 0], self.envMap.iat[place, 1],
-                                                                  countCH), []])
+                    sensX = int(place % dims)
+                    sensY = math.floor(place / dims)
+                    sensLong = self.lat_center + self.stp * (sensX - self.dim)
+                    sensLat = self.long_center + self.stp * (sensY - self.dim)
+
+                    clusterheadList.append([IoT_Device.IoT_Device(sensX, sensY, obstType, sensLong, sensLat, countCH),
+                                            []])
                     countCH += 1
                     envObj[place] = obstType
                     obstType = 0
@@ -214,10 +207,14 @@ class sim_env:
         for uav in range(self.total_uav):
             obstType = 3
             while obstType > 0:
-                place = random.randint(0, dims*dims-1)
-                if envObj[place]==0:
-                    uavList.append([UAV.QuadUAV(int(place%dims), math.floor(place/dims), self.envMap.iat[place,0],
-                                                        self.envMap.iat[place,1], count, uavCHList)])
+                place = random.randint(0, dims*dims + dims-1)
+                if envObj[place] == 0:
+                    sensX = int(place % dims)
+                    sensY = math.floor(place / dims)
+                    sensLong = self.lat_center + self.stp * (sensX - self.dim)
+                    sensLat = self.long_center + self.stp * (sensY - self.dim)
+
+                    uavList.append([UAV.QuadUAV(sensX, sensY, sensLong, sensLat, count, uavCHList)])
                     envObj[place] = obstType
                     obstType = 0
         
@@ -253,14 +250,14 @@ class sim_env:
     
     def initInterference(self):
         dims = self.dim
-        envStaticInter = [0.0] * (dims*dims)
+        envStaticInter = [0.0] * (dims*dims + dims)
         
         # Create Static 
-        shadows = int(math.sqrt(dims*dims))
+        shadows = int(math.sqrt(dims*dims + dims))
         print("Making Happy Trees")
         for shadow in range(shadows):
         
-            place = random.randint(0, dims*dims-1)
+            place = random.randint(0, dims*dims + dims-1)
             shadeSize = random.randint(int(8), int(30))
             intensity = random.randint(int(0.75*shadeSize), int(0.95*shadeSize))
             data2D = self.gaussian_kernel(shadeSize, intensity, normalised = False)
@@ -280,8 +277,8 @@ class sim_env:
                     count = 0
 
 
-        temp = poolingOverlap(np.array(envStaticInter, dtype='float').reshape(dims, dims), \
-                                              9, stride=1, method='mean', pad=True, return_max_pos=False)
+        temp = poolingOverlap(np.array(envStaticInter, dtype='float').reshape(dims, dims), 9,
+                              stride=1, method='mean', pad=True, return_max_pos=False)
 
         self.dataStaticInter = temp.flatten()
 
@@ -289,19 +286,20 @@ class sim_env:
     def moveUAV(self, X: int, Y: int, newX: int, newY: int): # Estimated Position of UAV (nearest meter)
         place = Y * self.dim + X
         newPlace = newY * self.dim + newX
-        if self.envMap.iat[place, 2] == 3:
-            self.envMap.iat[place, 2] = 0
-        elif self.envMap.iat[place, 2] == 9:
-            self.envMap.iat[place, 2] = 1
+
+        if self.envMap.iat[place] == 3:
+            self.envMap.iat[place] = 0
+        elif self.envMap.iat[place] == 9:
+            self.envMap.iat[place] = 1
         else:
-            self.envMap.iat[place, 2] /= 3
+            self.envMap.iat[place] /= 3
             
-        if self.envMap.iat[newPlace, 2] == 0:
-            self.envMap.iat[newPlace, 2] = 3
-        elif self.envMap.iat[newPlace, 2] == 1:
-            self.envMap.iat[newPlace, 2] = 9
+        if self.envMap.iat[newPlace] == 0:
+            self.envMap.iat[newPlace] = 3
+        elif self.envMap.iat[newPlace] == 1:
+            self.envMap.iat[newPlace] = 9
         else:
-            self.envMap.iat[newPlace, 2] *= 3
+            self.envMap.iat[newPlace] *= 3
     
     def getIrradiance(self, lat, long, tilt, azimuth, step):
         solpos = solarposition.get_solarposition(self.times[step], lat, long)
