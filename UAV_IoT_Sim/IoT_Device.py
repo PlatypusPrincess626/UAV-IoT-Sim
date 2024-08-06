@@ -149,7 +149,7 @@ class IoT_Device:
         power = abs(alpha / 100) * (1 - interference) * (powDensity * self.solarArea)
 
         if power * 1_000_000 > 0.0:
-            self.stored_energy += round(power / self._comms.get("LoRa_Voltage_V") * 1_000_000)
+            self.stored_energy += round((power / self._comms.get("LoRa_Voltage_V")) * 1_000_000)
             self.solar_powered = True
         else:
             self.solar_powered = False
@@ -272,8 +272,8 @@ class IoT_Device:
         else:
             return 0
 
-    def get_dest(self, state, full_sensor_list, model, step, no_hold, _=None):
-        if self.stored_data >= self.max_data * 0.25 and no_hold:
+    def get_dest(self, state, full_sensor_list, model, step, no_hold, force_change, _=None):
+        if self.stored_data >= self.max_data * 0.25 and no_hold and not force_change:
             # ADF 2.0
             return False, False, self, _, state, _, self.headSerial, _
             # ADF 1.0

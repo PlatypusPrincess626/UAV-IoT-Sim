@@ -53,6 +53,9 @@ class QuadUAV:
         self.crash = False
         self.model_transit = False
         self.no_hold = True
+        self.force_change = False
+        self.force_count = 0
+
         self.origin_state = None
         self.origin_action = None
 
@@ -108,6 +111,8 @@ class QuadUAV:
         self.model_transit = False
         self.is_charging = False
         self.no_hold = True
+        self.force_change = False
+        self.force_count = 0
 
         self.target = None
         self.targetHead = None
@@ -188,10 +193,12 @@ class QuadUAV:
 
             if math.sqrt(pow((self.indX - self.target.indX), 2) + pow((self.indY - self.target.indY), 2)) < \
                     self._comms.get("AmBC_Max_Distance_m"):
+
                 totalData += dataReturn
                 self.target = self.targetHead
                 self.targetX = self.targetHead.indX
                 self.targetY = self.targetHead.indY
+                self.inRange = True
                 train_model, change_archives = True, True
 
             else:
@@ -207,16 +214,24 @@ class QuadUAV:
 
 
         else:
-            dataReturn, self.last_AoI = device.ch_upload(int(self.indX), int(self.indY))
-            dataReturn = max(0, dataReturn)
-            totalData += dataReturn
+            if math.sqrt(pow((self.indX - self.target.indX), 2) + pow((self.indY - self.target.indY), 2)) < \
+                    self._comms.get("AmBC_Max_Distance_m"):
 
-            totalTime = totalData / self._comms.get("LoRa_Bit_Rate_bit/s")
-            self.energy_cost(0, totalTime)
+                self.inRange = True
 
-            self.state[self.targetSerial + 1][2] = self.last_AoI
-            self.state[self.targetSerial + 1][1] += totalData
-            self.state[0][1] += totalData
+                dataReturn, self.last_AoI = device.ch_upload(int(self.indX), int(self.indY))
+                dataReturn = max(0, dataReturn)
+                totalData += dataReturn
+
+                totalTime = totalData / self._comms.get("LoRa_Bit_Rate_bit/s")
+                self.energy_cost(0, totalTime)
+
+                self.state[self.targetSerial + 1][2] = self.last_AoI
+                self.state[self.targetSerial + 1][1] += totalData
+                self.state[0][1] += totalData
+
+            else:
+                self.inRange = False
 
         return train_model, change_archives
 
@@ -268,9 +283,13 @@ class QuadUAV:
         else:
             # False, True, full_state.iat[CH + 1, 0], _, state, _, CH, _
             used_model, changed_transit, dest1, dest2, state1, state2, action1, action2 = \
-                self.target.get_dest(self.state, self.full_sensor_list, model, step, self.no_hold)
+                self.target.get_dest(self.state, self.full_sensor_list, model, step, self.no_hold, self.force_change)
 
             self.no_hold = True
+            if self.force_change:
+                self.force_change = False
+                self.force_count = 0
+
             if self.model_transit and changed_transit:
                 train_model = True
 
@@ -291,6 +310,9 @@ class QuadUAV:
                         self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
             else:
+                if dest1.headSerial == self.targetSerial and self.inRange:
+                    self.force_count += 1
+
                 self.target = dest1
                 self.targetHead = dest1
                 self.targetSerial = self.targetHead.headSerial
