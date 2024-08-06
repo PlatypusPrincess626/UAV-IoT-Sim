@@ -290,6 +290,9 @@ class QuadUAV:
                 self.force_change = False
                 self.force_count = 0
 
+            elif self.force_count > 10:
+                self.force_change = True
+
             if self.model_transit and changed_transit:
                 train_model = True
 
