@@ -272,7 +272,7 @@ class IoT_Device:
         else:
             return 0
 
-    def get_dest(self, state, full_sensor_list, model, step, no_hold, force_change, _=None):
+    def get_dest(self, state, full_sensor_list, model, step, no_hold, force_change, targetSerial, _=None):
         if self.stored_data >= self.max_data * 0.25 and no_hold and not force_change:
             # ADF 2.0
             return False, False, self, _, state, _, self.headSerial, _
@@ -304,6 +304,9 @@ class IoT_Device:
                 count += 1
 
         action = model.act(state)
+        if force_change:
+            while targetSerial == action:
+                action = model.act(state)
 
         # ADF 2.0
         if action < (len(state) - 6):
@@ -318,6 +321,9 @@ class IoT_Device:
                 state[len(state) - 5 + Iter][1], state[len(state) - 5 + Iter][2] = 0, 0
 
             action2 = model.act(state) % (len(full_sensor_list.index) - 1)
+            if force_change:
+                while targetSerial == action2:
+                    action2 = model.act(state) % (len(full_sensor_list.index) - 1)
 
             return True, True, sensor, full_sensor_list.iat[action2 + 1, 0], state1, state, action, action2
 

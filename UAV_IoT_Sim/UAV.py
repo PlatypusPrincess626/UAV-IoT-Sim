@@ -287,7 +287,8 @@ class QuadUAV:
         else:
             # False, True, full_state.iat[CH + 1, 0], _, state, _, CH, _
             used_model, changed_transit, dest1, dest2, state1, state2, action1, action2 = \
-                self.target.get_dest(self.state, self.full_sensor_list, model, step, self.no_hold, self.force_change)
+                self.target.get_dest(self.state, self.full_sensor_list, model, step,
+                                     self.no_hold, self.force_change, self.targetSerial)
 
             self.no_hold = True
 
