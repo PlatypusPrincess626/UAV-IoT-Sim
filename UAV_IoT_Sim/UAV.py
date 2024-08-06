@@ -305,11 +305,11 @@ class QuadUAV:
                 if dest2.headSerial == self.targetSerial and self.inRange:
                     self.force_count += 1
 
-                if self.force_change and dest2.headSerial != self.targetSerial:
+                elif self.force_change:
                     self.force_change = False
                     self.force_count = 0
 
-                elif self.force_count > 10:
+                if self.force_count > 10:
                     self.force_change = True
 
                 self.targetSerial = self.targetHead.headSerial
@@ -324,11 +324,11 @@ class QuadUAV:
                 if dest1.headSerial == self.targetSerial and self.inRange:
                     self.force_count += 1
 
-                if self.force_change and dest1.headSerial != self.targetSerial:
+                elif self.force_change:
                     self.force_change = False
                     self.force_count = 0
 
-                elif self.force_count > 10:
+                if self.force_count > 10:
                     self.force_change = True
 
                 self.target = dest1
