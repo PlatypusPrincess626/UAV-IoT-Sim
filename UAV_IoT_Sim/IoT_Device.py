@@ -213,11 +213,11 @@ class IoT_Device:
         # ADF 2.0
         self.max_AoI = self.age_table[0]
         for sens in range(len(self.sens_table.index) - 1):
-            if self.age_table[sens] < self.max_AoI:
-                self.max_AoI = self.age_table[sens]
+            # if self.age_table[sens] < self.max_AoI:
+            #     self.max_AoI = self.age_table[sens]
 
-        #     self.max_AoI += self.age_table[sens]
-        # self.max_AoI = self.max_AoI / self.num_sensors
+            self.max_AoI += self.age_table[sens]
+        self.max_AoI = self.max_AoI / self.num_sensors
         # ADF 1.0
         # self.mean_AoI = step
 
