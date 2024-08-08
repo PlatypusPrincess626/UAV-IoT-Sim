@@ -126,7 +126,7 @@ def evaluate(
     accum_harvest = 0
 
     # QL
-    # agent.decay_epsilon(1)
+    agent.decay_epsilon(1)
 
     for i in range(eval_episodes):
         eval_env.reset()
@@ -163,11 +163,11 @@ def evaluate(
                 CH_Metrics[ch][1] = eval_env.curr_step - eval_env.curr_state[ch + 1][2]
 
             if train_model:
-                agent.update(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
+                # agent.update(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
                 # DDQN
-                # agent.update_mem(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
-                # if len(agent.memory) > 64:
-                #     agent.train(64)
+                agent.update_mem(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
+                if len(agent.memory) > 64:
+                    agent.train(64)
             ep_reward += info.get("Reward_Change")
 
             if log_metrics and i == eval_episodes-1:
@@ -182,7 +182,7 @@ def evaluate(
         if log_metrics and i == eval_episodes - 1:
             print(eval_env.ch_sensors)
             filename = ("age_metrics_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_gann.csv")
+                        curr_date_time.strftime("%m") + "_ADF1.csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -190,7 +190,7 @@ def evaluate(
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("data_metrics_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_gann.csv")
+                        curr_date_time.strftime("%m") + "_ADF1.csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -198,14 +198,14 @@ def evaluate(
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("uav_metrics_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_gann.csv")
+                        curr_date_time.strftime("%m") + "_ADF1.csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
                 csvwriter.writerows(UAV_Metrics)
 
         # DDQN
-        # agent.update_target_from_model()
+        agent.update_target_from_model()
 
         accum_avgAoI += avgAoI / (eval_env.curr_step + count)
         accum_peakAoI += peakAoI / (eval_env.curr_step + count)
@@ -252,11 +252,11 @@ def train(
     for timestep in range(total_steps):
         done = step(agent, env)
         # QL
-        # agent.decay_epsilon(timestep / total_steps)
+        agent.decay_epsilon(timestep / total_steps)
 
         if done:
             # DDQN
-            # agent.update_target_from_model()
+            agent.update_target_from_model()
             env.reset()
 
         if timestep % eval_frequency == 0:
@@ -340,11 +340,11 @@ def step(agent, env):
     if train_model:
         print(f"Training")
         #QL
-        agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
+        # agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
         # DDQN
-        # agent.update_mem(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
-        # if len(agent.memory) > 64:
-        #     agent.train(64)
+        agent.update_mem(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
+        if len(agent.memory) > 64:
+            agent.train(64)
     return done
 
 
@@ -352,7 +352,7 @@ def prepopulate(agent, prepop_steps, env):
     timestep = 0
 
     # QL
-    # agent.decay_epsilon(0)
+    agent.decay_epsilon(0)
     while timestep < prepop_steps:
         env.reset()
         done = False
@@ -364,15 +364,15 @@ def prepopulate(agent, prepop_steps, env):
 
             if buffer_done or env.truncated:
                 # DDQN
-                # agent.update_target_from_model()
+                agent.update_target_from_model()
                 done = True
 
             if train_model:
-                agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
+                # agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
                 # DDQN
-                # agent.update_mem(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
-                # if len(agent.memory) > 64:
-                #     agent.train(64)
+                agent.update_mem(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
+                if len(agent.memory) > 64:
+                    agent.train(64)
             timestep += 1
 
 def run_experiment(args):
@@ -385,7 +385,7 @@ def run_experiment(args):
         tf.config.experimental.set_memory_growth(device, True)
 
     print("Creating Agent")
-    agent = model_utils.get_gann_agent(
+    agent = model_utils.get_ddqn_agent(
         env
     )
 

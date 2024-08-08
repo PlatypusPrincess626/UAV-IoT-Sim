@@ -275,33 +275,33 @@ class IoT_Device:
     def get_dest(self, state, full_sensor_list, model, step, no_hold, force_change, targetSerial, _=None):
         if self.stored_data >= (self._comms.get("AmBC_Bit_Rate_bit/s") * 52 * 5) and no_hold and not force_change:
             # ADF 2.0
-            return False, False, self, _, state, _, self.headSerial, _
+            # return False, False, self, _, state, _, self.headSerial, _
             # ADF 1.0
-            # return False, False, self, state, self.headSerial
+            return False, False, self, state, self.headSerial
 
         for CH in range(len(state) - 6):
             if state[CH + 1][2] < 1.0:
                 # ADF 2.0
-                return False, True, full_sensor_list.iat[CH + 1, 0], _, state, _, CH, _
+                # return False, True, full_sensor_list.iat[CH + 1, 0], _, state, _, CH, _
                 # ADF 1.0
-                # return False, True, full_sensor_list.iat[CH + 1, 0], state, CH
+                return False, True, full_sensor_list.iat[CH + 1, 0], state, CH
 
         # ADF 2.0
-        sensMapping: List[List[int]] = [[0, 0, 0] for _ in range(5)]
-        count = 0
-        for sens in range(self.num_sensors):
-            if not (self.active_table[sens]) and (count < 5):
-                sensMapping[count][0], sensMapping[count][1], sensMapping[count][2] = \
-                    (sens,
-                     math.sqrt(pow((self.indX - self.sens_table.iat[sens, 0].indX), 2) +
-                               pow((self.indY - self.sens_table.iat[sens, 0].indY), 2)),
-                     (-5 + count)
-                     )
-
-                state[sensMapping[count][2]][1], state[sensMapping[count][2]][2] = \
-                    sensMapping[count][1], self.age_table[sens]
-
-                count += 1
+        # sensMapping: List[List[int]] = [[0, 0, 0] for _ in range(5)]
+        # count = 0
+        # for sens in range(self.num_sensors):
+        #     if not (self.active_table[sens]) and (count < 5):
+        #         sensMapping[count][0], sensMapping[count][1], sensMapping[count][2] = \
+        #             (sens,
+        #              math.sqrt(pow((self.indX - self.sens_table.iat[sens, 0].indX), 2) +
+        #                        pow((self.indY - self.sens_table.iat[sens, 0].indY), 2)),
+        #              (-5 + count)
+        #              )
+        #
+        #         state[sensMapping[count][2]][1], state[sensMapping[count][2]][2] = \
+        #             sensMapping[count][1], self.age_table[sens]
+        #
+        #         count += 1
 
         action = model.act(state)
         if force_change:
@@ -313,27 +313,27 @@ class IoT_Device:
                         action = sens
 
         # ADF 2.0
-        if action < (len(state) - 6):
-            return True, True, full_sensor_list.iat[action + 1, 0], _, state, _, action, _
-        else:
-            sensor = self.sens_table.iat[sensMapping[action - len(full_sensor_list.index) + 1][0], 0]
-
-            self.age_table[sensMapping[action - len(full_sensor_list.index) + 1][0]] = step
-            state1 = state
-
-            for Iter in range(5):
-                state[len(state) - 5 + Iter][1], state[len(state) - 5 + Iter][2] = 0, 0
-
-            action2 = model.act(state) % (len(full_sensor_list.index) - 1)
-            if force_change:
-                while targetSerial == action:
-                    lowest = state[self.headSerial + 1][2]
-                    for ch in range(len(state) - 6):
-                        if state[ch + 1][2] < lowest:
-                            lowest = state[ch + 1][2]
-                            action2 = ch
-
-            return True, True, sensor, full_sensor_list.iat[action2 + 1, 0], state1, state, action, action2
+        # if action < (len(state) - 6):
+        #     return True, True, full_sensor_list.iat[action + 1, 0], _, state, _, action, _
+        # else:
+        #     sensor = self.sens_table.iat[sensMapping[action - len(full_sensor_list.index) + 1][0], 0]
+        #
+        #     self.age_table[sensMapping[action - len(full_sensor_list.index) + 1][0]] = step
+        #     state1 = state
+        #
+        #     for Iter in range(5):
+        #         state[len(state) - 5 + Iter][1], state[len(state) - 5 + Iter][2] = 0, 0
+        #
+        #     action2 = model.act(state) % (len(full_sensor_list.index) - 1)
+        #     if force_change:
+        #         while targetSerial == action:
+        #             lowest = state[self.headSerial + 1][2]
+        #             for ch in range(len(state) - 6):
+        #                 if state[ch + 1][2] < lowest:
+        #                     lowest = state[ch + 1][2]
+        #                     action2 = ch
+        #
+        #     return True, True, sensor, full_sensor_list.iat[action2 + 1, 0], state1, state, action, action2
 
         # ADF 1.0
-        # return True, True, full_sensor_list.iat[action + 1, 0], state, action
+        return True, True, full_sensor_list.iat[action + 1, 0], state, action
