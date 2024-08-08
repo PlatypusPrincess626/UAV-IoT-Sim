@@ -375,7 +375,6 @@ def prepopulate(agent, prepop_steps, env):
                 #     agent.train(64)
             timestep += 1
 
-get_ql_agent
 def run_experiment(args):
     env_str = args.env
     print("Creating Evironment")
