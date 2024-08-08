@@ -279,7 +279,7 @@ class IoT_Device:
             # ADF 1.0
             return False, False, self, state, self.headSerial
 
-        for CH in range(len(state) - 6):
+        for CH in range(len(state) - 1):
             if state[CH + 1][2] < 1.0:
                 # ADF 2.0
                 # return False, True, full_sensor_list.iat[CH + 1, 0], _, state, _, CH, _
@@ -307,7 +307,7 @@ class IoT_Device:
         if force_change:
             lowest = state[self.headSerial + 1][2]
             while targetSerial == action:
-                for sens in range(len(state) - 6):
+                for sens in range(len(state) - 1):
                     if state[sens + 1][2] < lowest:
                         lowest = state[sens + 1][2]
                         action = sens
