@@ -182,7 +182,7 @@ def evaluate(
         if log_metrics and i == eval_episodes - 1:
             print(eval_env.ch_sensors)
             filename = ("age_metrics_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_ql.csv")
+                        curr_date_time.strftime("%m") + "_gann.csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -190,7 +190,7 @@ def evaluate(
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("data_metrics_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_ql.csv")
+                        curr_date_time.strftime("%m") + "_gann.csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -198,7 +198,7 @@ def evaluate(
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("uav_metrics_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "ql.csv")
+                        curr_date_time.strftime("%m") + "_gann.csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -252,7 +252,7 @@ def train(
     for timestep in range(total_steps):
         done = step(agent, env)
         # QL
-        agent.decay_epsilon(timestep / total_steps)
+        # agent.decay_epsilon(timestep / total_steps)
 
         if done:
             # DDQN
@@ -352,7 +352,7 @@ def prepopulate(agent, prepop_steps, env):
     timestep = 0
 
     # QL
-    agent.decay_epsilon(0)
+    # agent.decay_epsilon(0)
     while timestep < prepop_steps:
         env.reset()
         done = False
@@ -375,7 +375,7 @@ def prepopulate(agent, prepop_steps, env):
                 #     agent.train(64)
             timestep += 1
 
-
+get_ql_agent
 def run_experiment(args):
     env_str = args.env
     print("Creating Evironment")
@@ -386,7 +386,7 @@ def run_experiment(args):
         tf.config.experimental.set_memory_growth(device, True)
 
     print("Creating Agent")
-    agent = model_utils.get_ql_agent(
+    agent = model_utils.get_gann_agent(
         env
     )
 
