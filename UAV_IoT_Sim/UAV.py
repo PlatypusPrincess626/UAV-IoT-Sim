@@ -343,7 +343,8 @@ class QuadUAV:
         #   ADF 1.0
         else:
             used_model, changed_transit, dest, state, action = \
-                self.target.get_dest(self.state, self.full_sensor_list, model, step)
+                self.target.get_dest(self.state, self.full_sensor_list, model, step,
+                                     self.no_hold, self.force_change, self.targetSerial)
 
             self.no_hold = True
             if self.model_transit and changed_transit:
