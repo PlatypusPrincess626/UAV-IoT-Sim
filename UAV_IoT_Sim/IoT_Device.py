@@ -139,14 +139,14 @@ class IoT_Device:
         spectra = env.getIrradiance(self.lat, self.long, self.tilt, self.azimuth, step)
         # interference = env.getInterference(self.indX, self.indY, self.type)
         if self.type == 1:
-            interference = random.randint(1, 10_000) / 10_000
+            interference = random.random()
         else:
-            interference = 0
+            interference = 1
 
 
         f = InterpolatedUnivariateSpline(spectra['wavelength'], spectra['poa_global'])
         powDensity = f.integral(self.spctrlLow, self.spctrlHigh)
-        power = abs(alpha / 100) * (1 - interference) * (powDensity * self.solarArea)
+        power = abs(alpha / 100) * interference * powDensity * self.solarArea
 
         if power * 1_000_000 > 0.0:
             self.stored_energy += round((power / self._comms.get("LoRa_Voltage_V")) * 1_000_000)
@@ -213,11 +213,11 @@ class IoT_Device:
         # ADF 2.0
         self.max_AoI = self.age_table[0]
         for sens in range(len(self.sens_table.index) - 1):
-            # if self.age_table[sens] < self.max_AoI:
-            #     self.max_AoI = self.age_table[sens]
+            if self.age_table[sens] < self.max_AoI:
+                self.max_AoI = self.age_table[sens]
 
-            self.max_AoI += self.age_table[sens]
-        self.max_AoI = round(self.max_AoI / self.num_sensors)
+        #     self.max_AoI += self.age_table[sens]
+        # self.max_AoI = round(self.max_AoI / self.num_sensors)
         # ADF 1.0
         # self.mean_AoI = step
 
@@ -273,7 +273,7 @@ class IoT_Device:
             return 0
 
     def get_dest(self, state, full_sensor_list, model, step, no_hold, force_change, targetSerial, _=None):
-        if self.stored_data >= self.max_data * 0.25 and no_hold and not force_change:
+        if self.stored_data >= (self._comms.get("AmBC_Bit_Rate_bit/s") * 52 * 5) and no_hold and not force_change:
             # ADF 2.0
             return False, False, self, _, state, _, self.headSerial, _
             # ADF 1.0
