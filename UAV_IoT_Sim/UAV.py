@@ -369,6 +369,7 @@ class QuadUAV:
 
             self.target = dest
             self.targetHead = dest
+            self.targetSerial = self.targetHead.headSerial
             self.targetX = dest.indX
             self.targetY = dest.indY
             return (train_model, used_model, state, action,
