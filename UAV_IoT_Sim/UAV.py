@@ -350,6 +350,16 @@ class QuadUAV:
             if self.model_transit and changed_transit:
                 train_model = True
 
+            if dest.headSerial == self.targetSerial and self.inRange:
+                self.force_count += 1
+
+            elif self.force_change:
+                self.force_change = False
+                self.force_count = 0
+
+            if self.force_count > 10:
+                self.force_change = True
+
             self.state = state
             self.action = action
             if used_model:
