@@ -32,6 +32,7 @@ class QuadUAV:
         self.indX = int(X)
         self.indY = int(Y)
         self.maxH = 20
+        self.h = 1
 
         # Trajectory
         self.target = None
@@ -86,6 +87,7 @@ class QuadUAV:
         self.amp = self.max_energy / self.charge_rate  # Roughly 2.72 A optimal current
         self.stored_energy = self.max_energy * 1_000  # Initialize at full battery
         self.is_charging = False
+        self.launch_cost = 18.889 # mA
 
         # State used for model
         #   ADF 2.0
@@ -113,6 +115,7 @@ class QuadUAV:
         self.no_hold = True
         self.force_change = False
         self.force_count = 0
+        self.h = 1
 
         self.target = None
         self.targetHead = None
@@ -141,40 +144,48 @@ class QuadUAV:
         maxDist = math.sqrt(pow(self.indX - self.targetX, 2) + pow(self.indY - self.targetY, 2))
 
         if abs(self.targetX - self.indX) < 1.0 and abs(self.targetY - self.indY) < 1.0:
-            self.energy_cost(0, 0)
+            self.h = 0
 
         elif self.stored_energy > (1_000 * self.max_energy / (self.flight_discharge * 60)):
+            if self.h == 0:
+                self.h = 1
+                self.energy_cost(0, 0, 1)
 
-            if maxDist <= self.maxSpd * 60:
+
+            if maxDist < self.maxSpd * 60:
                 env.moveUAV(round(self.indX), round(self.indY), round(self.targetX), round(self.targetY))
                 self.indX = self.targetX
                 self.indY = self.targetY
-                time = maxDist / (self.maxSpd * 60)
+                time = maxDist / self.maxSpd
+                self.h = 0
 
             else:
-                vectAngle = math.atan((self.targetY - self.indY) / (self.targetX - self.indX))  # Returns radians
-                direction = (self.targetX - self.indX) / abs(self.targetX - self.indX)
+                time = 60
+                vectAngle = math.atan(abs(self.targetY - self.indY) / abs(self.targetX - self.indX))  # Returns radians
+                directionX = (self.targetX - self.indX) / abs(self.targetX - self.indX)
+                directionY = (self.targetY - self.indY) / abs(self.targetY - self.indY)
                 env.moveUAV(round(self.indX), round(self.indY),
-                            math.floor(self.indX + direction * self.maxSpd * 60 * math.cos(vectAngle)),
-                            math.floor(self.indY + direction * self.maxSpd * 60 * math.sin(vectAngle))
+                            math.floor(self.indX + directionX * self.maxSpd * 60 * math.cos(vectAngle)),
+                            math.floor(self.indY + directionY * self.maxSpd * 60 * math.sin(vectAngle))
                             )
-                self.indX += direction * self.maxSpd * 60 * math.cos(vectAngle)
-                self.indY += direction * self.maxSpd * 60 * math.sin(vectAngle)
-                time = maxDist / (self.maxSpd * 60)
+                self.indX += math.floor(directionX * self.maxSpd * 60 * math.cos(vectAngle))
+                self.indY += math.floor(directionY * self.maxSpd * 60 * math.sin(vectAngle))
 
-            self.energy_cost(time, 0)
+            self.energy_cost(time, 0, 0)
 
         else:
             self.crash = True
 
-    def energy_cost(self, flight: float = 0.0, lora: float = 0.0):
+    def energy_cost(self, flight: float = 0.0, lora: float = 0.0, launch: float = 0.0):
         total_cost = 0
         # Cost of air travel
-        total_cost += round(flight * 1_000 * (self.max_energy / (self.flight_discharge * 60 * 60)))
+        total_cost += round(flight * 1_000 * self.max_energy / (self.flight_discharge * 60 * 60))
         # Cost of LoRa
         total_cost += round(lora * self._comms.get("LoRa_Current_A"))
+        # Cost to Launch
+        total_cost += round(launch * self.launch_cost * 1_000)
 
-        self.step_move_cost += round(flight * 1_000 * (self.max_energy / (self.flight_discharge * 60 * 60)))
+        self.step_move_cost += round(flight * 1_000 * self.max_energy / (self.flight_discharge * 60 * 60))
         self.step_comms_cost += round(lora * self._comms.get("LoRa_Current_A"))
 
         self.stored_energy -= total_cost
@@ -204,8 +215,8 @@ class QuadUAV:
             else:
                 self.inRange = False
 
-            totalTime = totalData / self._comms.get("AmBC_Bit_Rate_bit/s", 0.0)
-            self.energy_cost(0, totalTime)
+            totalTime = totalData / (self._comms.get("AmBC_Bit_Rate_bit/s", 0.0) * 60)
+            self.energy_cost(0, totalTime, 0)
 
             self.state[self.targetSerial + 1][2] = self.last_AoI
             self.state[self.targetSerial + 1][1] += totalData
@@ -224,7 +235,7 @@ class QuadUAV:
                 totalData += dataReturn
 
                 totalTime = totalData / self._comms.get("LoRa_Bit_Rate_bit/s")
-                self.energy_cost(0, totalTime)
+                self.energy_cost(0, totalTime, 0)
 
                 self.state[self.targetSerial + 1][2] = self.last_AoI
                 self.state[self.targetSerial + 1][1] += totalData
@@ -236,7 +247,7 @@ class QuadUAV:
         return train_model, change_archives
 
     def receive_energy(self):
-        if self.target.type == 2:
+        if self.target.type == 2 and self.h == 0:
             t = self.target.charge_time(int(self.indX), int(self.indY), self.is_charging)
 
             if self.is_charging and t < 60.0:

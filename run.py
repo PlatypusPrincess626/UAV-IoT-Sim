@@ -176,6 +176,7 @@ def evaluate(
                 CH_Data.append([CH_Metrics[0][0], CH_Metrics[1][0], CH_Metrics[2][0],
                                CH_Metrics[3][0], CH_Metrics[4][0]])
                 UAV_Metrics.append([comms, move, harvest])
+                print(comms, move, harvest)
 
         curr_date_time = datetime.datetime.now()
 
