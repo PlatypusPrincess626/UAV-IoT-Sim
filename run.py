@@ -156,6 +156,7 @@ def evaluate(
             accum_comms += comms
             accum_move += move
             accum_harvest += harvest
+            print(comms, move, harvest)
 
             ch: int
             for ch in range(len(CH_Metrics)):
@@ -176,7 +177,6 @@ def evaluate(
                 CH_Data.append([CH_Metrics[0][0], CH_Metrics[1][0], CH_Metrics[2][0],
                                CH_Metrics[3][0], CH_Metrics[4][0]])
                 UAV_Metrics.append([comms, move, harvest])
-                print(comms, move, harvest)
 
         curr_date_time = datetime.datetime.now()
 
