@@ -261,10 +261,8 @@ class QuadUAV:
             self.state[0][2] = self.stored_energy
 
     def set_dest(self, model, step, _=None):
-        print(self.state)
         train_model = False
         used_model = False
-        print(self.force_change)
 
         if self.target is None:
             minDist = 10_000.0
