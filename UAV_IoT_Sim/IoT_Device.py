@@ -208,7 +208,7 @@ class IoT_Device:
             else:
                 self.active_table[sensor + channel] = False
 
-        self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 30 * totalChannels)
+        self.stored_energy -= round(self._comms.get("LoRa_Current_A"))
 
         # ADF 2.0
         self.max_AoI = self.age_table[0]

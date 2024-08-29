@@ -120,6 +120,8 @@ def evaluate(
     CH_Age = []
     CH_Data = []
     UAV_Metrics = []
+    CHCoords = []
+    SensCoords = []
 
     accum_comms = 0
     accum_move = 0
@@ -156,7 +158,7 @@ def evaluate(
             accum_comms += comms
             accum_move += move
             accum_harvest += harvest
-            print(comms, move, harvest)
+            print(eval_env.uavX, eval_env.uavY, comms, move, harvest)
 
             ch: int
             for ch in range(len(CH_Metrics)):
@@ -176,14 +178,37 @@ def evaluate(
                                CH_Metrics[3][1], CH_Metrics[4][1]])
                 CH_Data.append([CH_Metrics[0][0], CH_Metrics[1][0], CH_Metrics[2][0],
                                CH_Metrics[3][0], CH_Metrics[4][0]])
-                UAV_Metrics.append([comms, move, harvest])
+                UAV_Metrics.append([eval_env.uavX, eval_env.uavY, comms, move, harvest])
+
 
         curr_date_time = datetime.datetime.now()
 
         if log_metrics and i == eval_episodes - 1:
+            for sensor in range(len(eval_env.sensX)):
+                SensCoords.append([eval_env.sensX[sensor], eval_env.sensY[sensor]])
+            for cluster in range(len(eval_env.chX)):
+                CHCoords.append([eval_env.chX[cluster], eval_env.chY[cluster]])
+
+        if log_metrics and i == eval_episodes - 1:
+            filename = ("sens_pts_" + curr_date_time.strftime("%d") + "_" +
+                        curr_date_time.strftime("%m") + ".csv")
+            open(filename, 'x')
+            with open(filename, 'w') as csvfile:
+                csvwriter = csv.writer(csvfile, delimiter='|')
+                csvwriter.writerows(SensCoords)
+
+        if log_metrics and i == eval_episodes - 1:
+            filename = ("cluster_pts_" + curr_date_time.strftime("%d") + "_" +
+                        curr_date_time.strftime("%m") + ".csv")
+            open(filename, 'x')
+            with open(filename, 'w') as csvfile:
+                csvwriter = csv.writer(csvfile, delimiter='|')
+                csvwriter.writerows(CHCoords)
+
+        if log_metrics and i == eval_episodes - 1:
             print(eval_env.ch_sensors)
             filename = ("age_metrics_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_100000.csv")
+                        curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -191,7 +216,7 @@ def evaluate(
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("data_metrics_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_100000.csv")
+                        curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -199,7 +224,7 @@ def evaluate(
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("uav_metrics_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_100000.csv")
+                        curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')

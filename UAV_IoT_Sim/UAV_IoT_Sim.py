@@ -16,6 +16,12 @@ class make_env:
     ):
         self.scene = scene
         self._env = Environment.sim_env(scene, num_sensors, num_uav, num_ch, max_num_steps)
+        self.sensX = self._env.xPts
+        self.sensY = self._env.yPts
+        self.chX = self._env.chX
+        self.chY = self._env.chY
+        self.uavX = 0
+        self.uavY = 0
 
         self._num_sensors = num_sensors
         self.num_ch = num_ch
@@ -121,6 +127,9 @@ class make_env:
                     uav = self._env.UAVTable.iat[uav, 0]
                     train_model, used_model, state, action, comms, move, harvest = uav.set_dest(model, self.curr_step)
                     uav.navigate_step(self._env)
+                    self.uavX = uav.indX
+                    self.uavY = uav.indY
+
                     train_model, change_archives = uav.receive_data(self.curr_step)
                     uav.receive_energy()
 

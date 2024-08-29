@@ -87,8 +87,12 @@ class sim_env:
         self.total_sensors = num_sensors
         self.total_uav = num_uav
         self.total_clusterheads = num_clusterheads
-        
-        
+
+        self.chX = [0] * self.total_clusterheads
+        self.chY = [0] * self.total_clusterheads
+        self.xPts = [0] * self.total_sensors
+        self.yPts = [0] * self.total_sensors
+
         if(scene == "test"):
             # Test scene will be Yellowstone National Park
             self.lat_center = 44.424           # Latitude
@@ -126,7 +130,7 @@ class sim_env:
     def placeObjects(self) -> list:
         
         dims = self.dim
-        envObj = [0] * (dims*dims + dims)
+        envObj = [0] * (dims*dims)
 
         # print("Placing Obstuctions")
         # for obst in range(self.numObst):
@@ -147,6 +151,8 @@ class sim_env:
                 if envObj[place] == 0:
                     sensX = int(place % dims)
                     sensY = math.floor(place/dims)
+                    self.xPts[sensor] = int(place % dims)
+                    self.yPts[sensor] = math.floor(place / dims)
                     sensLong = self.lat_center + self.stp * (sensX - self.dim)
                     sensLat = self.long_center + self.stp * (sensY - self.dim)
 
@@ -158,7 +164,7 @@ class sim_env:
         for sensor in sensorList:
             X, Y = sensor[0].get_indicies()
             sensCoord.append([X, Y])
-        data = np.array(sensCoord, dtype = 'int')
+        data = np.array(sensCoord, dtype='int')
         kmeans = KMeans(n_clusters=self.total_clusterheads, random_state=0, n_init=10).fit(data)
         centroids = kmeans.cluster_centers_
         heads = kmeans.predict(sensCoord)
@@ -167,6 +173,7 @@ class sim_env:
         uavCHList = []
         clusterheadList = []
         countCH = 0
+
         for centroid in centroids:
             row = int(centroid[0])
             column = int(centroid[1])
@@ -176,6 +183,8 @@ class sim_env:
                 if envObj[place] == 0:
                     sensX = int(place % dims)
                     sensY = math.floor(place / dims)
+                    self.chX[countCH] = int(place % dims)
+                    self.chY[countCH] = math.floor(place / dims)
                     sensLong = self.lat_center + self.stp * (sensX - self.dim)
                     sensLat = self.long_center + self.stp * (sensY - self.dim)
 

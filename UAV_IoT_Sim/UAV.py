@@ -143,8 +143,12 @@ class QuadUAV:
 
         maxDist = math.sqrt(pow(self.indX - self.targetX, 2) + pow(self.indY - self.targetY, 2))
 
-        if abs(self.targetX - self.indX) < 1.0 and abs(self.targetY - self.indY) < 1.0:
-            self.h = 0
+        if maxDist < 1.0:
+            if self.h == 0:
+                self.energy_cost(0, 0, 0)
+            else:
+                self.h = 0
+                self.energy_cost(0, 0, 1)
 
         elif self.stored_energy > (1_000 * self.max_energy / (self.flight_discharge * 60)):
             if self.h == 0:
@@ -157,7 +161,8 @@ class QuadUAV:
                 self.indX = self.targetX
                 self.indY = self.targetY
                 time = maxDist / self.maxSpd
-                self.h = 0
+                self.energy_cost(0, 0, 1)
+
 
             else:
                 time = 60
@@ -181,12 +186,13 @@ class QuadUAV:
         # Cost of air travel
         total_cost += round(flight * 1_000 * self.max_energy / (self.flight_discharge * 60 * 60))
         # Cost of LoRa
-        total_cost += round(lora * self._comms.get("LoRa_Current_A"))
+        total_cost += round(self._comms.get("LoRa_Current_A"))
         # Cost to Launch
         total_cost += round(launch * self.launch_cost * 1_000)
 
-        self.step_move_cost += round(flight * 1_000 * self.max_energy / (self.flight_discharge * 60 * 60))
-        self.step_comms_cost += round(lora * self._comms.get("LoRa_Current_A"))
+        self.step_move_cost += round(flight * 1_000 * self.max_energy / (self.flight_discharge * 60 * 60) +
+                                     round(launch * self.launch_cost * 1_000))
+        self.step_comms_cost += round(self._comms.get("LoRa_Current_A"))
 
         self.stored_energy -= total_cost
         self.state[0][2] = self.stored_energy
