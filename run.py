@@ -165,7 +165,8 @@ def evaluate(
                 CH_Metrics[ch][0] = eval_env.curr_state[ch + 1][1]
                 CH_Metrics[ch][1] = eval_env.curr_step - eval_env.curr_state[ch + 1][2]
 
-            if train_model:
+            # if train_model:
+            if True:
                 # agent.update(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
                 # DDQN
                 agent.update_mem(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
@@ -363,7 +364,8 @@ def step(agent, env):
     if buffer_done or env.truncated:
         done = True
 
-    if train_model:
+    # if train_model:
+    if True:
         print(f"Training")
         #QL
         # agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
@@ -393,7 +395,8 @@ def prepopulate(agent, prepop_steps, env):
                 agent.update_target_from_model()
                 done = True
 
-            if train_model:
+            # if train_model:
+            if True:
                 # agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
                 # DDQN
                 agent.update_mem(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
