@@ -143,6 +143,7 @@ class sim_env:
 
         print("Placing Sensors")
         sensorList = []
+        sensCoord = []
         # Random Sensor Placement for now
         for sensor in range(self.total_sensors):
             obstType = 1
@@ -151,6 +152,7 @@ class sim_env:
                 if envObj[place] == 0:
                     sensX = int(place % dims)
                     sensY = math.floor(place/dims)
+                    sensCoord.append([sensX, sensY])
                     self.xPts[sensor] = int(place % dims)
                     self.yPts[sensor] = math.floor(place / dims)
                     sensLong = self.lat_center + self.stp * (sensX - self.dim)
@@ -160,10 +162,6 @@ class sim_env:
                     envObj[place] = obstType
                     obstType = 0
 
-        sensCoord = []
-        for sensor in sensorList:
-            X, Y = sensor[0].get_indicies()
-            sensCoord.append([X, Y])
         data = np.array(sensCoord, dtype='int')
         kmeans = KMeans(n_clusters=self.total_clusterheads, random_state=0, n_init=10).fit(data)
         centroids = kmeans.cluster_centers_

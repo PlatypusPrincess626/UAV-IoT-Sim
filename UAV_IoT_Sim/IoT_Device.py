@@ -102,8 +102,6 @@ class IoT_Device:
             self.stored_energy = round(self.max_energy * 1_000)
 
     def reset(self):
-        self.indX = random.randint(0, 100)
-        self.indY = random.randint(0, 100)
         self.max_AoI = 0
         self.stored_energy = round(self.max_energy * 1_000)
         if self.type == 1:
