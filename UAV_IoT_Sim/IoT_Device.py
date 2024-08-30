@@ -271,11 +271,11 @@ class IoT_Device:
             return 0
 
     def get_dest(self, state, full_sensor_list, model, step, no_hold, force_change, targetSerial, _=None):
-        if self.stored_data >= (self._comms.get("AmBC_Bit_Rate_bit/s") * 52 * 5) and no_hold and not force_change:
-            # ADF 2.0
-            return False, False, self, _, state, _, self.headSerial, _
-            # ADF 1.0
-            # return False, False, self, state, self.headSerial
+        # if self.stored_data >= (self._comms.get("AmBC_Bit_Rate_bit/s") * 52 * 5) and no_hold and not force_change:
+        #     # ADF 2.0
+        #     return False, False, self, _, state, _, self.headSerial, _
+        #     # ADF 1.0
+        #     # return False, False, self, state, self.headSerial
 
         for CH in range(len(state) - 6):
             if state[CH + 1][2] < 1.0:
