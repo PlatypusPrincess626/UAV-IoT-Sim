@@ -312,13 +312,12 @@ class QuadUAV:
 
             if self.model_transit and changed_transit:
                 train_model = True
+                self.model_transit = False
 
             self.state = state1
             self.action = action1
             if used_model:
                 self.model_transit = True
-            else:
-                self.model_transit = False
 
             if dest1.type == 1:
                 if dest2.headSerial == self.targetSerial and self.inRange:
