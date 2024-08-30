@@ -82,7 +82,7 @@ class QuadUAV:
         self.cpu_pow = 3.7  # milli-watts/ 2 micro Joule
         self.cpu_amps = 1_000 # micro-amps
 
-        self.charge_rate = 1  # 60 min charging time
+        self.charge_rate = 1/3  # 60 min charging time
         self.flight_discharge = 0.5  # 30 min flight time
         self.amp = self.max_energy / self.charge_rate  # Roughly 2.72 A optimal current
         self.stored_energy = self.max_energy * 1_000  # Initialize at full battery
@@ -145,6 +145,7 @@ class QuadUAV:
 
         if maxDist < 1.0:
             if self.h == 0:
+                self.h = 0
                 self.energy_cost(0, 0, 0)
             else:
                 self.h = 0
@@ -161,6 +162,7 @@ class QuadUAV:
                 self.indX = self.targetX
                 self.indY = self.targetY
                 time = maxDist / self.maxSpd
+                self.h = 0
                 self.energy_cost(0, 0, 1)
 
 
@@ -286,6 +288,7 @@ class QuadUAV:
             self.targetY = minCH.indY
             self.targetSerial = self.targetHead.headSerial
 
+        # self.no_hold
         elif self.stored_energy < (self.max_energy * .30 * 1_000) and self.no_hold:
             self.is_charging = True
             self.target = self.targetHead
@@ -344,7 +347,7 @@ class QuadUAV:
                     self.force_change = False
                     self.force_count = 0
 
-                if self.force_count > 30:
+                if self.force_count > 60:
                     self.force_change = True
 
                 self.target = dest1
