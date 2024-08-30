@@ -234,7 +234,7 @@ class QuadUAV:
 
         else:
             if math.sqrt(pow((self.indX - self.target.indX), 2) + pow((self.indY - self.target.indY), 2)) < \
-                    self._comms.get("AmBC_Max_Distance_m"):
+                    self._comms.get("LoRa_Max_Distance_m"):
 
                 self.inRange = True
 
