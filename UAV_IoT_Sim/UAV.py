@@ -289,11 +289,11 @@ class QuadUAV:
             self.targetSerial = self.targetHead.headSerial
 
         # self.no_hold
-        elif self.stored_energy < (self.max_energy * .30 * 1_000) and self.no_hold:
+        elif self.stored_energy < (self.max_energy * .50 * 1_000) and self.no_hold:
             self.is_charging = True
             self.target = self.targetHead
 
-        elif self.is_charging and self.stored_energy > (self.max_energy * .60 * 1_000) and self.no_hold:
+        elif self.is_charging and self.stored_energy > (self.max_energy * .75 * 1_000) and self.no_hold:
             self.is_charging = False
             self.target = self.target
 
