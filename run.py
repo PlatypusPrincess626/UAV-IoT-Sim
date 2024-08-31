@@ -173,6 +173,8 @@ def evaluate(
                 if len(agent.memory) > 64:
                     agent.train(64)
             ep_reward += info.get("Reward_Change")
+            if crashed:
+                ep_reward = eval_env.curr_reward
 
             if log_metrics and i == eval_episodes-1:
                 CH_Age.append([CH_Metrics[0][1], CH_Metrics[1][1], CH_Metrics[2][1],
