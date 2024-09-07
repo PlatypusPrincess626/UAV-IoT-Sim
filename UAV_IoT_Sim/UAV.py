@@ -321,8 +321,8 @@ class QuadUAV:
             if dest1.type == 1:
                 d2 = math.sqrt(pow((dest1.indX - dest2.indX), 2) + pow((dest1.indY - dest2.indY), 2))
             travel_time = (d1 + d2) / self.maxSpd
-            energy_needed = travel_time * (1_000 * self.max_energy / (self.flight_discharge * 60 * 60) +
-                            round(self.cpu_amps + self._comms.get("AmBC_Current_A") +
+            energy_needed = travel_time * (1_000 * self.max_energy / (self.flight_discharge * 60 * 60)) + \
+                            travel_time / 60 * (round(self.cpu_amps + self._comms.get("AmBC_Current_A") +
                                   self._comms.get("Lora_Upkeep_A")) +
                             round(self._comms.get("LoRa_Current_A")))
 
