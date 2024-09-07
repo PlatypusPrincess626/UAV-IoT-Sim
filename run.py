@@ -89,7 +89,7 @@ def get_args():
     parser.add_argument(
         "--disable_wandb",
         type=bool,
-        default=False,
+        default=True,
         help="Activate wandb."
     )
     return parser.parse_args()
@@ -272,10 +272,10 @@ def train(
         eval_frequency: int,
         eval_episodes: int,
         policy_path: str,
-        logger,
         mean_success_rate: RunningAverage,
         mean_episode_length: RunningAverage,
-        mean_reward: RunningAverage
+        mean_reward: RunningAverage,
+        logger=None,
 ):
     start_time = time()
     # agent.eval_off()
@@ -319,10 +319,10 @@ def train(
                 }
             )
 
-            logger.log(
-                log_vals,
-                step=timestep,
-            )
+            # logger.log(
+            #     log_vals,
+            #     step=timestep,
+            # )
 
         print(
             f"Training Steps: {timestep}, Env: {env_str}, Sucess Rate: {sr:.2f}, Return: {ret:.2f}, Episode Length: {length:.2f}"
@@ -341,7 +341,7 @@ def train(
         "losses/hours": hours,
     }
     sr, ret, length, avgAoI, peakAoI, dataDist, dataColl, CH_Metrics, \
-        comms, move, harvest = evaluate(agent, env, eval_episodes, True, env_str, logger, start_time)
+        comms, move, harvest = evaluate(agent, env, eval_episodes, True, env_str, start_time)
 
     log_vals.update(
         {
@@ -355,10 +355,10 @@ def train(
         }
     )
 
-    logger.log(
-        log_vals,
-        step=total_steps,
-    )
+    # logger.log(
+    #     log_vals,
+    #     step=total_steps,
+    # )
 
 
 def step(agent, env):
@@ -433,8 +433,8 @@ def run_experiment(args):
         f"model={args.model}"
     )
 
-    wandb_kwargs = {"resume": None}
-    logger = get_logger(policy_path, args, wandb_kwargs)
+    # wandb_kwargs = {"resume": None}
+    # logger = get_logger(policy_path, args, wandb_kwargs)
 
     prepopulate(agent, 50_000, env)
     mean_success_rate = RunningAverage(10)
@@ -450,10 +450,10 @@ def run_experiment(args):
         args.eval_frequency,
         args.eval_episodes,
         policy_path,
-        logger,
         mean_success_rate,
         mean_episode_length,
-        mean_reward
+        mean_reward,
+        # logger
     )
 
 
