@@ -331,6 +331,10 @@ class QuadUAV:
                 self.target = self.target
                 self.force_count += 1
 
+                if self.force_count > 30:
+                    self.force_change = True
+                    self.force_count = 0
+
             elif self.stored_energy < 1.2 * energy_needed and dest1.type == 1:
                 self.no_hold = True
                 dest1 = dest2
@@ -340,10 +344,6 @@ class QuadUAV:
                 self.targetSerial = self.targetHead.headSerial
                 self.targetX = dest1.indX
                 self.targetY = dest1.indY
-                self.force_change = True
-                self.force_count = 0
-
-            if self.force_count > 30:
                 self.force_change = True
                 self.force_count = 0
 
@@ -357,6 +357,10 @@ class QuadUAV:
 
                     elif self.force_change:
                         self.force_change = False
+                        self.force_count = 0
+
+                    if self.force_count > 30:
+                        self.force_change = True
                         self.force_count = 0
 
                     self.targetSerial = self.targetHead.headSerial
