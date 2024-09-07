@@ -325,7 +325,7 @@ class QuadUAV:
                                   self._comms.get("Lora_Upkeep_A")) +
                             round(self._comms.get("LoRa_Current_A")))
 
-            if self.stored_energy < 1.2 * energy_needed and self.no_hold:
+            if self.stored_energy < 1.2 * energy_needed and self.no_hold and not self.force_change:
                 self.is_charging = True
                 used_model = False
                 self.target = self.target
@@ -343,6 +343,10 @@ class QuadUAV:
                 self.force_change = True
                 self.force_count = 0
 
+            if self.force_count > 30:
+                self.force_change = True
+                self.force_count = 0
+
             else:
                 if used_model:
                     self.model_transit = True
@@ -353,10 +357,6 @@ class QuadUAV:
 
                     elif self.force_change:
                         self.force_change = False
-                        self.force_count = 0
-
-                    if self.force_count > 30:
-                        self.force_change = True
                         self.force_count = 0
 
                     self.targetSerial = self.targetHead.headSerial
