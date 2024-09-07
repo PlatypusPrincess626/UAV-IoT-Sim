@@ -308,7 +308,6 @@ class QuadUAV:
                 self.target.get_dest(self.state, self.full_sensor_list, model, step,
                                      self.no_hold, self.force_change, self.targetSerial)
 
-            self.no_hold = True
             self.state = state1
             self.action = action1
 
@@ -326,10 +325,21 @@ class QuadUAV:
                                   self._comms.get("Lora_Upkeep_A")) +
                             round(self._comms.get("LoRa_Current_A")))
 
-            if self.stored_energy < 1.2 * energy_needed:
+            if self.stored_energy < 1.2 * energy_needed and self.no_hold:
                 self.is_charging = True
                 used_model = False
                 self.target = self.target
+
+            elif self.stored_energy < 1.2 * energy_needed and dest1.type == 1:
+                self.no_hold = True
+                dest1 = dest2
+
+                self.target = dest1
+                self.targetHead = dest1
+                self.targetSerial = self.targetHead.headSerial
+                self.targetX = dest1.indX
+                self.targetY = dest1.indY
+                self.force_change = True
 
             else:
                 if used_model:
