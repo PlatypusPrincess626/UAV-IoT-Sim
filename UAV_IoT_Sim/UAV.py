@@ -321,7 +321,7 @@ class QuadUAV:
                 d2 = math.sqrt(pow((dest1.indX - dest2.indX), 2) + pow((dest1.indY - dest2.indY), 2))
             travel_time = (d1 + d2) / self.maxSpd
             energy_needed = travel_time * (1_000 * self.max_energy / (self.flight_discharge * 60 * 60)) + \
-                            travel_time / 60 * (round(self.cpu_amps + self._comms.get("AmBC_Current_A") +
+                            (travel_time / 60) * (round(self.cpu_amps + self._comms.get("AmBC_Current_A") +
                                   self._comms.get("Lora_Upkeep_A")) +
                             round(self._comms.get("LoRa_Current_A")))
 
@@ -329,6 +329,7 @@ class QuadUAV:
                 self.is_charging = True
                 used_model = False
                 self.target = self.target
+                self.force_count += 1
 
             elif self.stored_energy < 1.2 * energy_needed and dest1.type == 1:
                 self.no_hold = True
@@ -340,6 +341,7 @@ class QuadUAV:
                 self.targetX = dest1.indX
                 self.targetY = dest1.indY
                 self.force_change = True
+                self.force_count = 0
 
             else:
                 if used_model:
@@ -355,6 +357,7 @@ class QuadUAV:
 
                     if self.force_count > 30:
                         self.force_change = True
+                        self.force_count = 0
 
                     self.targetSerial = self.targetHead.headSerial
                     self.targetHead = dest2
