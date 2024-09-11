@@ -133,8 +133,9 @@ class make_env:
                     train_model2, change_archives = uav.receive_data(self.curr_step)
                     uav.receive_energy()
 
-                    if train_model or train_model2:
-                        train_model = True
+                    train_model = True
+                    # if train_model or train_model2:
+                    #     train_model = True
 
                     self.curr_state = uav.state
                     self.last_action = action
