@@ -331,10 +331,6 @@ class QuadUAV:
                 self.target = self.target
                 self.force_count += 1
 
-                if self.force_count > 30:
-                    self.force_change = True
-                    self.force_count = 0
-
             elif self.stored_energy < 1.2 * energy_needed and dest1.type == 1:
                 self.no_hold = True
                 dest1 = dest2
@@ -348,6 +344,7 @@ class QuadUAV:
                 self.force_count = 0
 
             else:
+                self.is_charging = False
                 if used_model:
                     self.model_transit = True
 
