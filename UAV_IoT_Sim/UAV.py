@@ -347,6 +347,7 @@ class QuadUAV:
                 self.force_count = 0
 
             else:
+                self.no_hold = True
                 if used_model:
                     self.model_transit = True
 
