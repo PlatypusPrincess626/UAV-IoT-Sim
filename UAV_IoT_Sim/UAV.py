@@ -310,6 +310,9 @@ class QuadUAV:
 
             self.state = state1
             self.action = action1
+            self.force_change = False
+            self.is_charging = False
+
 
             if self.model_transit and changed_transit:
                 train_model = True
@@ -344,7 +347,6 @@ class QuadUAV:
                 self.force_count = 0
 
             else:
-                self.is_charging = False
                 if used_model:
                     self.model_transit = True
 
