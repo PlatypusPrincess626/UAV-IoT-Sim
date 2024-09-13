@@ -286,7 +286,17 @@ class IoT_Device:
 
         # ADF 2.0
         oldest_age = [self.age_table[0], self.age_table[1], self.age_table[2], self.age_table[3], self.age_table[4]]
-        oldest_indx = [0, 1, 2, 3, 4]
+        oldest_age.sort()
+        oldest_indx = []
+        for sens in range(5):
+            i = 0
+            while i < 5:
+                if oldest_age[sens] == self.age_table[i]:
+                    oldest_indx.append(i)
+                elif i >= 5:
+                    break
+                i += 1
+
         for sens in range(self.num_sensors-5):
             i = 0
             while i < 5:
