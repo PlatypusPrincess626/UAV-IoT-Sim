@@ -285,21 +285,33 @@ class IoT_Device:
                 # return False, True, full_sensor_list.iat[CH + 1, 0], state, CH
 
         # ADF 2.0
+        oldest_age = [self.age_table[0], self.age_table[1], self.age_table[2], self.age_table[3], self.age_table[4]]
+        oldest_indx = [0, 1, 2, 3, 4]
+        for sens in range(self.num_sensors-5):
+            i = 0
+            while i < 5:
+                if oldest_age[i] < self.age_table[sens + 5]:
+                    break
+                i += 1
+
+            if i < 5:
+                oldest_age.insert(i, self.age_table[sens + 5])
+                oldest_indx.insert(i, sens + 5)
+            else:
+                oldest_age.append(self.age_table[sens + 5])
+                oldest_indx.append(sens + 5)
+
         sensMapping: List[List[int]] = [[0, 0, 0] for _ in range(5)]
-        count = 0
-        for sens in range(self.num_sensors):
-            if not (self.active_table[sens]) and (count < 5):
-                sensMapping[count][0], sensMapping[count][1], sensMapping[count][2] = \
-                    (sens,
-                     math.sqrt(pow((self.indX - self.sens_table.iat[sens, 0].indX), 2) +
-                               pow((self.indY - self.sens_table.iat[sens, 0].indY), 2)),
-                     (-5 + count)
-                     )
+        for sens in range(5):
+            sensMapping[sens][0], sensMapping[sens][1], sensMapping[sens][2] =\
+                (oldest_indx[sens],
+                 math.sqrt(pow((self.indX - self.sens_table.iat[oldest_indx[sens], 0].indX), 2) +
+                           pow((self.indY - self.sens_table.iat[oldest_indx[sens], 0].indY), 2)),
+                 (-5 + sens))
 
-                state[sensMapping[count][2]][1], state[sensMapping[count][2]][2] = \
-                    sensMapping[count][1], self.age_table[sens]
+            state[sensMapping[sens][2]][1], state[sensMapping[sens][2]][2] = (
+                sensMapping[sens][1], oldest_age[sens])
 
-                count += 1
 
         action = model.act(state)
         if force_change:

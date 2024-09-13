@@ -82,8 +82,8 @@ class QuadUAV:
         self.cpu_pow = 3.7  # milli-watts/ 2 micro Joule
         self.cpu_amps = 1_000 # micro-amps
 
-        self.charge_rate = 1/3  # 60 min charging time
-        self.flight_discharge = 3/4  # 30 min flight time
+        self.charge_rate = 1/3  # 20 min charging time
+        self.flight_discharge = 3/4  # 45 min flight time
         self.amp = self.max_energy / self.charge_rate  # Roughly 2.72 A optimal current
         self.stored_energy = self.max_energy * 1_000  # Initialize at full battery
         self.is_charging = False
