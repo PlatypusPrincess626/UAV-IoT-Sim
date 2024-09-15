@@ -128,7 +128,7 @@ def evaluate(
     accum_harvest = 0
 
     # QL
-    agent.decay_epsilon(1)
+    # agent.decay_epsilon(1)
 
     for i in range(eval_episodes):
         eval_env.reset()
@@ -194,7 +194,7 @@ def evaluate(
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("sens_pts_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_ql.csv")
+                        curr_date_time.strftime("%m") + "_gann.csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -202,7 +202,7 @@ def evaluate(
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("cluster_pts_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_ql.csv")
+                        curr_date_time.strftime("%m") + "_gann.csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -211,7 +211,7 @@ def evaluate(
         if log_metrics and i == eval_episodes - 1:
             print(eval_env.ch_sensors)
             filename = ("age_metrics_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_ql.csv")
+                        curr_date_time.strftime("%m") + "_gann.csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -219,7 +219,7 @@ def evaluate(
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("data_metrics_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_ql.csv")
+                        curr_date_time.strftime("%m") + "_gann.csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -227,7 +227,7 @@ def evaluate(
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("uav_metrics_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_ql.csv")
+                        curr_date_time.strftime("%m") + "_gann.csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -284,7 +284,7 @@ def train(
     for timestep in range(total_steps):
         done = step(agent, env)
         # QL
-        agent.decay_epsilon(timestep / total_steps)
+        # agent.decay_epsilon(timestep / total_steps)
 
         if done:
             # DDQN
@@ -385,7 +385,7 @@ def prepopulate(agent, prepop_steps, env):
     timestep = 0
 
     # QL
-    agent.decay_epsilon(0)
+    # agent.decay_epsilon(0)
     while timestep < prepop_steps:
         env.reset()
         done = False
@@ -420,7 +420,7 @@ def run_experiment(args):
         tf.config.experimental.set_memory_growth(device, True)
 
     print("Creating Agent")
-    agent = model_utils.get_ql_agent(
+    agent = model_utils.get_gann_agent(
         env
     )
 
