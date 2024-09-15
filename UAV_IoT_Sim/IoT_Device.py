@@ -303,13 +303,16 @@ class IoT_Device:
                 if oldest_age[i] < self.age_table[sens + 5]:
                     break
                 i += 1
+                if self.num_sensors < (sens + i):
+                    break
 
-            if i < 5:
+            if i < 5 and self.num_sensors > (sens + i):
                 oldest_age.insert(i, self.age_table[sens + 5])
                 oldest_indx.insert(i, sens + 5)
-            else:
+            elif self.num_sensors > (sens + i):
                 oldest_age.append(self.age_table[sens + 5])
                 oldest_indx.append(sens + 5)
+
 
         sensMapping: List[List[int]] = [[0, 0, 0] for _ in range(5)]
         for sens in range(5):
