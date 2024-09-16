@@ -245,7 +245,10 @@ class QuadUAV:
                 totalTime = totalData / self._comms.get("LoRa_Bit_Rate_bit/s")
                 self.energy_cost(0, totalTime, 0)
 
-                self.state[self.targetSerial + 1][2] = self.last_AoI
+                # ADF 2
+                # self.state[self.targetSerial + 1][2] = self.last_AoI
+                # ADF 1
+                self.state[self.targetSerial + 1][2] = step
                 self.state[self.targetSerial + 1][1] += totalData
                 self.state[0][1] += totalData
 

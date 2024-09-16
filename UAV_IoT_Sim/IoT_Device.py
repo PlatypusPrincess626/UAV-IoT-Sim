@@ -338,11 +338,11 @@ class IoT_Device:
                     if state[sens + 1][2] < lowest and not sens == targetSerial:
                         lowest = state[sens + 1][2]
                         action = sens
-                    elif i > len(state) - 1:
+                    elif i >= len(state) - 1:
                         # ADF 2
                         # action = len(state) - 5
                         # ADF 1
-                        if targetSerial < len(state) - 2:
+                        if targetSerial < len(full_sensor_list) - 2:
                             action += 1
                         else:
                             action = 0
