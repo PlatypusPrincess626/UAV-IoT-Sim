@@ -396,6 +396,14 @@ class QuadUAV:
                 self.target.get_dest(self.state, self.full_sensor_list, model, step,
                                      self.no_hold, self.force_change, self.targetSerial)
 
+            self.force_change = False
+            self.is_charging = False
+
+
+            if self.model_transit and changed_transit:
+                train_model = True
+                self.model_transit = False
+
             d1 = math.sqrt(pow((self.indX - dest.indX), 2) + pow((self.indY - dest.indY), 2))
             travel_time = d1 / self.maxSpd
             energy_needed = travel_time * (1_000 * self.max_energy / (self.flight_discharge * 60 * 60)) + \
