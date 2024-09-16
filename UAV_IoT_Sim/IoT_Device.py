@@ -377,4 +377,4 @@ class IoT_Device:
         #     return True, True, sensor, full_sensor_list.iat[action2 + 1, 0], state1, state, action, action2
 
         # ADF 1.0
-        return True, True, full_sensor_list.iat[action, 0], state, action
+        return True, True, full_sensor_list.iat[action + 1, 0], state, action
