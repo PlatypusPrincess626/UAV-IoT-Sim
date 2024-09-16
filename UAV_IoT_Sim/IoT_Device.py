@@ -209,15 +209,15 @@ class IoT_Device:
         self.stored_energy -= round(self._comms.get("LoRa_Current_A"))
 
         # ADF 2.0
-        # self.max_AoI = self.age_table[0]
-        # for sens in range(len(self.sens_table.index) - 1):
-        #     if self.age_table[sens] < self.max_AoI:
-        #         self.max_AoI = self.age_table[sens]
+        self.max_AoI = self.age_table[0]
+        for sens in range(len(self.sens_table.index) - 1):
+            if self.age_table[sens] < self.max_AoI:
+                self.max_AoI = self.age_table[sens]
 
         #     self.max_AoI += self.age_table[sens]
         # self.max_AoI = round(self.max_AoI / self.num_sensors)
         # ADF 1.0
-        self.max_AoI = step
+        # self.max_AoI = step
 
     def ch_upload(self, X: int, Y: int):
         if self.solar_powered:
@@ -278,55 +278,55 @@ class IoT_Device:
         #     # return False, False, self, state, self.headSerial
 
         # ADF 2
-        # for CH in range(len(state) - 6):
+        for CH in range(len(state) - 6):
         # ADF 1
-        for CH in range(len(state) - 1):
+        # for CH in range(len(state) - 1):
             if state[CH + 1][2] < 1.0:
                 # ADF 2.0
-                # return False, True, full_sensor_list.iat[CH + 1, 0], _, state, _, CH, _
+                return False, True, full_sensor_list.iat[CH + 1, 0], _, state, _, CH, _
                 # ADF 1.0
-                return False, True, full_sensor_list.iat[CH + 1, 0], state, CH
+                # return False, True, full_sensor_list.iat[CH + 1, 0], state, CH
 
         # ADF 2.0
-        # oldest_age = [self.age_table[0], self.age_table[1], self.age_table[2], self.age_table[3], self.age_table[4]]
-        # oldest_age.sort()
-        # oldest_indx = []
-        # for sens in range(5):
-        #     i = 0
-        #     while i < 5:
-        #         if oldest_age[sens] == self.age_table[i]:
-        #             oldest_indx.append(i)
-        #         elif i >= 5:
-        #             break
-        #         i += 1
-        #
-        # for sens in range(self.num_sensors-5):
-        #     i = 0
-        #     while i < 5:
-        #         if oldest_age[i] < self.age_table[sens + 5]:
-        #             break
-        #         i += 1
-        #         if self.num_sensors < (sens + i):
-        #             break
-        #
-        #     if i < 5 and self.num_sensors > (sens + i):
-        #         oldest_age.insert(i, self.age_table[sens + 5])
-        #         oldest_indx.insert(i, sens + 5)
-        #     elif self.num_sensors > (sens + i):
-        #         oldest_age.append(self.age_table[sens + 5])
-        #         oldest_indx.append(sens + 5)
-        #
-        #
-        # sensMapping: List[List[int]] = [[0, 0, 0] for _ in range(5)]
-        # for sens in range(5):
-        #     sensMapping[sens][0], sensMapping[sens][1], sensMapping[sens][2] =\
-        #         (oldest_indx[sens],
-        #          math.sqrt(pow((self.indX - self.sens_table.iat[oldest_indx[sens], 0].indX), 2) +
-        #                    pow((self.indY - self.sens_table.iat[oldest_indx[sens], 0].indY), 2)),
-        #          (-5 + sens))
-        #
-        #     state[sensMapping[sens][2]][1], state[sensMapping[sens][2]][2] = (
-        #         sensMapping[sens][1], oldest_age[sens])
+        oldest_age = [self.age_table[0], self.age_table[1], self.age_table[2], self.age_table[3], self.age_table[4]]
+        oldest_age.sort()
+        oldest_indx = []
+        for sens in range(5):
+            i = 0
+            while i < 5:
+                if oldest_age[sens] == self.age_table[i]:
+                    oldest_indx.append(i)
+                elif i >= 5:
+                    break
+                i += 1
+
+        for sens in range(self.num_sensors-5):
+            i = 0
+            while i < 5:
+                if oldest_age[i] < self.age_table[sens + 5]:
+                    break
+                i += 1
+                if self.num_sensors < (sens + i):
+                    break
+
+            if i < 5 and self.num_sensors > (sens + i):
+                oldest_age.insert(i, self.age_table[sens + 5])
+                oldest_indx.insert(i, sens + 5)
+            elif self.num_sensors > (sens + i):
+                oldest_age.append(self.age_table[sens + 5])
+                oldest_indx.append(sens + 5)
+
+
+        sensMapping: List[List[int]] = [[0, 0, 0] for _ in range(5)]
+        for sens in range(5):
+            sensMapping[sens][0], sensMapping[sens][1], sensMapping[sens][2] =\
+                (oldest_indx[sens],
+                 math.sqrt(pow((self.indX - self.sens_table.iat[oldest_indx[sens], 0].indX), 2) +
+                           pow((self.indY - self.sens_table.iat[oldest_indx[sens], 0].indY), 2)),
+                 (-5 + sens))
+
+            state[sensMapping[sens][2]][1], state[sensMapping[sens][2]][2] = (
+                sensMapping[sens][1], oldest_age[sens])
 
 
         action = model.act(state)
@@ -334,50 +334,50 @@ class IoT_Device:
             print(len(state))
             lowest = state[self.headSerial + 1][2]
             i = 0
-            for sens in range(len(full_sensor_list) - 1):
+            for sens in range(len(state) - 1):
                 if state[sens + 1][2] < lowest and not sens == targetSerial:
                     lowest = state[sens + 1][2]
                     action = sens
-                elif i >= len(full_sensor_list) - 1:
+                elif i >= len(state) - 1:
                     # ADF 2
-                    # action = len(state) - 5
+                    action = len(state) - 5
                     # ADF 1
-                    if targetSerial < len(full_sensor_list) - 2:
-                        action += 1
-                    else:
-                        action = 0
+                    # if targetSerial < len(full_sensor_list) - 2:
+                    #     action += 1
+                    # else:
+                    #     action = 0
                 i += 1
 
 
         # ADF 2.0
-        # if action < (len(state) - 6):
-        #     return True, True, full_sensor_list.iat[action + 1, 0], _, state, _, action, _
-        # else:
-        #     sensor = self.sens_table.iat[sensMapping[action - len(full_sensor_list.index) + 1][0], 0]
-        #
-        #     self.age_table[sensMapping[action - len(full_sensor_list.index) + 1][0]] = step
-        #     state1 = state
-        #
-        #     for Iter in range(5):
-        #         state[len(state) - 5 + Iter][1], state[len(state) - 5 + Iter][2] = 0, 0
-        #
-        #     action2 = model.act(state) % (len(full_sensor_list.index) - 1)
-        #     if force_change:
-        #         while targetSerial == action:
-        #             lowest = state[self.headSerial + 1][2]
-        #             i = 0
-        #             for ch in range(len(state) - 6):
-        #                 if state[ch + 1][2] < lowest and not ch == targetSerial:
-        #                     lowest = state[ch + 1][2]
-        #                     action2 = ch
-        #                 elif i > len(state) - 6:
-        #                     if targetSerial < len(state) - 7:
-        #                         action2 += 1
-        #                     else:
-        #                         action2 = 0
-        #                 i += 1
-        #
-        #     return True, True, sensor, full_sensor_list.iat[action2 + 1, 0], state1, state, action, action2
+        if action < (len(state) - 6):
+            return True, True, full_sensor_list.iat[action + 1, 0], _, state, _, action, _
+        else:
+            sensor = self.sens_table.iat[sensMapping[action - len(full_sensor_list.index) + 1][0], 0]
+
+            self.age_table[sensMapping[action - len(full_sensor_list.index) + 1][0]] = step
+            state1 = state
+
+            for Iter in range(5):
+                state[len(state) - 5 + Iter][1], state[len(state) - 5 + Iter][2] = 0, 0
+
+            action2 = model.act(state) % (len(full_sensor_list.index) - 1)
+            if force_change:
+                while targetSerial == action:
+                    lowest = state[self.headSerial + 1][2]
+                    i = 0
+                    for ch in range(len(full_sensor_list) - 1):
+                        if state[ch + 1][2] < lowest and not ch == targetSerial:
+                            lowest = state[ch + 1][2]
+                            action2 = ch
+                        elif i >= len(full_sensor_list) - 1:
+                            if targetSerial < len(full_sensor_list) - 2:
+                                action2 += 1
+                            else:
+                                action2 = 0
+                        i += 1
+
+            return True, True, sensor, full_sensor_list.iat[action2 + 1, 0], state1, state, action, action2
 
         # ADF 1.0
-        return True, True, full_sensor_list.iat[action + 1, 0], state, action
+        # return True, True, full_sensor_list.iat[action + 1, 0], state, action
