@@ -339,7 +339,7 @@ class IoT_Device:
                         # ADF 2
                         # action = len(state) - 5
                         # ADF 1
-                        if targetSerial < len(state) - 3:
+                        if targetSerial < len(state) - 2:
                             action += 1
                         else:
                             action = 0
