@@ -399,7 +399,6 @@ class QuadUAV:
             self.force_change = False
             self.is_charging = False
 
-
             if self.model_transit and changed_transit:
                 train_model = True
                 self.model_transit = False
@@ -419,8 +418,8 @@ class QuadUAV:
 
             else:
                 self.no_hold = True
-                if self.model_transit and changed_transit:
-                    train_model = True
+                if used_model:
+                    self.model_transit = True
 
                 if dest.headSerial == self.targetSerial and self.inRange:
                     self.force_count += 1
@@ -429,15 +428,11 @@ class QuadUAV:
                     self.force_change = False
                     self.force_count = 0
 
-                if self.force_count > 10:
+                if self.force_count > 30:
                     self.force_change = True
 
                 self.state = state
                 self.action = action
-                if used_model:
-                    self.model_transit = True
-                else:
-                    self.model_transit = False
 
                 self.target = dest
                 self.targetHead = dest
