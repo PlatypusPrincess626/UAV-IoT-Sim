@@ -217,7 +217,7 @@ class IoT_Device:
         #     self.max_AoI += self.age_table[sens]
         # self.max_AoI = round(self.max_AoI / self.num_sensors)
         # ADF 1.0
-        self.mean_AoI = step
+        self.max_AoI = step
 
     def ch_upload(self, X: int, Y: int):
         if self.solar_powered:
