@@ -331,6 +331,7 @@ class IoT_Device:
 
         action = model.act(state)
         if force_change:
+            print("Boo")
             lowest = state[self.headSerial + 1][2]
             i = 0
             while targetSerial == action:
