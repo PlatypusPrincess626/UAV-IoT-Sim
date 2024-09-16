@@ -168,7 +168,7 @@ class QuadUAV:
 
             else:
                 time = 60
-                vectAngle = math.atan(abs(self.targetY - self.indY) / abs(self.targetX - self.indX))  # Returns radians
+                vectAngle = math.atan(abs(self.targetY - self.indY) / max(abs(self.targetX - self.indX), 1))  # Returns radians
                 directionX = (self.targetX - self.indX) / max(abs(self.targetX - self.indX), 1)
                 directionY = (self.targetY - self.indY) / max(abs(self.targetY - self.indY), 1)
                 env.moveUAV(round(self.indX), round(self.indY),
