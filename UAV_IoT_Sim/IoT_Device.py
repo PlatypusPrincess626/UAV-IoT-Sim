@@ -122,11 +122,11 @@ class IoT_Device:
 
     def harvest_data(self, step):
         if self.solar_powered:
-            self.stored_data = min(self.bits_per_min, self.max_data)
+            self.stored_data += min(self.bits_per_min, self.max_data)
             return True
 
         elif self.stored_energy > round(self.sens_amp * 4):
-            self.stored_data = min(self.bits_per_min, self.max_data)
+            self.stored_data += min(self.bits_per_min, self.max_data)
             self.stored_energy -= round(self.sens_amp * 4)
             return True
 
@@ -161,7 +161,9 @@ class IoT_Device:
     def ws_upload_data(self, X, Y):
         if math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)) <= \
                 self._comms.get("AmBC_Max_Distance_m"):
-            return min(self._comms.get("AmBC_Bit_Rate_bit/s") * 26, self.stored_data)
+            temp = min(self._comms.get("AmBC_Bit_Rate_bit/s") * 26, self.stored_data)
+            self.stored_data -= temp
+            return temp
         else:
             return -1
 
