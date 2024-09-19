@@ -225,8 +225,8 @@ class IoT_Device:
                     self._comms.get("LoRa_Max_Distance_m"):
 
                 if self.stored_data > 0:
-                    self.stored_data -= min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
                     sent_data = min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
+                    self.stored_data -= min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
 
                     return sent_data, self.max_AoI
 
@@ -240,8 +240,8 @@ class IoT_Device:
                     self._comms.get("LoRa_Max_Distance_m"):
 
                 if self.stored_data > 0:
-                    self.stored_data -= min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
                     sent_data = min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
+                    self.stored_data -= min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
 
                     self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 60)
                     return sent_data, self.max_AoI
