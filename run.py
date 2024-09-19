@@ -194,7 +194,7 @@ def evaluate(
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("sens_pts_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_old.csv")
+                        curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -202,7 +202,7 @@ def evaluate(
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("cluster_pts_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_old.csv")
+                        curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -211,7 +211,7 @@ def evaluate(
         if log_metrics and i == eval_episodes - 1:
             print(eval_env.ch_sensors)
             filename = ("age_metrics_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_old.csv")
+                        curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -219,7 +219,7 @@ def evaluate(
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("data_metrics_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_old.csv")
+                        curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
@@ -227,7 +227,7 @@ def evaluate(
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("uav_metrics_" + curr_date_time.strftime("%d") + "_" +
-                        curr_date_time.strftime("%m") + "_old.csv")
+                        curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='|')
