@@ -175,7 +175,7 @@ class sim_env:
         for centroid in centroids:
             row = int(centroid[0])
             column = int(centroid[1])
-            place = row * dims + column - 1
+            place = column * dims + row
             obstType = 2
             while obstType > 0:
                 if envObj[place] == 0:
