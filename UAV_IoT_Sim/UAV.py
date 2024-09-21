@@ -37,6 +37,7 @@ class QuadUAV:
         # Trajectory
         self.target = None
         self.targetHead = None
+        self.last_Head = None
         self.targetSerial = 0
         self.targetX = int(X)
         self.targetY = int(Y)
@@ -119,6 +120,7 @@ class QuadUAV:
 
         self.target = None
         self.targetHead = None
+        self.last_Head = None
         self.step_move_cost = 0
         self.step_comms_cost = 0
         self.energy_harvested = 0
@@ -226,8 +228,8 @@ class QuadUAV:
             totalTime = totalData / (self._comms.get("AmBC_Bit_Rate_bit/s", 0.0) * 60)
             self.energy_cost(0, totalTime, 0)
 
-            self.state[self.targetSerial + 1][2] = self.last_AoI
-            self.state[self.targetSerial + 1][1] += totalData
+            self.state[self.last_Head + 1][2] = self.last_AoI
+            self.state[self.last_Head + 1][1] += totalData
             self.state[0][1] += totalData
             self.targetSerial = self.targetHead.headSerial
 
@@ -275,6 +277,7 @@ class QuadUAV:
     def set_dest(self, model, step, _=None):
         train_model = False
         used_model = False
+        self.last_Head = self.targetHead
 
         if self.target is None:
             minDist = 10_000.0
