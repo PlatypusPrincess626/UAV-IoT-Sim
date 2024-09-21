@@ -159,8 +159,7 @@ class IoT_Device:
 
     # Uploading data from a sensor
     def ws_upload_data(self, X, Y):
-        if math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)) <= \
-                self._comms.get("AmBC_Max_Distance_m"):
+        if math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)) <= self._comms.get("AmBC_Max_Distance_m"):
             temp = min(self._comms.get("AmBC_Bit_Rate_bit/s") * 26, self.stored_data)
             self.stored_data -= temp
             return temp
@@ -221,12 +220,11 @@ class IoT_Device:
 
     def ch_upload(self, X: int, Y: int):
         if self.solar_powered:
-            if math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)) <= \
-                    self._comms.get("LoRa_Max_Distance_m"):
+            if math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)) <= self._comms.get("LoRa_Max_Distance_m"):
 
                 if self.stored_data > 0:
                     sent_data = min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
-                    self.stored_data -= min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
+                    self.stored_data -= sent_data
 
                     return sent_data, self.max_AoI
 
@@ -235,22 +233,22 @@ class IoT_Device:
 
             else:
                 return -1, self.max_AoI
-        elif self.stored_energy > round(self._comms.get("LoRa_Current_A") * 60):
+        elif self.stored_energy > round(self._comms.get("LoRa_Current_A")):
             if math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)) <= self._comms.get("LoRa_Max_Distance_m"):
 
                 if self.stored_data > 0:
                     sent_data = min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
                     self.stored_data -= min(self._comms.get("LoRa_Bit_Rate_bit/s") * 56, self.stored_data)
 
-                    self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 60)
+                    self.stored_energy -= round(self._comms.get("LoRa_Current_A"))
                     return sent_data, self.max_AoI
 
                 else:
-                    self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 60)
+                    self.stored_energy -= round(self._comms.get("LoRa_Current_A"))
                     return 0, self.max_AoI
 
             else:
-                self.stored_energy -= round(self._comms.get("LoRa_Current_A") * 60)
+                self.stored_energy -= round(self._comms.get("LoRa_Current_A"))
                 return -1, self.max_AoI
         else:
             return -1, self.max_AoI
@@ -313,8 +311,7 @@ class IoT_Device:
 
         sensMapping: List[List[int]] = [[0, 0, 0] for _ in range(5)]
         for sens in range(5):
-            sensMapping[sens][0], sensMapping[sens][1], sensMapping[sens][2] =\
-                (oldest_indx[sens],
+            sensMapping[sens][0], sensMapping[sens][1], sensMapping[sens][2] = (oldest_indx[sens],
                  math.sqrt(pow((self.indX - self.sens_table.iat[oldest_indx[sens], 0].indX), 2) +
                            pow((self.indY - self.sens_table.iat[oldest_indx[sens], 0].indY), 2)),
                  (-5 + sens))

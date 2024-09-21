@@ -158,7 +158,6 @@ def evaluate(
             accum_comms += comms
             accum_move += move
             accum_harvest += harvest
-            print(eval_env.uavX, eval_env.uavY, comms, move, harvest)
 
             ch: int
             for ch in range(len(CH_Metrics)):
@@ -177,9 +176,9 @@ def evaluate(
                 ep_reward = -1
 
             if log_metrics and i == eval_episodes-1:
-                CH_Age.append([eval_env.curr_state[0][1], CH_Metrics[0][1], CH_Metrics[1][1], CH_Metrics[2][1],
+                CH_Age.append([CH_Metrics[0][1], CH_Metrics[1][1], CH_Metrics[2][1],
                                CH_Metrics[3][1], CH_Metrics[4][1]])
-                CH_Data.append([CH_Metrics[0][0], CH_Metrics[1][0], CH_Metrics[2][0],
+                CH_Data.append([eval_env.curr_state[0][1], CH_Metrics[0][0], CH_Metrics[1][0], CH_Metrics[2][0],
                                CH_Metrics[3][0], CH_Metrics[4][0]])
                 UAV_Metrics.append([eval_env.uavX, eval_env.uavY, eval_env.curr_state[0][2], comms, move, harvest])
 
