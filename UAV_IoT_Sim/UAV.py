@@ -277,7 +277,7 @@ class QuadUAV:
     def set_dest(self, model, step, _=None):
         train_model = False
         used_model = False
-        self.last_Head = self.targetHead
+        self.last_Head = self.targetHead.headSerial
 
         if self.target is None:
             minDist = 10_000.0
