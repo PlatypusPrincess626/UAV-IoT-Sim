@@ -137,7 +137,7 @@ class IoT_Device:
         spectra = env.getIrradiance(self.lat, self.long, self.tilt, self.azimuth, step)
         # interference = env.getInterference(self.indX, self.indY, self.type)
         if self.type == 1:
-            interference = random.random()
+            interference = 1 - (random.random() * 0.8)
         else:
             interference = 1
 
