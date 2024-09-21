@@ -81,14 +81,14 @@ class QuadUAV:
         # Battery Usage
         self.max_energy = 6_800  # 6800 mAh
         self.cpu_pow = 3.7  # milli-watts/ 2 micro Joule
-        self.cpu_amps = 1_000 # micro-amps
+        self.cpu_amps = 1_000  # micro-amps
 
-        self.charge_rate = 1/3  # 60 min charging time
-        self.flight_discharge = 3/4  # 45 min flight time
+        self.charge_rate = 1 / 3  # 60 min charging time
+        self.flight_discharge = 3 / 4  # 45 min flight time
         self.amp = self.max_energy / self.charge_rate  # Roughly 2.72 A optimal current
         self.stored_energy = self.max_energy * 1_000  # Initialize at full battery
         self.is_charging = False
-        self.launch_cost = 18.889 # mA
+        self.launch_cost = 18.889  # mA
 
         # State used for model
         #   ADF 2.0
@@ -140,7 +140,7 @@ class QuadUAV:
         self.energy_harvested = 0
 
         power_upkeep = round(self.cpu_amps + self._comms.get("AmBC_Current_A") +
-                        self._comms.get("Lora_Upkeep_A"))
+                             self._comms.get("Lora_Upkeep_A"))
         self.stored_energy -= power_upkeep
 
         maxDist = math.sqrt(pow(self.indX - self.targetX, 2) + pow(self.indY - self.targetY, 2))
@@ -158,7 +158,6 @@ class QuadUAV:
                 self.h = 1
                 self.energy_cost(0, 0, 1)
 
-
             if maxDist < self.maxSpd * 60:
                 env.moveUAV(round(self.indX), round(self.indY), round(self.targetX), round(self.targetY))
                 self.indX = self.targetX
@@ -170,7 +169,8 @@ class QuadUAV:
 
             else:
                 time = 60
-                vectAngle = math.atan(abs(self.targetY - self.indY) / max(abs(self.targetX - self.indX), 1))  # Returns radians
+                vectAngle = math.atan(
+                    abs(self.targetY - self.indY) / max(abs(self.targetX - self.indX), 1))  # Returns radians
                 directionX = (self.targetX - self.indX) / max(abs(self.targetX - self.indX), 1)
                 directionY = (self.targetY - self.indY) / max(abs(self.targetY - self.indY), 1)
                 env.moveUAV(round(self.indX), round(self.indY),
@@ -277,7 +277,9 @@ class QuadUAV:
     def set_dest(self, model, step, _=None):
         train_model = False
         used_model = False
-        self.last_Head = self.targetHead.headSerial
+
+        if self.targetHead is not None:
+            self.last_Head = self.targetHead.headSerial
 
         if self.target is None:
             minDist = 10_000.0
@@ -334,8 +336,8 @@ class QuadUAV:
             travel_time = (d1 + d2) / self.maxSpd
             energy_needed = travel_time * (1_000 * self.max_energy / (self.flight_discharge * 60 * 60)) + \
                             (travel_time / 60) * (round(self.cpu_amps + self._comms.get("AmBC_Current_A") +
-                                  self._comms.get("Lora_Upkeep_A")) +
-                            round(self._comms.get("LoRa_Current_A")))
+                                                        self._comms.get("Lora_Upkeep_A")) +
+                                                  round(self._comms.get("LoRa_Current_A")))
 
             if self.stored_energy < 1.2 * energy_needed and self.no_hold and not self.force_change:
                 self.is_charging = True
@@ -453,4 +455,3 @@ class QuadUAV:
 
         return (train_model, used_model, self.state, self.targetHead.headSerial,
                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
-
