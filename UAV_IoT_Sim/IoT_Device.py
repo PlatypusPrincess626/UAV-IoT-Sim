@@ -148,6 +148,7 @@ class IoT_Device:
 
         if power * 1_000_000 > 0.0:
             self.stored_energy += round((power / self._comms.get("LoRa_Voltage_V")) * 1_000_000)
+            print(self.stored_data)
             self.solar_powered = True
         else:
             self.solar_powered = False
