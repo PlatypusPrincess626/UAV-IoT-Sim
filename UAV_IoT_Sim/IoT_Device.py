@@ -148,7 +148,6 @@ class IoT_Device:
 
         if power * 1_000_000 > 0.0:
             self.stored_energy += round((power / self._comms.get("LoRa_Voltage_V")) * 1_000_000)
-            print(self.stored_data)
             self.solar_powered = True
         else:
             self.solar_powered = False
@@ -156,6 +155,7 @@ class IoT_Device:
         power_upkeep = round(self.cpu_amps + self._comms.get("AmBC_Current_A"))
         if self.type == 2:
             power_upkeep += round(self._comms.get("Lora_Upkeep_A"))
+            print(self.stored_data)
         self.stored_energy -= power_upkeep
 
     # Uploading data from a sensor
@@ -323,7 +323,6 @@ class IoT_Device:
 
         action = model.act(state)
         if force_change:
-            print(len(state))
             lowest = state[self.headSerial + 1][2]
             i = 0
             for sens in range(len(state) - 1):
