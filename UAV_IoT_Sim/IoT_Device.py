@@ -164,7 +164,7 @@ class IoT_Device:
             self.stored_data -= temp
             return temp
         else:
-            print(math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)) <= self._comms.get("AmBC_Max_Distance_m"))
+            print(math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)))
             return -1
 
     # Clusterhead-Specific Tasks
