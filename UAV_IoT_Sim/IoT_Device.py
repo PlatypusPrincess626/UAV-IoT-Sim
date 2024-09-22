@@ -161,10 +161,10 @@ class IoT_Device:
     def ws_upload_data(self, X, Y):
         if math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)) <= self._comms.get("AmBC_Max_Distance_m"):
             temp = min(self._comms.get("AmBC_Bit_Rate_bit/s") * 26, self.stored_data)
-            print(temp)
             self.stored_data -= temp
             return temp
         else:
+            print(math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)) <= self._comms.get("AmBC_Max_Distance_m"))
             return -1
 
     # Clusterhead-Specific Tasks
