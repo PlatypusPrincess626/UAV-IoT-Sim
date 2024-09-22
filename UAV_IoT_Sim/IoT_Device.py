@@ -148,7 +148,6 @@ class IoT_Device:
 
         power_upkeep = round(self.cpu_amps + self._comms.get("AmBC_Current_A"))
         if self.type == 2:
-            # print(self.stored_energy)
             power_upkeep += round(self._comms.get("Lora_Upkeep_A"))
         self.stored_energy -= power_upkeep
 
@@ -251,16 +250,13 @@ class IoT_Device:
     def charge_time(self, X: int, Y: int, charge):
         if abs(self.indX - X) < 1.0 and abs(self.indY - Y) < 1.0:
             if self.solar_powered and charge:
-                print(1)
                 return 60.0
             elif self.stored_energy > self.max_energy * 0.25 and charge:
                 self.stored_energy -= round(6_800_000 / (self.charge_rate * 60))
-                print(2)
                 return 60.0
             elif self.stored_energy > self.max_energy * 0.5:
                 if not self.solar_powered:
                     self.stored_energy -= round(0.5 * 6_800_000 / (self.charge_rate * 60))
-                print(3)
                 return 30.0
             else:
                 return 0

@@ -146,10 +146,12 @@ class QuadUAV:
         maxDist = math.sqrt(pow(self.indX - self.targetX, 2) + pow(self.indY - self.targetY, 2))
 
         if maxDist < 1.0:
-            if self.h == 0:
+            if self.h != 0:
                 self.h = 0
-                self.energy_cost(0, 0, 0)
-            else:
+                self.energy_cost(0, 0, 1)
+
+        elif self.is_charging:
+            if self.h != 0:
                 self.h = 0
                 self.energy_cost(0, 0, 1)
 
@@ -158,7 +160,6 @@ class QuadUAV:
                 self.h = 1
                 self.energy_cost(0, 0, 1)
 
-
             if maxDist < self.maxSpd * 60:
                 env.moveUAV(round(self.indX), round(self.indY), round(self.targetX), round(self.targetY))
                 self.indX = self.targetX
@@ -166,7 +167,6 @@ class QuadUAV:
                 time = maxDist / self.maxSpd
                 self.h = 0
                 self.energy_cost(0, 0, 1)
-
 
             else:
                 time = 60
@@ -264,11 +264,11 @@ class QuadUAV:
         if self.target.type == 2 and self.h == 0:
             t = self.target.charge_time(int(self.indX), int(self.indY), self.is_charging)
 
-            if self.is_charging and t < 60.0:
+            if self.is_charging and t < 1.0:
                 self.no_hold = False
 
             self.stored_energy += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
-            if self.stored_energy >= self.max_energy * 1_000:
+            if self.stored_energy > self.max_energy * 1_000:
                 self.stored_energy = self.max_energy * 1_000
 
             print(self.stored_energy)
@@ -336,9 +336,9 @@ class QuadUAV:
                 d2 = math.sqrt(pow((dest1.indX - dest2.indX), 2) + pow((dest1.indY - dest2.indY), 2))
             travel_time = (d1 + d2) / self.maxSpd
             energy_needed = travel_time * (1_000 * self.max_energy / (self.flight_discharge * 60 * 60)) + \
-                            (travel_time / 60) * (round(self.cpu_amps + self._comms.get("AmBC_Current_A") +
-                                  self._comms.get("Lora_Upkeep_A")) +
-                            round(self._comms.get("LoRa_Current_A")))
+                            math.ceil(travel_time / 60) * (round(self.cpu_amps + self._comms.get("AmBC_Current_A") +
+                                                                 self._comms.get("Lora_Upkeep_A")) +
+                                                           round(self._comms.get("LoRa_Current_A")))
 
             if self.stored_energy < 1.2 * energy_needed and self.no_hold and not self.force_change:
                 self.is_charging = True
