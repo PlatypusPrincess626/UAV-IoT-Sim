@@ -21,7 +21,7 @@ class QuadUAV:
             "LoRa_Upkeep_W": 0.004,  # static
             "Lora_Upkeep_A": 1200,  # micro-amps
 
-            "AmBC_Max_Distance_m": 500,
+            "AmBC_Max_Distance_m": 800,
             "AmBC_Bit_Rate_bit/s": 1592,
             "AmBC_Power_W": 0.00259,  # upkeep
             "AmBC_Voltage_V": 3.3,
