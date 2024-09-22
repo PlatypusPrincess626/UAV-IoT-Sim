@@ -45,8 +45,6 @@ class IoT_Device:
         if devType == 1:
             self.type = 1
             self.typeStr = "Wireless Sensor"
-            self.head = None
-            self.queue = None
 
             self.azimuth = 0  # 0 for North
             self.tilt = 0  # 0 for no horizontal tilt
@@ -115,10 +113,6 @@ class IoT_Device:
     # Call location
     def get_indicies(self):
         return self.indX, self.indY
-
-    def set_head(self, head: int, queue: int):
-        self.head = head
-        self.queue = queue
 
     def harvest_data(self, step):
         if self.solar_powered:

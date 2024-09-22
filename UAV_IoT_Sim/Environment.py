@@ -166,7 +166,23 @@ class sim_env:
         kmeans = KMeans(n_clusters=self.total_clusterheads, random_state=0, n_init=10).fit(data)
         centroids = kmeans.cluster_centers_
         heads = kmeans.predict(sensCoord)
-        head_assignment = [sensCoord[i] + [heads[i]-1] for i in range(len(sensCoord))]
+
+        C1 = []
+        C2 = []
+        C3 = []
+        C4 = []
+        C5 = []
+        for i in range(len(heads)):
+            if heads[i] == 0:
+                C1.append(sensorList[i][0])
+            elif heads[i] == 1:
+                C2.append(sensorList[i][0])
+            elif heads[i] == 2:
+                C3.append(sensorList[i][0])
+            elif heads[i] == 3:
+                C4.append(sensorList[i][0])
+            elif heads[i] == 4:
+                C5.append(sensorList[i][0])
 
         uavCHList = []
         clusterheadList = []
@@ -186,8 +202,22 @@ class sim_env:
                     sensLong = self.lat_center + self.stp * (sensX - self.dim)
                     sensLat = self.long_center + self.stp * (sensY - self.dim)
 
-                    clusterheadList.append([IoT_Device.IoT_Device(sensX, sensY, obstType, sensLong, sensLat, countCH),
-                                            []])
+                    if countCH == 0:
+                        clusterheadList.append([IoT_Device.IoT_Device(sensX, sensY,
+                                                                      obstType, sensLong, sensLat, countCH), C1])
+                    elif countCH == 1:
+                        clusterheadList.append([IoT_Device.IoT_Device(sensX, sensY,
+                                                                      obstType, sensLong, sensLat, countCH), C2])
+                    elif countCH == 2:
+                        clusterheadList.append([IoT_Device.IoT_Device(sensX, sensY,
+                                                                      obstType, sensLong, sensLat, countCH), C3])
+                    elif countCH == 3:
+                        clusterheadList.append([IoT_Device.IoT_Device(sensX, sensY,
+                                                                      obstType, sensLong, sensLat, countCH), C4])
+                    elif countCH == 4:
+                        clusterheadList.append([IoT_Device.IoT_Device(sensX, sensY,
+                                                                      obstType, sensLong, sensLat, countCH), C5])
+
                     countCH += 1
                     envObj[place] = obstType
                     obstType = 0
@@ -197,16 +227,6 @@ class sim_env:
                             place += 1
                         else:
                             place -= 1
-
-        print("Placing Clusterheads") 
-        for location in head_assignment:
-            X, Y = location[0], location[1]
-            for sensor in sensorList:
-                sensorX, sensorY = sensor[0].get_indicies()
-                if sensorX == X and sensorY == Y:
-                    clusterheadList[location[2]][1].append(sensor)
-                    sensor[0].set_head(location[2], len(clusterheadList[location[2]][1]))
-                    break
                     
         for CH in range(len(clusterheadList)):
             uavCHList.append([clusterheadList[CH][0], len(clusterheadList[CH][1])])
