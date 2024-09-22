@@ -97,7 +97,7 @@ class IoT_Device:
             self.solarArea = 2 * 4  # 20 cm x 40 cm
             self._C = 3200  # F (Battery Supported)
             self.max_energy = 6_800  # Ah
-            self.charge_rate = 3.02  # A/s
+            self.charge_rate = 1/3  # A/s
             self.discharge_rate = 0.755  # s
             self.stored_energy = round(self.max_energy * 1_000)
 
@@ -155,7 +155,7 @@ class IoT_Device:
         power_upkeep = round(self.cpu_amps + self._comms.get("AmBC_Current_A"))
         if self.type == 2:
             power_upkeep += round(self._comms.get("Lora_Upkeep_A"))
-            print(self.stored_data)
+            print(round((power / self._comms.get("LoRa_Voltage_V")) * 1_000_000), self.stored_data)
         self.stored_energy -= power_upkeep
 
     # Uploading data from a sensor
@@ -259,9 +259,10 @@ class IoT_Device:
             if self.solar_powered and charge:
                 return 60.0
             elif self.stored_energy > self.max_energy * 0.25 and charge:
-                self.stored_energy -= round(6_800_000 / (1 * 60))
+                self.stored_energy -= round(6_800_000 / (self.charge_rate * 60))
                 return 60.0
             elif self.stored_energy > self.max_energy * 0.5:
+                self.stored_energy -= round(0.5 * 6_800_000 / (self.charge_rate * 60))
                 return 30.0
             else:
                 return 0
