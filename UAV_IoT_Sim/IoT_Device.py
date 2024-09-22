@@ -258,7 +258,8 @@ class IoT_Device:
                 print(2)
                 return 60.0
             elif self.stored_energy > self.max_energy * 0.5:
-                self.stored_energy -= round(0.5 * 6_800_000 / (self.charge_rate * 60))
+                if not self.solar_powered:
+                    self.stored_energy -= round(0.5 * 6_800_000 / (self.charge_rate * 60))
                 print(3)
                 return 30.0
             else:
