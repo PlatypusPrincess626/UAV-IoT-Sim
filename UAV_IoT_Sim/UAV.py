@@ -327,6 +327,37 @@ class QuadUAV:
                 self.target = self.target
                 self.force_count += 1
 
+            elif self.stored_energy < 1.2 * energy_needed:
+                if dest1.type == 1:
+                    if dest2 == self.target:
+                        used_model = False
+                        self.force_change = True
+                        self.target = self.target
+
+                    else:
+                        used_model = True
+                        self.target = dest2
+                        self.targetSerial = self.targetHead.headSerial
+                        self.targetHead = dest2
+                        self.targetX = dest2.indX
+                        self.targetY = dest2.indY
+                        return (train_model, used_model, state1, action1,
+                                self.step_comms_cost, self.step_move_cost, self.energy_harvested)
+                else:
+                    if dest1 == self.target:
+                        used_model = False
+                        self.force_change = True
+                        self.target = self.target
+                    else:
+                        used_model = True
+                        self.target = dest1
+                        self.targetSerial = self.targetHead.headSerial
+                        self.targetHead = dest1
+                        self.targetX = dest1.indX
+                        self.targetY = dest1.indY
+                        return (train_model, used_model, state1, action1,
+                                self.step_comms_cost, self.step_move_cost, self.energy_harvested)
+
             else:
                 self.force_change = False
                 self.no_hold = True
