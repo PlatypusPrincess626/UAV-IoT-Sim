@@ -150,11 +150,6 @@ class QuadUAV:
                 self.h = 0
                 self.energy_cost(0, 0, 1)
 
-        elif self.is_charging:
-            if self.h != 0:
-                self.h = 0
-                self.energy_cost(0, 0, 1)
-
         elif self.stored_energy > (1_000 * self.max_energy / (self.flight_discharge * 60)):
             if self.h == 0:
                 self.h = 1
@@ -190,7 +185,7 @@ class QuadUAV:
         # Cost of air travel
         total_cost += round(flight * 1_000 * self.max_energy / (self.flight_discharge * 60 * 60))
         # Cost of LoRa
-        total_cost += round(self._comms.get("LoRa_Current_A"))
+        total_cost += round((lora/max(lora, 1)) * self._comms.get("LoRa_Current_A"))
         # Cost to Launch
         total_cost += round(launch * self.launch_cost * 1_000)
 
@@ -225,7 +220,7 @@ class QuadUAV:
             else:
                 self.inRange = False
 
-            totalTime = totalData / (self._comms.get("AmBC_Bit_Rate_bit/s", 0.0) * 60)
+            totalTime = totalData / self._comms.get("AmBC_Bit_Rate_bit/s")
             self.energy_cost(0, totalTime, 0)
 
             self.state[self.last_Head + 1][2] = self.last_AoI
@@ -271,7 +266,7 @@ class QuadUAV:
             if self.stored_energy > self.max_energy * 1_000:
                 self.stored_energy = self.max_energy * 1_000
 
-            print(self.stored_energy)
+            print(self.stored_energy, t)
             self.energy_harvested += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
             self.state[0][2] = self.stored_energy
 
@@ -298,33 +293,19 @@ class QuadUAV:
             self.targetY = minCH.indY
             self.targetSerial = self.targetHead.headSerial
 
-        # # self.no_hold
-        # elif self.stored_energy < (self.max_energy * .50 * 1_000) and self.no_hold:
-        #     self.is_charging = True
-        #     self.target = self.targetHead
-        #
-        # elif self.is_charging and self.stored_energy > (self.max_energy * .75 * 1_000) and self.no_hold:
-        #     self.is_charging = False
-        #     self.target = self.target
-
         elif not self.inRange:
             self.target = self.target
 
         elif self.target.type == 1:
             self.target = self.target
 
-        # Here model_transit will change
-        #   ADF 2.0
         else:
-            # False, True, full_state.iat[CH + 1, 0], _, state, _, CH, _
             used_model, changed_transit, dest1, dest2, state1, state2, action1, action2 = \
                 self.target.get_dest(self.state, self.full_sensor_list, model, step,
                                      self.no_hold, self.force_change, self.targetSerial)
 
             self.state = state1
             self.action = action1
-            self.force_change = False
-            self.is_charging = False
 
             if self.model_transit and changed_transit:
                 train_model = True
@@ -335,31 +316,21 @@ class QuadUAV:
             if dest1.type == 1:
                 d2 = math.sqrt(pow((dest1.indX - dest2.indX), 2) + pow((dest1.indY - dest2.indY), 2))
             travel_time = (d1 + d2) / self.maxSpd
-            energy_needed = travel_time * (1_000 * self.max_energy / (self.flight_discharge * 60 * 60)) + \
+            energy_needed = travel_time * 1_000 * self.max_energy / (self.flight_discharge * 60 * 60) + \
                             math.ceil(travel_time / 60) * (round(self.cpu_amps + self._comms.get("AmBC_Current_A") +
                                                                  self._comms.get("Lora_Upkeep_A")) +
                                                            round(self._comms.get("LoRa_Current_A")))
 
-            if self.stored_energy < 1.2 * energy_needed and self.no_hold and not self.force_change:
+            if self.stored_energy < 1.2 * energy_needed and self.no_hold:
                 self.is_charging = True
                 used_model = False
                 self.target = self.target
                 self.force_count += 1
 
-            elif self.stored_energy < 1.2 * energy_needed and dest1.type == 1:
-                self.no_hold = True
-                dest1 = dest2
-
-                self.target = dest1
-                self.targetHead = dest1
-                self.targetSerial = self.targetHead.headSerial
-                self.targetX = dest1.indX
-                self.targetY = dest1.indY
-                self.force_change = True
-                self.force_count = 0
-
             else:
+                self.force_change = False
                 self.no_hold = True
+                self.is_charging = False
                 if used_model:
                     self.model_transit = True
 
