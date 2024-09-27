@@ -400,7 +400,6 @@ def prepopulate(agent, prepop_steps, env):
                 done = True
 
             if train_model:
-                print("Raaa")
             # if True:
             #     agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
                 # DDQN

@@ -238,7 +238,7 @@ class make_env:
         rewardAvgAge = (1 - (peakAge - avgAge) / (self.curr_step + 1))
         rewardDataChange = dataChange / 1_498_500
 
-        rewardChange = 0 * rewardDist + 0.8 * rewardPeak + 0 * rewardAvgAge + 0.2 * rewardDataChange
+        rewardChange = 0.2 * rewardDist + 0.6 * rewardPeak + 0 * rewardAvgAge + 0.2 * rewardDataChange
 
         if self.terminated:
             rewardChange = -1
