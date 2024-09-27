@@ -328,6 +328,7 @@ class QuadUAV:
                 self.force_count += 1
 
             elif self.stored_energy < 1.2 * energy_needed:
+                self.no_hold = True
                 if dest1.type == 1:
                     if dest2 == self.target:
                         used_model = False
