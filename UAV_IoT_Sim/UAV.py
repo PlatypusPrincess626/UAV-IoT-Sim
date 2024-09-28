@@ -326,6 +326,8 @@ class QuadUAV:
                 used_model = False
                 self.target = self.target
                 self.force_count += 1
+                return (train_model, used_model, state1, action1,
+                        self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
             elif self.stored_energy < 1.2 * energy_needed:
                 self.no_hold = True
@@ -334,7 +336,6 @@ class QuadUAV:
                         used_model = False
                         self.force_change = True
                         self.target = self.target
-
                     else:
                         used_model = True
                         self.target = dest2
@@ -360,7 +361,6 @@ class QuadUAV:
                                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
             else:
-                self.force_change = False
                 self.no_hold = True
                 self.is_charging = False
                 if used_model:
@@ -376,7 +376,6 @@ class QuadUAV:
 
                     if self.force_count > 30:
                         self.force_change = True
-                        self.force_count = 0
 
                     self.targetSerial = self.targetHead.headSerial
                     self.targetHead = dest2
