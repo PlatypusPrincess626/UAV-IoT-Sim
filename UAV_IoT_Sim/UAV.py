@@ -325,7 +325,6 @@ class QuadUAV:
                 self.is_charging = True
                 used_model = False
                 self.target = self.target
-                self.force_count += 1
                 return (train_model, used_model, state1, action1,
                         self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
