@@ -270,9 +270,10 @@ class QuadUAV:
             self.energy_harvested += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
             self.state[0][2] = self.stored_energy
 
-    def set_dest(self, model, step, _=None):
+    def set_dest(self, model, model_p, step, _=None):
         train_model = False
         used_model = False
+        action_p = None
 
         if self.targetHead is not None:
             self.last_Head = self.targetHead.headSerial
@@ -300,8 +301,8 @@ class QuadUAV:
             self.target = self.target
 
         else:
-            used_model, changed_transit, dest1, dest2, state1, state2, action1, action2 = \
-                self.target.get_dest(self.state, self.full_sensor_list, model, step,
+            used_model, changed_transit, dest1, dest2, state1, state2, action1, action2, action_p = \
+                self.target.get_dest(self.state, self.full_sensor_list, model, model_p, step,
                                      self.no_hold, self.force_change, self.targetSerial)
 
             self.state = state1
@@ -321,14 +322,14 @@ class QuadUAV:
                                                                  self._comms.get("Lora_Upkeep_A")) +
                                                            round(self._comms.get("LoRa_Current_A")))
 
-            if self.stored_energy < 1.2 * energy_needed and self.no_hold:
+            if action_p and self.no_hold:
                 self.is_charging = True
                 used_model = False
                 self.target = self.target
-                return (train_model, used_model, state1, action1,
+                return (train_model, used_model, state1, action1, action_p,
                         self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
-            elif self.stored_energy < 1.2 * energy_needed:
+            elif action_p:
                 self.no_hold = True
                 if dest1.type == 1:
                     if dest2 == self.target:
@@ -342,7 +343,7 @@ class QuadUAV:
                         self.targetHead = dest2
                         self.targetX = dest2.indX
                         self.targetY = dest2.indY
-                        return (train_model, used_model, state1, action1,
+                        return (train_model, used_model, state1, action1, action_p,
                                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
                 else:
                     if dest1 == self.target:
@@ -356,7 +357,7 @@ class QuadUAV:
                         self.targetHead = dest1
                         self.targetX = dest1.indX
                         self.targetY = dest1.indY
-                        return (train_model, used_model, state1, action1,
+                        return (train_model, used_model, state1, action1, action_p,
                                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
             else:
@@ -381,7 +382,7 @@ class QuadUAV:
                     self.target = dest1
                     self.targetX = dest1.indX
                     self.targetY = dest1.indY
-                    return (train_model, used_model, state1, action1,
+                    return (train_model, used_model, state1, action1, action_p,
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
                 else:
@@ -400,7 +401,7 @@ class QuadUAV:
                     self.targetSerial = self.targetHead.headSerial
                     self.targetX = dest1.indX
                     self.targetY = dest1.indY
-                    return (train_model, used_model, state1, action1,
+                    return (train_model, used_model, state1, action1, action_p,
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
         #   ADF 1.0
@@ -455,6 +456,6 @@ class QuadUAV:
         #         return (train_model, used_model, state, action,
         #                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
-        return (train_model, used_model, self.state, self.targetHead.headSerial,
+        return (train_model, used_model, self.state, self.targetHead.headSerial, action_p,
                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 

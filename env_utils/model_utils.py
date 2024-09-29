@@ -253,10 +253,11 @@ class get_gann_agent:
 
 
 class get_ddqn_agent():
-    def __init__(self, env, epsilon_i=1.0, epsilon_f=0.0, n_epsilon=0.1, alpha=0.5, gamma=0.95, epsilon=0.5, epsilon_min=0.1, epsilon_decay=0.01):
+    def __init__(self, env, nS, nA, epsilon_i=1.0, epsilon_f=0.0, n_epsilon=0.1,
+                 alpha=0.5, gamma=0.95, epsilon=0.5, epsilon_min=0.1, epsilon_decay=0.01):
         # ADF 2.0
-        self.nS =((env.num_ch + 6) * 2)
-        self.nA = env.num_ch + 5
+        self.nS = nS
+        self.nA = nA
         # ADF 1.0
         # self.nS = ((env.num_ch + 1) * 2)
         # self.nA = env.num_ch

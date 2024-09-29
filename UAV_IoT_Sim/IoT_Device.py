@@ -263,7 +263,8 @@ class IoT_Device:
         else:
             return 0
 
-    def get_dest(self, state, full_sensor_list, model, step, no_hold, force_change, targetSerial, _=None):
+    def get_dest(self, state, full_sensor_list, model, model_p, step, no_hold, force_change, targetSerial, _=None):
+        action_p = model_p.act(state)
 
         # ADF 2
         for CH in range(len(state) - 6):
@@ -271,9 +272,9 @@ class IoT_Device:
         # for CH in range(len(state) - 1):
             if state[CH + 1][2] < 1.0:
                 # ADF 2.0
-                return False, True, full_sensor_list.iat[CH + 1, 0], _, state, _, CH, _
+                return False, True, full_sensor_list.iat[CH + 1, 0], _, state, _, CH, _, action_p
                 # ADF 1.0
-                # return False, True, full_sensor_list.iat[CH + 1, 0], state, CH
+                # return False, True, full_sensor_list.iat[CH + 1, 0], state, CH, action_p
 
         # ADF 2.0
         oldest_age = [self.age_table[0], self.age_table[1], self.age_table[2], self.age_table[3], self.age_table[4]]
@@ -337,7 +338,7 @@ class IoT_Device:
 
         # ADF 2.0
         if action < (len(state) - 6):
-            return True, True, full_sensor_list.iat[action + 1, 0], _, state, _, action, _
+            return True, True, full_sensor_list.iat[action + 1, 0], _, state, _, action, _, action_p
         else:
             sensor = self.sens_table.iat[sensMapping[action - len(full_sensor_list.index) + 1][0], 0]
 
@@ -363,7 +364,7 @@ class IoT_Device:
                                 action2 = 0
                         i += 1
 
-            return True, True, sensor, full_sensor_list.iat[action2 + 1, 0], state1, state, action, action2
+            return True, True, sensor, full_sensor_list.iat[action2 + 1, 0], state1, state, action, action2, action_p
 
         # ADF 1.0
         # return True, True, full_sensor_list.iat[action + 1, 0], state, action

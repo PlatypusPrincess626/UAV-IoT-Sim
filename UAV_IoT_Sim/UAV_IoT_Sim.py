@@ -100,8 +100,9 @@ class make_env:
             self._curr_total_data = 0
             return self._env
     
-    def step(self, model):
+    def step(self, model, model_p):
         train_model = False
+        action_p = None
         old_action = 0
         comms, move, harvest = 0, 0, 0
 
@@ -125,7 +126,7 @@ class make_env:
 
                 for uav in range(self._num_uav):
                     uav = self._env.UAVTable.iat[uav, 0]
-                    train_model, used_model, state, action, comms, move, harvest = uav.set_dest(model, self.curr_step)
+                    train_model, used_model, state, action, action_p, comms, move, harvest = uav.set_dest(model, model_p, self.curr_step)
                     uav.navigate_step(self._env)
                     self.uavX = uav.indX
                     self.uavY = uav.indY
@@ -183,7 +184,7 @@ class make_env:
                 "Truncated": self.truncated         # -> Max episode steps reached
             }
 
-        return train_model, old_state, old_action, comms, move, harvest
+        return train_model, old_state, old_action, action_p, comms, move, harvest
 
     def reward(self):
         '''
