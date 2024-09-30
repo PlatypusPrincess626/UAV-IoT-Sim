@@ -135,8 +135,9 @@ class make_env:
                     self.uavY = uav.indY
 
                     train_model2, change_archives = uav.receive_data(self.curr_step)
+                    print(type(excess_energy))
                     excess_energy = uav.receive_energy()
-
+                    print(type(excess_energy))
                     # train_model = True
                     if train_model or train_model2:
                         train_model = True
@@ -247,7 +248,6 @@ class make_env:
 
         rewardPeak = (1 - 2 * peakAge / (self.curr_step + 1))
         rewardDataChange = dataChange / 1_498_500
-        print(type(excess_energy))
         reward_energy = excess_energy
         reward2Change = 0.75 * rewardPeak + 0.25 * rewardDataChange - 0.5 * reward_energy
 
