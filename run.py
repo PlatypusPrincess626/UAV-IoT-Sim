@@ -404,6 +404,7 @@ def prepopulate(agent, agent_p, prepop_steps, env):
             buffer_done = env.terminated
 
             if action_p >= 0:
+                print("Here")
                 agent_p.update_mem(old_state, action_p, env.reward2, env.curr_state, buffer_done)
 
             if buffer_done or env.truncated:

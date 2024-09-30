@@ -104,7 +104,7 @@ class make_env:
     
     def step(self, model, model_p):
         train_model = False
-        action_p = None
+        action_p = -1
         excess_energy = 0
         old_action = 0
         comms, move, harvest = 0, 0, 0
