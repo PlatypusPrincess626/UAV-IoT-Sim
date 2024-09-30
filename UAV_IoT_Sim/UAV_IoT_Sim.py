@@ -247,6 +247,7 @@ class make_env:
 
         rewardPeak = (1 - 2 * peakAge / (self.curr_step + 1))
         rewardDataChange = dataChange / 1_498_500
+        print(type(excess_energy))
         reward_energy = excess_energy
         reward2Change = 0.75 * rewardPeak + 0.25 * rewardDataChange - 0.5 * reward_energy
 
