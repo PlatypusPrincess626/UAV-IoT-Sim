@@ -273,7 +273,7 @@ class QuadUAV:
             self.energy_harvested += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
             self.state[0][2] = self.stored_energy
 
-            return excess_percent
+        return excess_percent
 
     def set_dest(self, model, model_p, step, _=None):
         train_model = False
