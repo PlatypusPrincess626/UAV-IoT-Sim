@@ -44,6 +44,7 @@ class make_env:
             self.ch_sensors[CH] = self._env.CHTable.iat[CH, 0].num_sensors
 
         self.curr_reward = 0
+        self.reward2 = 0
         self.curr_info = {
             "Last_Action": None,
             "Reward_Change": 0.0,          # -> Change in reward at step
@@ -83,6 +84,7 @@ class make_env:
             # self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
 
             self.curr_reward = 0
+            self.reward2 = 0
             self.curr_info = {
                 "Last_Action": None,
                 "Reward_Change": 0.0,          # -> Change in reward at step
@@ -172,6 +174,7 @@ class make_env:
                 }
         else:
             self.curr_reward = 0
+            self.reward2 = 0
             self.curr_info = {
                 "Last_Action": self.last_action,
                 "Reward_Change": 0,        # -> Change in reward at step
@@ -241,6 +244,10 @@ class make_env:
 
         rewardChange = 0.2 * rewardDist + 0.6 * rewardPeak + 0 * rewardAvgAge + 0.2 * rewardDataChange
 
+        rewardPeak = (1 - 2 * peakAge / (self.curr_step + 1))
+        rewardDataChange = dataChange / 1_498_500
+        reward2Change = 0.75 * rewardPeak + 0.25 * rewardDataChange
+
         if self.terminated:
             rewardChange = -1
         
@@ -257,3 +264,4 @@ class make_env:
         }
         
         self.curr_reward += rewardChange
+        self.reward2 += reward2Change
