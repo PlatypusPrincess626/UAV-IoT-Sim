@@ -256,6 +256,7 @@ class QuadUAV:
         return train_model, change_archives
 
     def receive_energy(self):
+        excess_percent = 0
         if self.target.type == 2 and self.h == 0:
             t = self.target.charge_time(int(self.indX), int(self.indY), self.is_charging)
 
@@ -264,11 +265,15 @@ class QuadUAV:
 
             self.stored_energy += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
             if self.stored_energy > self.max_energy * 1_000:
+                excess_percent = round((self.stored_energy - self.max_energy * 1_000) /
+                                       max(0, (t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))))
                 self.stored_energy = self.max_energy * 1_000
 
             print(self.stored_energy, t)
             self.energy_harvested += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
             self.state[0][2] = self.stored_energy
+
+            return excess_percent
 
     def set_dest(self, model, model_p, step, _=None):
         train_model = False

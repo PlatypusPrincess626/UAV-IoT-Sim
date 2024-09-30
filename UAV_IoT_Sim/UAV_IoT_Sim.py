@@ -105,6 +105,7 @@ class make_env:
     def step(self, model, model_p):
         train_model = False
         action_p = None
+        excess_energy = 0
         old_action = 0
         comms, move, harvest = 0, 0, 0
 
@@ -134,7 +135,7 @@ class make_env:
                     self.uavY = uav.indY
 
                     train_model2, change_archives = uav.receive_data(self.curr_step)
-                    uav.receive_energy()
+                    excess_energy = uav.receive_energy()
 
                     # train_model = True
                     if train_model or train_model2:
@@ -157,7 +158,7 @@ class make_env:
                         self.archived_state = state
                         self.archived_action = action
 
-                self.reward()
+                self.reward(excess_energy)
                 self.curr_step += 1
             else:
                 self.truncated = True
@@ -189,7 +190,7 @@ class make_env:
 
         return train_model, old_state, old_action, action_p, comms, move, harvest
 
-    def reward(self):
+    def reward(self, excess_energy):
         '''
         Distribution of Data
         Average AoI
@@ -246,7 +247,8 @@ class make_env:
 
         rewardPeak = (1 - 2 * peakAge / (self.curr_step + 1))
         rewardDataChange = dataChange / 1_498_500
-        reward2Change = 0.75 * rewardPeak + 0.25 * rewardDataChange
+        reward_energy = excess_energy
+        reward2Change = 0.75 * rewardPeak + 0.25 * rewardDataChange - 0.5 * reward_energy
 
         if self.terminated:
             rewardChange = -1
