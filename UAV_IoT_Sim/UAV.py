@@ -278,7 +278,7 @@ class QuadUAV:
     def set_dest(self, model, model_p, step, _=None):
         train_model = False
         used_model = False
-        action_p = None
+        action_p = -1
 
         if self.targetHead is not None:
             self.last_Head = self.targetHead.headSerial

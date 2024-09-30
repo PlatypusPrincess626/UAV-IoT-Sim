@@ -135,9 +135,8 @@ class make_env:
                     self.uavY = uav.indY
 
                     train_model2, change_archives = uav.receive_data(self.curr_step)
-                    print(type(excess_energy))
                     excess_energy = uav.receive_energy()
-                    print(type(excess_energy))
+
                     # train_model = True
                     if train_model or train_model2:
                         train_model = True

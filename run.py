@@ -152,7 +152,7 @@ def evaluate(
             if buffer_done or eval_env.truncated:
                 done = True
 
-            if action_p is not None:
+            if action_p >= 0:
                 agent_p.update_mem(old_state, action_p, eval_env.reward2, eval_env.curr_state, buffer_done)
 
             avgAoI += info.get("Avg_Age", 0.0)
@@ -371,7 +371,7 @@ def step(agent, agent_p, env):
     buffer_done = env.terminated
     done = False
 
-    if action_p is not None:
+    if action_p >= 0:
         agent_p.update_mem(old_state, action_p, env.reward2, env.curr_state, buffer_done)
 
     if buffer_done or env.truncated:
@@ -403,7 +403,7 @@ def prepopulate(agent, agent_p, prepop_steps, env):
             train_model, old_state, old_action, action_p, comms, move, harvest = env.step(agent, agent_p)
             buffer_done = env.terminated
 
-            if action_p is not None:
+            if action_p >= 0:
                 agent_p.update_mem(old_state, action_p, env.reward2, env.curr_state, buffer_done)
 
             if buffer_done or env.truncated:
