@@ -346,7 +346,7 @@ def train(
         "losses/hours": hours,
     }
     sr, ret, length, avgAoI, peakAoI, dataDist, dataColl, CH_Metrics, \
-        comms, move, harvest = evaluate(agent, env, eval_episodes, True, env_str, start_time)
+        comms, move, harvest = evaluate(agent, agent_p, env, eval_episodes, True, env_str, start_time)
 
     log_vals.update(
         {
