@@ -323,7 +323,7 @@ class IoT_Device:
 
             return model_help, True, full_sensor_list.iat[action + 1, 0], state, action, action_p
 
-        elif aciton_p == 1:
+        elif action_p == 1:
             CHstate = self.state = [[0, 0, 0] for _ in range(len(state))]
             CHstate[0] = state[0]
             CHstate[0][1] = (self.stored_data + self.contribution)
@@ -366,7 +366,7 @@ class IoT_Device:
 
             return True, True, sensor, CHstate, action, action_p
 
-        else:
+        elif action_p == 2:
             model_help = False
             if no_hold:
                 action = targetSerial
