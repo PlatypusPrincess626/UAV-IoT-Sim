@@ -21,23 +21,12 @@ def modify_state(state):
     _, _, zmax = np_state.max(axis=0)
 
     # ADF 2.0
-    for i in range(len(state)-5):
+    for i in range(len(state)):
         refined_state[i][0] = state[i][1]/max(total_data, 1)
         if i == 0:
             refined_state[i][1] = state[i][2]/6_800_000
         else:
             refined_state[i][1] = state[i][2]/max(zmax, 1)
-    for i in range(5):
-        refined_state[len(state)-1-i][0] = state[i][1]/10000
-        refined_state[len(state) - 1 - i][0] = state[i][2]/max(zmax, 1)
-
-    # ADF 1.0
-    # for i in range(len(state)):
-    #     refined_state[i][0] = state[i][1]/max(total_data, 1)
-    #     if i == 0:
-    #         refined_state[i][1] = state[i][2]/6_800_000
-    #     else:
-    #         refined_state[i][1] = state[i][2]/max(zmax, 1)
 
     return refined_state
 
@@ -259,8 +248,6 @@ class get_ddqn_agent():
         self.nS = nS
         self.nA = nA
         # ADF 1.0
-        # self.nS = ((env.num_ch + 1) * 2)
-        # self.nA = env.num_ch
 
         self.memory = deque([], maxlen=2500)
         self.alpha = alpha

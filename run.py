@@ -438,15 +438,15 @@ def run_experiment(args):
     # DDQN
     agent = model_utils.get_ddqn_agent(
         env,
-        ((env.num_ch + 6) * 2),
-        env.num_ch + 5
+        ((env.num_ch + 1) * 2),
+        env.num_ch
     )
 
     # Power Determination
     agent_p = model_utils.get_ddqn_agent(
         env,
-        ((env.num_ch + 6) * 2),
-        2
+        ((env.num_ch + 1) * 2),
+        3
     )
 
     policy_save_dir = os.path.join(

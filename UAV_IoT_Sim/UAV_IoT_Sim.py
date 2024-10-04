@@ -32,12 +32,8 @@ class make_env:
         self.last_action = 0
         self.archived_action = 0
 
-        # ADF 2.0
-        self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
-        self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
-        # ADF 1.00
-        # self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
-        # self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
+        self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
+        self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
 
         self.ch_sensors = [0 for _ in range(self.num_ch)]
         for CH in range(self.num_ch):
@@ -76,12 +72,8 @@ class make_env:
             self.last_action = 0
             self.archived_action = 0
 
-            # # ADF 2.0
-            self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
-            self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
-            # ADF 1.0
-            # self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
-            # self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
+            self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
+            self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
 
             self.curr_reward = 0
             self.reward2 = 0
@@ -109,10 +101,7 @@ class make_env:
         old_action = 0
         comms, move, harvest = 0, 0, 0
 
-        # # ADF 2.0
-        old_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
-        # ADF 1.0
-        # old_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
+        old_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
 
         if not self.terminated:
             if self.curr_step < self._max_steps:
@@ -201,10 +190,7 @@ class make_env:
         peakAge = 0
         minAge = self.curr_step
 
-        # ADF 2.0
-        for index in range(len(self.curr_state) - 6):
-        # ADF 1.0
-        # for index in range(len(self.curr_state) - 1):
+        for index in range(len(self.curr_state) - 1):
             age = self.curr_step - self.curr_state[index + 1][2]
             # age = self.curr_step - self.curr_state[index + 1][2]
             # if age > self._aoi_threshold:
@@ -221,10 +207,7 @@ class make_env:
         minColl = 1.0
         index: int
 
-        # ADF 2.0
-        for index in range(len(self.curr_state) - 5):
-        # ADF 1.0
-        # for index in range(len(self.curr_state)):
+        for index in range(len(self.curr_state)):
             if index > 0:
                 val = self.curr_state[index][1] / (max(self._curr_total_data, 1))
                 if val > maxColl:

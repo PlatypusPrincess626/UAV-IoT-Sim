@@ -91,10 +91,7 @@ class QuadUAV:
         self.launch_cost = 18.889 # mA
 
         # State used for model
-        #   ADF 2.0
-        self.state = [[0, 0, 0] for _ in range(len(CHList) + 6)]
-        #   ADF 1.0
-        # self.state = [[0, 0, 0] for _ in range(len(CHList) + 1)]
+        self.state = [[0, 0, 0] for _ in range(len(CHList) + 1)]
 
         self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy * 1_000
         count = 0
@@ -306,64 +303,34 @@ class QuadUAV:
             self.target = self.target
 
         else:
-            used_model, changed_transit, dest1, dest2, state1, state2, action1, action2, action_p = \
+            # True, True, sensor, CHstate, action, action_p
+            used_model, changed_transit, dest, state, action, action_p = \
                 self.target.get_dest(self.state, self.full_sensor_list, model, model_p, step,
                                      self.no_hold, self.force_change, self.targetSerial)
 
-            self.state = state1
-            self.action = action1
+            self.state = state
+            self.action = action
 
             if self.model_transit and changed_transit:
                 train_model = True
                 self.model_transit = False
 
-            d2 = 0
-            d1 = math.sqrt(pow((self.indX - dest1.indX), 2) + pow((self.indY - dest1.indY), 2))
-            if dest1.type == 1:
-                d2 = math.sqrt(pow((dest1.indX - dest2.indX), 2) + pow((dest1.indY - dest2.indY), 2))
-            travel_time = (d1 + d2) / self.maxSpd
-            energy_needed = travel_time * 1_000 * self.max_energy / (self.flight_discharge * 60 * 60) + \
-                            math.ceil(travel_time / 60) * (round(self.cpu_amps + self._comms.get("AmBC_Current_A") +
-                                                                 self._comms.get("Lora_Upkeep_A")) +
-                                                           round(self._comms.get("LoRa_Current_A")))
+            # d2 = 0
+            # d1 = math.sqrt(pow((self.indX - dest.indX), 2) + pow((self.indY - dest.indY), 2))
+            # if dest.type == 1:
+            #     d2 = d1
+            # travel_time = (d1 + d2) / self.maxSpd
+            # energy_needed = travel_time * 1_000 * self.max_energy / (self.flight_discharge * 60 * 60) + \
+            #                 math.ceil(travel_time / 60) * (round(self.cpu_amps + self._comms.get("AmBC_Current_A") +
+            #                                                      self._comms.get("Lora_Upkeep_A")) +
+            #                                                round(self._comms.get("LoRa_Current_A")))
 
-            if action_p and self.no_hold:
+            if action_p == 2 and self.no_hold:
                 self.is_charging = True
                 used_model = False
                 self.target = self.target
-                return (train_model, used_model, state1, action1, action_p,
+                return (train_model, used_model, state, action, action_p,
                         self.step_comms_cost, self.step_move_cost, self.energy_harvested)
-
-            elif action_p:
-                self.no_hold = True
-                if dest1.type == 1:
-                    if dest2 == self.target:
-                        used_model = False
-                        self.force_change = True
-                        self.target = self.target
-                    else:
-                        used_model = True
-                        self.target = dest2
-                        self.targetSerial = self.targetHead.headSerial
-                        self.targetHead = dest2
-                        self.targetX = dest2.indX
-                        self.targetY = dest2.indY
-                        return (train_model, used_model, state1, action1, action_p,
-                                self.step_comms_cost, self.step_move_cost, self.energy_harvested)
-                else:
-                    if dest1 == self.target:
-                        used_model = False
-                        self.force_change = True
-                        self.target = self.target
-                    else:
-                        used_model = True
-                        self.target = dest1
-                        self.targetSerial = self.targetHead.headSerial
-                        self.targetHead = dest1
-                        self.targetX = dest1.indX
-                        self.targetY = dest1.indY
-                        return (train_model, used_model, state1, action1, action_p,
-                                self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
             else:
                 self.no_hold = True
@@ -371,27 +338,25 @@ class QuadUAV:
                 if used_model:
                     self.model_transit = True
 
-                if dest1.type == 1:
-                    if dest2.headSerial == self.targetSerial and self.inRange:
-                        self.force_count += 1
+                if dest.type == 1:
+                    self.force_count += 1
 
-                    elif self.force_change:
+                    if self.force_change:
                         self.force_change = False
                         self.force_count = 0
 
                     if self.force_count > 30:
                         self.force_change = True
 
-                    self.targetSerial = self.targetHead.headSerial
-                    self.targetHead = dest2
-                    self.target = dest1
-                    self.targetX = dest1.indX
-                    self.targetY = dest1.indY
-                    return (train_model, used_model, state1, action1, action_p,
+                    self.target = dest
+                    self.targetX = dest.indX
+                    self.targetY = dest.indY
+
+                    return (train_model, used_model, state, action, action_p,
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
                 else:
-                    if dest1.headSerial == self.targetSerial and self.inRange:
+                    if dest.headSerial == self.targetSerial and self.inRange:
                         self.force_count += 1
 
                     elif self.force_change:
@@ -401,65 +366,13 @@ class QuadUAV:
                     if self.force_count > 30:
                         self.force_change = True
 
-                    self.target = dest1
-                    self.targetHead = dest1
+                    self.target = dest
+                    self.targetHead = dest
                     self.targetSerial = self.targetHead.headSerial
-                    self.targetX = dest1.indX
-                    self.targetY = dest1.indY
-                    return (train_model, used_model, state1, action1, action_p,
+                    self.targetX = dest.indX
+                    self.targetY = dest.indY
+                    return (train_model, used_model, state, action, action_p,
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
-
-        #   ADF 1.0
-        # else:
-        #     used_model, changed_transit, dest, state, action = \
-        #         self.target.get_dest(self.state, self.full_sensor_list, model, step,
-        #                              self.no_hold, self.force_change, self.targetSerial)
-        #
-        #     self.force_change = False
-        #     self.is_charging = False
-        #
-        #     if self.model_transit and changed_transit:
-        #         train_model = True
-        #         self.model_transit = False
-        #
-        #     d1 = math.sqrt(pow((self.indX - dest.indX), 2) + pow((self.indY - dest.indY), 2))
-        #     travel_time = d1 / self.maxSpd
-        #     energy_needed = travel_time * (1_000 * self.max_energy / (self.flight_discharge * 60 * 60)) + \
-        #                     (travel_time / 60) * (round(self.cpu_amps + self._comms.get("AmBC_Current_A") +
-        #                             self._comms.get("Lora_Upkeep_A")) +
-        #                     round(self._comms.get("LoRa_Current_A")))
-        #
-        #     if self.stored_energy < 1.2 * energy_needed and self.no_hold and not self.force_change:
-        #         self.is_charging = True
-        #         used_model = False
-        #         self.target = self.target
-        #         self.force_count += 1
-        #
-        #     else:
-        #         self.no_hold = True
-        #         if used_model:
-        #             self.model_transit = True
-        #
-        #         if dest.headSerial == self.targetSerial and self.inRange:
-        #             self.force_count += 1
-        #
-        #         elif self.force_change:
-        #             self.force_change = False
-        #             self.force_count = 0
-        #
-        #         if self.force_count > 30:
-        #             self.force_change = True
-        #
-        #         self.state = state
-        #         self.action = action
-        #
-        #         self.target = dest
-        #         self.targetHead = dest
-        #         self.targetSerial = self.targetHead.headSerial
-        #         self.targetX = dest.indX
-        #         self.targetY = dest.indY
-        #         return (train_model, used_model, state, action,
-        #                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
         return (train_model, used_model, self.state, self.targetHead.headSerial, action_p,
                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
