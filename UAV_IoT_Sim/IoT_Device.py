@@ -380,7 +380,7 @@ class IoT_Device:
             out_state = CHstate
             target = self.sens_table.iat[CHstate[action+1][0], 0]
 
-        d_to_targ = sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
+        d_to_targ = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
         if target.type == 1:
             d_to_targ *= 2
         AoI_list = decision_state[1:][2]
