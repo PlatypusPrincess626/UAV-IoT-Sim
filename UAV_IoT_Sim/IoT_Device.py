@@ -385,7 +385,7 @@ class IoT_Device:
             d_to_targ *= 2
 
 
-        AoI_list = decision_state[1:][2]
+        AoI_list = decision_state[2][1:]
         AoI_peak = max(AoI_list)
         print(AoI_list)
 
