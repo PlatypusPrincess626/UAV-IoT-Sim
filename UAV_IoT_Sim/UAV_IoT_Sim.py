@@ -35,7 +35,7 @@ class make_env:
 
         self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
         self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
-        self.last_pstate = [0, 0]
+        self.last_pstate = [0, 0, 0]
 
         self.ch_sensors = [0 for _ in range(self.num_ch)]
         for CH in range(self.num_ch):
@@ -76,7 +76,7 @@ class make_env:
 
             self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
             self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
-            self.last_pstate = [0, 0]
+            self.last_pstate = [0, 0, 0]
 
             self.curr_reward = 0
             self.reward2 = 0
