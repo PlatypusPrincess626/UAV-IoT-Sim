@@ -278,7 +278,7 @@ class QuadUAV:
     def set_dest(self, model, model_p, step, _=None):
         train_model = False
         used_model = False
-        action_p = [0]
+        action_p = []
         p_state = [0, 0]
 
         if self.targetHead is not None:
@@ -311,11 +311,11 @@ class QuadUAV:
             if self.target.type == 1:
                 targetType = 1
             # True, True, sensor, CHstate, action, action_p
-            used_model, changed_transit, dest, state, action, action_p, p_state = \
+            used_model, changed_transit, dest, uav_state, state, action, action_p, p_state = \
                 self.target.get_dest(self.state, self.full_sensor_list, model, model_p, step,
                                      self.no_hold, self.force_change, targetType, self.targetSerial)
 
-            self.state = state
+            self.state = uav_state
             self.action = action
             self.train_p = True
 
