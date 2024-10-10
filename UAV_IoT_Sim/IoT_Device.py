@@ -389,4 +389,4 @@ class IoT_Device:
         p_state = [d_to_targ, (AoI_peak + (30 * self.action_p))]
         self.action_p = model_p.act(p_state)
 
-        return model_help, True, target, out_state, action, action_p, p_state
+        return model_help, True, target, out_state, action, self.action_p, p_state
