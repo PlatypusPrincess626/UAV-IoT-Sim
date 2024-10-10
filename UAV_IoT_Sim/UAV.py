@@ -263,8 +263,9 @@ class QuadUAV:
                 self.no_hold = False
 
             self.stored_energy += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
+            excess_percent = (self.stored_energy / self.max_energy)
             if self.stored_energy > self.max_energy * 1_000:
-                excess_percent = 1
+                excess_percent = 1 - (self.stored_energy/self.max_energy)
                 self.stored_energy = self.max_energy * 1_000
 
             print(self.stored_energy, t)
@@ -277,7 +278,7 @@ class QuadUAV:
         train_model = False
         used_model = False
         action_p = [0]
-        p_state = [0, 0]
+        p_state = [0, 0, 0]
 
         if self.targetHead is not None:
             self.last_Head = self.targetHead.headSerial

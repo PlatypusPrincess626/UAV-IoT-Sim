@@ -390,7 +390,7 @@ class IoT_Device:
             if AoI > AoI_peak:
                 AoI_peak = AoI
 
-        p_state = [d_to_targ, AoI_peak + math.floor(30 * self.action_p[0])]
+        p_state = [d_to_targ, state[0][2], AoI_peak + math.floor(30 * self.action_p[0])]
         action_p = model_p.act(p_state)
 
-        return model_help, True, target, decision_state, out_state, action, self.action_p, p_state
+        return model_help, True, target, state, out_state, action, self.action_p, p_state

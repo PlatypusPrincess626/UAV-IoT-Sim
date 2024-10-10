@@ -442,8 +442,8 @@ def run_experiment(args):
     # Power Determination
     agent_p = model_utils.get_ddqn_regression_agent(
         env,
-        2,
-        3
+        3,
+        1
     )
 
     policy_save_dir = os.path.join(
