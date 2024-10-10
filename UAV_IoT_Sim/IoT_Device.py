@@ -384,9 +384,10 @@ class IoT_Device:
         if target.type == 1:
             d_to_targ *= 2
 
-        print(decision_state)
+
         AoI_list = decision_state[1:][2]
         AoI_peak = max(AoI_list)
+        print(AoI_list)
 
         p_state = [d_to_targ, AoI_peak + math.floor(30 * self.action_p[0])]
         print(p_state)
