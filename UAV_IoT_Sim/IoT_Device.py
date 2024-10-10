@@ -296,7 +296,7 @@ class IoT_Device:
 
         decision_state = state
         for CH in range(len(state) - 1):
-            decision_state[CH+1, 2] = state[CH+1, 2] + (30 * self.action_p)
+            decision_state[CH+1][2] = state[CH+1][2] + (30 * self.action_p)
 
         action = 0
         out_state = state
@@ -383,7 +383,7 @@ class IoT_Device:
         d_to_targ = sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
         if target.type == 1:
             d_to_targ *= 2
-        AoI_list = decision_state[1:,2]
+        AoI_list = decision_state[1:][2]
         AoI_peak = max(AoI_list)
 
         p_state = [d_to_targ, (AoI_peak + (30 * self.action_p))]
