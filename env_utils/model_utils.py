@@ -446,12 +446,12 @@ class get_ddqn_regression_agent():
     def act(self, state):
         r_state = [state[0]/self.state1_max, state[1]/self.state2_max]
 
-        action_vals = self.model.predict(np.expand_dims(np.array(r_state).flatten(), axis=0))  # Exploit: Use the NN to predict the correct action from this state
+        action_vals = self.model.predict(np.expand_dims(np.array(r_state), axis=0))  # Exploit: Use the NN to predict the correct action from this state
         return action_vals[0]
 
     def test_action(self, state):  # Exploit
         r_state = [state[0]/self.state1_max, state[1]/self.state2_max]
-        action_vals = self.model.predict(np.expand_dims(np.array(r_state).flatten(), axis=0))  # Exploit: Use the NN to predict the correct action from this state
+        action_vals = self.model.predict(np.expand_dims(np.array(r_state), axis=0))  # Exploit: Use the NN to predict the correct action from this state
         return action_vals[0]
 
     def update_mem(self, state, action, reward, nstate, done):
@@ -471,14 +471,14 @@ class get_ddqn_regression_agent():
         st = np.zeros((0, self.nS))  # States
         nst = np.zeros((0, self.nS))  # Next States
         for i in range(len(np_array)):  # Creating the state and next state np arrays
-            st = np.append(st, np.expand_dims(np.array(np_array[i][0]).flatten(), axis=0), axis=0)
-            nst = np.append(nst, np.expand_dims(np.array(np_array[i][3]).flatten(), axis=0), axis=0)
+            st = np.append(st, np.expand_dims(np.array(np_array[i][0]), axis=0), axis=0)
+            nst = np.append(nst, np.expand_dims(np.array(np_array[i][3]), axis=0), axis=0)
         st_predict = self.model.predict(st)  # Here is the speedup! I can predict on the ENTIRE batch
         nst_predict = self.model.predict(nst)
         nst_predict_target = self.model_target.predict(nst)  # Predict from the TARGET
         index = 0
         for state, action, reward, nstate, done in minibatch:
-            x.append(np.expand_dims(np.array(state).flatten(), axis=0))
+            x.append(np.expand_dims(np.array(state), axis=0))
             # Predict from state
             nst_action_predict_target = nst_predict_target
             nst_action_predict_model = nst_predict
