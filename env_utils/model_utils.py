@@ -377,3 +377,139 @@ class get_ddqn_agent():
         # Decay Epsilon
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
+
+class get_ddqn_regression_agent():
+    def __init__(self, env, nS, nA, epsilon_i=1.0, epsilon_f=0.0, n_epsilon=0.1,
+                 alpha=0.5, gamma=0.95, epsilon=0.5, epsilon_min=0.1, epsilon_decay=0.01):
+        # ADF 2.0
+        self.nS = nS
+        self.nA = nA
+        self.state2_max = env._max_steps
+        self.state1_max = env.dims
+        # ADF 1.0
+
+        self.memory = deque([], maxlen=2500)
+        self.alpha = alpha
+        self.gamma = gamma
+        # Explore/Exploit
+        self.epsilon = epsilon
+        self.epsilon_min = epsilon_min
+        self.epsilon_decay = epsilon_decay
+        self.model = self.build_model()
+        self.model_target = self.build_model()  # Second (target) neural network
+        self.update_target_from_model()  # Update weights
+        self.loss = []
+        self.epsilon_i = epsilon_i
+        self.epsilon_f = epsilon_f
+        self.n_epsilon = n_epsilon
+
+        self.td_errors = RunningAverage(100)
+        self.grad_norms = RunningAverage(100)
+        self.qvalue_max = RunningAverage(100)
+        self.target_max = RunningAverage(100)
+        self.qvalue_mean = RunningAverage(100)
+        self.target_mean = RunningAverage(100)
+        self.qvalue_min = RunningAverage(100)
+        self.target_min = RunningAverage(100)
+
+    def build_model(self):
+        model = tf.keras.Sequential()  # linear stack of layers https://keras.io/models/sequential/
+        model.add(tf.keras.layers.Input(shape=(self.nS, )))
+        model.add(tf.keras.layers.Dense(250, activation='relu'))  # [Input] -> Layer 1
+        #   Dense: Densely connected layer https://keras.io/layers/core/
+        #   24: Number of neurons
+        #   input_dim: Number of input variables
+        #   activation: Rectified Linear Unit (relu) ranges >= 0
+        model.add(tf.keras.layers.Dense(250, activation='relu'))  # Layer 2 -> 3
+        model.add(tf.keras.layers.Dense(1, activation='linear'))  # Layer 3 -> [output]
+        #   Size has to match the output (different actions)
+        #   Linear activation on the last layer
+        model.compile(loss='mean_squared_error',  # Loss function: Mean Squared Error
+                      optimizer=tf.keras.optimizers.Adam(
+                          learning_rate=self.alpha))  # Optimaizer: Adam (Feel free to check other options)
+        return model
+
+    def decay_epsilon(self, n):
+        """
+        Decays the get_ddqn_agent's exploration rate according to n, which is a
+        float between 0 and 1 describing how far along training is,
+        with 0 meaning 'just started' and 1 meaning 'done'.
+        """
+        self.epsilon = max(
+            self.epsilon_f,
+            self.epsilon_i - (n / self.n_epsilon) * (self.epsilon_i - self.epsilon_f))
+
+    def update_target_from_model(self):
+        # Update the target model from the base model
+        self.model_target.set_weights(self.model.get_weights())
+
+    def act(self, state):
+        r_state = [state[0]/self.state1_max, state[1]/self.state2_max]
+
+        action_vals = self.model.predict(np.expand_dims(np.array(r_state).flatten(), axis=0))  # Exploit: Use the NN to predict the correct action from this state
+        return action_vals[0]
+
+    def test_action(self, state):  # Exploit
+        r_state = [state[0]/self.state1_max, state[1]/self.state2_max]
+        action_vals = self.model.predict(np.expand_dims(np.array(r_state).flatten(), axis=0))  # Exploit: Use the NN to predict the correct action from this state
+        return action_vals[0]
+
+    def update_mem(self, state, action, reward, nstate, done):
+        # Store the experience in memory
+        r_state = [state[0]/self.state1_max, state[1]/self.state2_max]
+        r_nstate = [nstate[0]/self.state1_max, nstate[1]/self.state2_max]
+        self.memory.append((r_state, action, reward, r_nstate, done))
+
+    def train(self, batch_size):
+        # Execute the experience replay
+        minibatch = random.sample(self.memory, batch_size)  # Randomly sample from memory
+
+        # Convert to numpy for speed by vectorization
+        x = []
+        y = []
+        np_array = minibatch
+        st = np.zeros((0, self.nS))  # States
+        nst = np.zeros((0, self.nS))  # Next States
+        for i in range(len(np_array)):  # Creating the state and next state np arrays
+            st = np.append(st, np.expand_dims(np.array(np_array[i][0]).flatten(), axis=0), axis=0)
+            nst = np.append(nst, np.expand_dims(np.array(np_array[i][3]).flatten(), axis=0), axis=0)
+        st_predict = self.model.predict(st)  # Here is the speedup! I can predict on the ENTIRE batch
+        nst_predict = self.model.predict(nst)
+        nst_predict_target = self.model_target.predict(nst)  # Predict from the TARGET
+        index = 0
+        for state, action, reward, nstate, done in minibatch:
+            x.append(np.expand_dims(np.array(state).flatten(), axis=0))
+            # Predict from state
+            nst_action_predict_target = nst_predict_target
+            nst_action_predict_model = nst_predict
+            if done == True:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
+                target = reward
+            else:  # Non terminal
+                target = reward + self.gamma * pow((nst_action_predict_target - nst_action_predict_model), 2)  # Using Q to get T is Double DQN
+
+            # self.qvalue_max.add(np.argmax(nst_predict))
+            # self.qvalue_mean.add(np.mean(nst_predict))
+            # self.qvalue_min.add(np.argmin(nst_predict))
+            #
+            # self.target_max.add(np.argmax(nst_predict_target))
+            # self.target_mean.add(np.mean(nst_predict_target))
+            # self.target_min.add(np.argmin(nst_predict_target))
+
+            loss = pow((nst_predict_target - st_predict), 2)
+            self.td_errors.add(loss)
+
+            y.append(target)
+            index += 1
+
+
+        # Reshape for Keras Fit
+        x_reshape = np.array(x).reshape(batch_size, self.nS)
+        y_reshape = np.array(y)
+        epoch_count = 1
+        hist = self.model.fit(x_reshape, y_reshape, epochs=epoch_count, verbose=0)
+        # Graph Losses
+        for i in range(epoch_count):
+            self.loss.append(hist.history['loss'][i])
+        # Decay Epsilon
+        if self.epsilon > self.epsilon_min:
+            self.epsilon *= self.epsilon_decay

@@ -27,6 +27,7 @@ class make_env:
         self.num_ch = num_ch
         self._num_uav = num_uav
         self._max_steps = max_num_steps
+        self.dims = self._env.dim
         
         self.curr_step = 0
         self.last_action = 0
@@ -34,6 +35,7 @@ class make_env:
 
         self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
         self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
+        self.last_pstate = [0, 0]
 
         self.ch_sensors = [0 for _ in range(self.num_ch)]
         for CH in range(self.num_ch):
@@ -74,6 +76,7 @@ class make_env:
 
             self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
             self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
+            self.last_pstate = [0, 0]
 
             self.curr_reward = 0
             self.reward2 = 0
@@ -100,6 +103,7 @@ class make_env:
         excess_energy = 0
         old_action = 0
         comms, move, harvest = 0, 0, 0
+        old_pstate = [0, 0]
 
         old_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
 
@@ -118,7 +122,7 @@ class make_env:
 
                 for uav in range(self._num_uav):
                     uav = self._env.UAVTable.iat[uav, 0]
-                    train_model, used_model, state, action, action_p, comms, move, harvest = uav.set_dest(model, model_p, self.curr_step)
+                    train_model, used_model, state, action, action_p, p_state, comms, move, harvest = uav.set_dest(model, model_p, self.curr_step)
                     uav.navigate_step(self._env)
                     self.uavX = uav.indX
                     self.uavY = uav.indY
@@ -136,6 +140,8 @@ class make_env:
 
                     old_state = self.archived_state
                     old_action = self.archived_action
+                    old_pstate = self.last_pstate
+                    self.last_pstate = p_state
 
                     if change_archives:
                         for Iter in range(5):
@@ -177,7 +183,7 @@ class make_env:
                 "Truncated": self.truncated         # -> Max episode steps reached
             }
 
-        return train_model, old_state, old_action, action_p, comms, move, harvest
+        return train_model, old_state, old_action, action_p, old_pstate, comms, move, harvest
 
     def reward(self, excess_energy):
         '''
@@ -191,7 +197,7 @@ class make_env:
         minAge = self.curr_step
 
         for index in range(len(self.curr_state) - 1):
-            age = self.curr_step - self.curr_state[index + 1][2]
+            age = self.curr_state[index + 1][2]
             # age = self.curr_step - self.curr_state[index + 1][2]
             # if age > self._aoi_threshold:
             #     age = self._aoi_threshold
@@ -226,7 +232,7 @@ class make_env:
         rewardAvgAge = (1 - (peakAge - avgAge) / (self.curr_step + 1))
         rewardDataChange = dataChange / 1_498_500
 
-        rewardChange = 0.2 * rewardDist + 0.6 * rewardPeak + 0 * rewardAvgAge + 0.2 * rewardDataChange
+        rewardChange = 0 * rewardDist + 1 * rewardPeak + 0 * rewardAvgAge + 0 * rewardDataChange
 
         rewardPeak = (1 - 2 * peakAge / (self.curr_step + 1))
         rewardDataChange = dataChange / 1_498_500

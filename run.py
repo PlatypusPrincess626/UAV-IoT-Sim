@@ -1,3 +1,4 @@
+import math
 import os
 import argparse
 from time import time, sleep
@@ -144,7 +145,7 @@ def evaluate(
         CH_Metrics = [[0, 0] for _ in range(eval_env.num_ch)]
 
         while not done:
-            train_model, old_state, old_action, action_p, comms, move, harvest = eval_env.step(agent, agent_p)
+            train_model, old_state, old_action, action_p, old_pstate, comms, move, harvest = eval_env.step(agent, agent_p)
             buffer_done = eval_env.terminated
             info = eval_env.curr_info
             crashed = eval_env.terminated
@@ -152,8 +153,8 @@ def evaluate(
             if buffer_done or eval_env.truncated:
                 done = True
 
-            if action_p >= 0:
-                agent_p.update_mem(old_state, action_p, eval_env.reward2, eval_env.curr_state, buffer_done)
+            if math.floor(action_p * 30) > 0:
+                agent_p.update_mem(old_pstate, action_p, env.curr_reward, env.last_pstate, buffer_done)
 
             avgAoI += info.get("Avg_Age", 0.0)
             peakAoI += info.get("Peak_Age", 0.0)
@@ -367,12 +368,12 @@ def train(
 
 
 def step(agent, agent_p, env):
-    train_model, old_state, old_action, action_p, comms, move, harvest = env.step(agent, agent_p)
+    train_model, old_state, old_action, action_p, old_pstate, comms, move, harvest = env.step(agent, agent_p)
     buffer_done = env.terminated
     done = False
 
-    if action_p >= 0:
-        agent_p.update_mem(old_state, action_p, env.reward2, env.curr_state, buffer_done)
+    if math.floor(action_p * 30) > 0:
+        agent_p.update_mem(old_pstate, action_p, env.curr_reward, env.last_pstate, buffer_done)
 
     if buffer_done or env.truncated:
         done = True
@@ -400,12 +401,12 @@ def prepopulate(agent, agent_p, prepop_steps, env):
 
         while not done:
             print(f"Prepop Step: {timestep}")
-            train_model, old_state, old_action, action_p, comms, move, harvest = env.step(agent, agent_p)
+            train_model, old_state, old_action, action_p, old_pstate, comms, move, harvest = env.step(agent, agent_p)
             buffer_done = env.terminated
 
-            if action_p >= 0:
+            if math.floor(action_p * 30) > 0:
                 print("Here")
-                agent_p.update_mem(old_state, action_p, env.reward2, env.curr_state, buffer_done)
+                agent_p.update_mem(old_pstate, action_p, env.curr_reward, env.last_pstate, buffer_done)
 
             if buffer_done or env.truncated:
                 # DDQN
@@ -443,9 +444,9 @@ def run_experiment(args):
     )
 
     # Power Determination
-    agent_p = model_utils.get_ddqn_agent(
+    agent_p = model_utils.get_ddqn_regression_agent(
         env,
-        ((env.num_ch + 1) * 2),
+        2,
         3
     )
 
