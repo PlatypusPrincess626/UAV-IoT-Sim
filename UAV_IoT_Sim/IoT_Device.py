@@ -281,7 +281,7 @@ class IoT_Device:
             return 0
 
     def get_dest(self, state, full_sensor_list, model, model_p, step,
-                 no_hold, force_change, charging, targetType, targetSerial, _=None):
+                 no_hold, force_change, targetType, targetSerial, _=None):
 
         my_contribution = state[targetSerial][1]
         if my_contribution > self.contribution:
