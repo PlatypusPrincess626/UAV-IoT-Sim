@@ -143,12 +143,6 @@ class make_env:
                     old_pstate = self.last_pstate
                     self.last_pstate = p_state
 
-                    if change_archives:
-                        for Iter in range(5):
-                            self.archived_state[len(uav.full_sensor_list) + Iter][1], \
-                                self.archived_state[len(uav.full_sensor_list) + Iter][2] = 0, 0
-                        self.archived_action = action
-
                     if used_model:
                         self.archived_state = state
                         self.archived_action = action
