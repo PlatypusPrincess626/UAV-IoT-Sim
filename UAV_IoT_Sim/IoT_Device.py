@@ -296,7 +296,7 @@ class IoT_Device:
 
         decision_state = state
         for CH in range(len(state) - 1):
-            decision_state[CH+1][2] = state[CH+1][2] + (30 * self.action_p[0])
+            decision_state[CH+1][2] = state[CH+1][2] + math.floor(30 * self.action_p[0])
 
         action = 0
         out_state = state
@@ -371,8 +371,8 @@ class IoT_Device:
                     oldest_indx.append(sens + 5)
 
             for sens in range(5):
-                CHstate[[sens + 1]][0], CHstate[[sens + 1]][1], CHstate[sens + 1][2] = \
-                    (oldest_indx[sens], self.data_table[oldest_indx[sens]], (step-oldest_age[sens]+(30*self.action_p[0])))
+                CHstate[sens + 1][0], CHstate[sens + 1][1], CHstate[sens + 1][2] = \
+                    (oldest_indx[sens], self.data_table[oldest_indx[sens]], (step-oldest_age[sens]+math.floor(30*self.action_p[0])))
 
             action = model.act(CHstate)
             self.last_target = CHstate[action+1][0]
@@ -383,10 +383,12 @@ class IoT_Device:
         d_to_targ = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
         if target.type == 1:
             d_to_targ *= 2
+
+        print(decision_state)
         AoI_list = decision_state[1:][2]
         AoI_peak = max(AoI_list)
 
-        p_state = [d_to_targ, AoI_peak + (30 * self.action_p[0])]
+        p_state = [d_to_targ, AoI_peak + math.floor(30 * self.action_p[0])]
         print(p_state)
         action_p = model_p.act(p_state)
 
