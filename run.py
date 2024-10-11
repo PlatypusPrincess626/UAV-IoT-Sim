@@ -153,7 +153,7 @@ def evaluate(
             if buffer_done or eval_env.truncated:
                 done = True
 
-            agent_p.update_mem(old_pstate, action_p, env.reward2, env.last_pstate, buffer_done)
+            agent_p.update_mem(old_pstate, action_p, eval_env.reward2, eval_env.last_pstate, buffer_done)
 
             avgAoI += info.get("Avg_Age", 0.0)
             peakAoI += info.get("Peak_Age", 0.0)
