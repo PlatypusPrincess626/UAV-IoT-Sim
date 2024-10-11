@@ -153,7 +153,7 @@ def evaluate(
             if buffer_done or eval_env.truncated:
                 done = True
 
-            agent_p.update_mem(old_pstate, action_p, env.curr_reward, env.last_pstate, buffer_done)
+            agent_p.update_mem(old_pstate, action_p, env.reward2, env.last_pstate, buffer_done)
 
             avgAoI += info.get("Avg_Age", 0.0)
             peakAoI += info.get("Peak_Age", 0.0)
@@ -371,7 +371,7 @@ def step(agent, agent_p, env):
     buffer_done = env.terminated
     done = False
 
-    agent_p.update_mem(old_pstate, action_p, env.curr_reward, env.last_pstate, buffer_done)
+    agent_p.update_mem(old_pstate, action_p, env.reward2, env.last_pstate, buffer_done)
 
     if buffer_done or env.truncated:
         done = True
@@ -402,7 +402,7 @@ def prepopulate(agent, agent_p, prepop_steps, env):
             train_model, old_state, old_action, action_p, old_pstate, comms, move, harvest = env.step(agent, agent_p)
             buffer_done = env.terminated
 
-            agent_p.update_mem(old_pstate, action_p, env.curr_reward, env.last_pstate, buffer_done)
+            agent_p.update_mem(old_pstate, action_p, env.reward2, env.last_pstate, buffer_done)
 
             if buffer_done or env.truncated:
                 # DDQN
