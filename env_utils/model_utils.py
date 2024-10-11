@@ -445,13 +445,13 @@ class get_ddqn_regression_agent():
 
     def act(self, state):
         r_state = [state[0]/self.state1_max, state[1]/6_800_000, state[2]/self.state2_max]
-        print(np.reshape(np.array(r_state), (-1, self.nA)).shape)
-        action_vals = self.model.predict(np.reshape(np.array(r_state), (-1, self.nA)))  # Exploit: Use the NN to predict the correct action from this state
+        print(np.reshape(np.array(r_state), (self.nA)).shape)
+        action_vals = self.model.predict(np.reshape(np.array(r_state), (self.nA)))  # Exploit: Use the NN to predict the correct action from this state
         return action_vals[0]
 
     def test_action(self, state):  # Exploit
         r_state = [state[0]/self.state1_max, state[1]/6_800_000, state[2]/self.state2_max]
-        action_vals = self.model.predict(np.reshape(np.array(r_state), (-1, self.nA))) # Exploit: Use the NN to predict the correct action from this state
+        action_vals = self.model.predict(np.reshape(np.array(r_state), (self.nA))) # Exploit: Use the NN to predict the correct action from this state
         return action_vals[0]
 
     def update_mem(self, state, action, reward, nstate, done):
