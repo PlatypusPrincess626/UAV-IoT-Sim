@@ -445,13 +445,13 @@ class get_ddqn_regression_agent():
 
     def act(self, state):
         r_state = [state[0]/self.state1_max, state[1]/6_800_000, state[2]/self.state2_max]
-        print(np.reshape(np.array(r_state), (self.nA)).shape)
-        action_vals = self.model.predict(np.reshape(np.array(r_state), (self.nA)))  # Exploit: Use the NN to predict the correct action from this state
+        print(np.reshape(np.array(r_state), (-1, self.nS)).shape)
+        action_vals = self.model.predict(np.reshape(np.array(r_state), (-1, self.nS)))  # Exploit: Use the NN to predict the correct action from this state
         return action_vals[0]
 
     def test_action(self, state):  # Exploit
         r_state = [state[0]/self.state1_max, state[1]/6_800_000, state[2]/self.state2_max]
-        action_vals = self.model.predict(np.reshape(np.array(r_state), (self.nA))) # Exploit: Use the NN to predict the correct action from this state
+        action_vals = self.model.predict(np.reshape(np.array(r_state), (self.nS))) # Exploit: Use the NN to predict the correct action from this state
         return action_vals[0]
 
     def update_mem(self, state, action, reward, nstate, done):
@@ -471,8 +471,8 @@ class get_ddqn_regression_agent():
         st = np.zeros((0, self.nS))  # States
         nst = np.zeros((0, self.nS))  # Next States
         for i in range(len(np_array)):  # Creating the state and next state np arrays
-            st = np.append(st, np.reshape(np.array(np_array[i][0]), (-1, self.nA)), axis=0)
-            nst = np.append(nst, np.reshape(np.array(np_array[i][3]), (-1, self.nA)), axis=0)
+            st = np.append(st, np.reshape(np.array(np_array[i][0]), (-1, self.nS)), axis=0)
+            nst = np.append(nst, np.reshape(np.array(np_array[i][3]), (-1, self.nS)), axis=0)
         st_predict = self.model.predict(st)  # Here is the speedup! I can predict on the ENTIRE batch
         nst_predict = self.model.predict(nst)
         nst_predict_target = self.model_target.predict(nst)  # Predict from the TARGET
