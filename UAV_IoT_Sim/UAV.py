@@ -145,7 +145,7 @@ class QuadUAV:
         maxDist = math.sqrt(pow(self.indX - self.targetX, 2) + pow(self.indY - self.targetY, 2))
 
         if maxDist < 1.0:
-            if self.h == 1:
+            if self.h == 1 and self.target.type == 2:
                 self.h = 0
                 self.energy_cost(0, 0, 1)
 
