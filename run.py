@@ -154,7 +154,7 @@ def evaluate(
                 done = True
 
             agent_p.update_mem(old_pstate, action_p, eval_env.reward2, eval_env.last_pstate, buffer_done)
-
+            print(eval_env.reward2)
             avgAoI += info.get("Avg_Age", 0.0)
             peakAoI += info.get("Peak_Age", 0.0)
             dataDist += info.get("Data_Distribution", 0.0)
