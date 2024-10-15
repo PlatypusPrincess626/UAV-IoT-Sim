@@ -145,7 +145,7 @@ class QuadUAV:
         maxDist = math.sqrt(pow(self.indX - self.targetX, 2) + pow(self.indY - self.targetY, 2))
 
         if maxDist < 1.0:
-            if self.h != 0:
+            if self.h == 1:
                 self.h = 0
                 self.energy_cost(0, 0, 1)
 
@@ -159,8 +159,9 @@ class QuadUAV:
                 self.indX = self.targetX
                 self.indY = self.targetY
                 time = maxDist / self.maxSpd
-                self.h = 0
-                self.energy_cost(0, 0, 1)
+                if self.target.type == 2:
+                    self.h = 0
+                    self.energy_cost(0, 0, 1)
 
             else:
                 time = 60
@@ -259,7 +260,8 @@ class QuadUAV:
         if self.target.type == 2 and self.h == 0:
             t = self.target.charge_time(int(self.indX), int(self.indY), self.is_charging)
 
-            if self.is_charging and t < 1.0:
+            if (self.is_charging and abs(self.indX-self.targetX) < 1.0 and
+                    abs(self.indY-self.targetY) < 1.0 and t < 1.0):
                 self.no_hold = False
 
             self.stored_energy += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
