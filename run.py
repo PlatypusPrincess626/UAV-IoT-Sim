@@ -131,6 +131,7 @@ def evaluate(
 
     # QL
     agent.decay_epsilon(1)
+    agent_p.decay_epsilon(1)
 
     for i in range(eval_episodes):
         eval_env.reset()
@@ -289,6 +290,7 @@ def train(
         done = step(agent, agent_p, env)
         # QL
         agent.decay_epsilon(timestep / total_steps)
+        agent_p.decay_epsilon(timestep/total_steps)
 
         if done:
             # DDQN
@@ -393,6 +395,8 @@ def prepopulate(agent, agent_p, prepop_steps, env):
 
     # QL
     agent.decay_epsilon(0)
+    agent_p.decay_epsilon(0)
+
     while timestep < prepop_steps:
         env.reset()
         done = False

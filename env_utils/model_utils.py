@@ -447,8 +447,8 @@ class get_ddqn_regression_agent():
 
     def act(self, state):
         r_state = [state[0]/self.state1_max, state[1]/6_800_000, state[2]/self.state2_max]
-        if np.random.rand() < self.epsilon:
-            return np.random.rand()
+        if random.randint(0, 1000) < self.epsilon * 1000:
+            return random.randint(0, 1000) / 1000
 
         action_vals = self.model.predict(np.reshape(np.array(r_state), (-1, self.nS)))  # Exploit: Use the NN to predict the correct action from this state
         print(action_vals[0])
