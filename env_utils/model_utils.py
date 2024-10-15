@@ -451,7 +451,6 @@ class get_ddqn_regression_agent():
             return random.randint(0, 1000) / 1000
 
         action_vals = self.model.predict(np.reshape(np.array(r_state), (-1, self.nS)))  # Exploit: Use the NN to predict the correct action from this state
-        print(action_vals[0])
         return action_vals[0]
 
     def test_action(self, state):  # Exploit
