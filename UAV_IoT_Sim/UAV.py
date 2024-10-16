@@ -267,10 +267,9 @@ class QuadUAV:
             self.stored_energy += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
             excess_percent = 1.5 * (self.stored_energy / self.max_energy) - 1
             if self.stored_energy > self.max_energy * 1_000:
-                excess_percent = 1 - (self.stored_energy/self.max_energy)
+                excess_percent = -1 * ((self.stored_energy - self.max_energy) / self.max_energy)
                 self.stored_energy = self.max_energy * 1_000
 
-            print(self.stored_energy, t)
             self.energy_harvested += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
             self.state[0][2] = self.stored_energy
 
