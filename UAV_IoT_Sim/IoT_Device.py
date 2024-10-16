@@ -95,7 +95,7 @@ class IoT_Device:
             self.reset_max = round(self.max_data * 0.25)
             self.stored_data = self.reset_max
             self.contribution = 0
-            self.action_p = [0.0]
+            self.action_p = 0.0
 
             self.solarArea = 2 * 4  # 20 cm x 40 cm
             self._C = 3200  # F (Battery Supported)
@@ -110,7 +110,7 @@ class IoT_Device:
         self.max_AoI = 0
         self.stored_energy = round(self.max_energy * 1_000)
         self.contribution = 0
-        self.action_p = [0.0]
+        self.action_p = 0.0
         if self.type == 1:
             self.stored_data = random.randint(0, self.reset_max)
         else:
@@ -296,7 +296,7 @@ class IoT_Device:
 
         decision_state = state
         for CH in range(len(state) - 1):
-            decision_state[CH+1][2] = state[CH+1][2] + math.floor(30 * self.action_p[0])
+            decision_state[CH+1][2] = state[CH+1][2] + math.floor(30 * self.action_p)
 
         action = 0
         out_state = state
@@ -372,7 +372,7 @@ class IoT_Device:
 
             for sens in range(5):
                 CHstate[sens + 1][0], CHstate[sens + 1][1], CHstate[sens + 1][2] = \
-                    (oldest_indx[sens], self.data_table[oldest_indx[sens]], (step-oldest_age[sens]+math.floor(30*self.action_p[0])))
+                    (oldest_indx[sens], self.data_table[oldest_indx[sens]], (step-oldest_age[sens]+math.floor(30*self.action_p)))
 
             action = model.act(CHstate)
             self.last_target = CHstate[action+1][0]
@@ -390,7 +390,7 @@ class IoT_Device:
             if AoI > AoI_peak:
                 AoI_peak = AoI
 
-        p_state = [d_to_targ, state[0][2], AoI_peak + math.floor(30 * self.action_p[0])]
+        p_state = [d_to_targ, state[0][2], AoI_peak + math.floor(30 * self.action_p)]
         action_p = model_p.act(p_state)
         print(action_p)
 

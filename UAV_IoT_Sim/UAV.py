@@ -279,7 +279,7 @@ class QuadUAV:
     def set_dest(self, model, model_p, step, _=None):
         train_model = False
         used_model = False
-        action_p = [0.0]
+        action_p = 0.0
         p_state = [0, 0, 0]
 
         if self.targetHead is not None:
@@ -334,8 +334,8 @@ class QuadUAV:
             #                                                      self._comms.get("Lora_Upkeep_A")) +
             #                                                round(self._comms.get("LoRa_Current_A")))
 
-            print(action_p[0] * 30 > 0)
-            if math.floor(action_p[0] * 30) > 0 and self.no_hold:
+            print(action_p * 30 > 0)
+            if math.floor(action_p * 30) > 0 and self.no_hold:
                 used_model = False
                 self.is_charging = True
                 self.target = self.target
