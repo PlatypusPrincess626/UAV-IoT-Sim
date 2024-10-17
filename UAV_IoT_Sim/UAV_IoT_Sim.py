@@ -228,7 +228,7 @@ class make_env:
 
         rewardChange = 0 * rewardDist + 1 * rewardPeak + 0 * rewardAvgAge + 0 * rewardDataChange
 
-        rewardPeak = (1 - 2 * peakAge / (self.curr_step + 1))
+        rewardPeak = (1 - peakAge / (self.curr_step + 1))
         rewardDataChange = dataChange / 1_498_500
         reward_energy = excess_energy
         reward2Change = 1 * rewardPeak + 0 * rewardDataChange + 0 * reward_energy
@@ -248,5 +248,5 @@ class make_env:
             "Truncated": self.truncated         # -> Max episode steps reached
         }
         
-        self.curr_reward += rewardChange
-        self.reward2 += reward2Change
+        self.curr_reward = rewardChange
+        self.reward2 = reward2Change
