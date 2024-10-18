@@ -487,8 +487,8 @@ class get_ddqn_regression_agent():
         for state, action, reward, nstate, done in minibatch:
             x.append(np.reshape(np.array(state), (-1, self.nS)))
             # Predict from state
-            nst_action_predict_target = nst_predict_target
-            nst_action_predict_model = nst_predict
+            nst_action_predict_target = nst_predict_target[0]
+            nst_action_predict_model = nst_predict[0]
             if done == True:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
                 target = reward
             else:  # Non terminal
