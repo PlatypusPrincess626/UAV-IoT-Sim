@@ -293,7 +293,7 @@ def train(
         done = step(agent, agent_p, env)
         # QL
         agent.decay_epsilon(timestep / total_steps)
-        agent_p.decay_epsilon(timestep/total_steps)
+        agent_p.decay_epsilon(timestep / total_steps)
 
         if done:
             # DDQN

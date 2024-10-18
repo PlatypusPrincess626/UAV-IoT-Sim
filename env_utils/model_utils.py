@@ -423,7 +423,7 @@ class get_ddqn_regression_agent():
         #   input_dim: Number of input variables
         #   activation: Rectified Linear Unit (relu) ranges >= 0
         model.add(tf.keras.layers.Dense(10, activation='relu'))  # Layer 2 -> 3
-        model.add(tf.keras.layers.Dense(self.nA, activation='linear'))  # Layer 3 -> [output]
+        model.add(tf.keras.layers.Dense(self.nA, activation='sigmoid'))  # Layer 3 -> [output]
         #   Size has to match the output (different actions)
         #   Linear activation on the last layer
         model.compile(loss='mean_squared_error',  # Loss function: Mean Squared Error
