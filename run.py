@@ -174,8 +174,11 @@ def evaluate(
             #     agent.update(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
                 # DDQN
                 agent.update_mem(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
+                agent_p.update_mem(old_pstate, action_p, eval_env.reward2, eval_env.curr_pstate, buffer_done)
                 if len(agent.memory) > 64:
                     agent.train(64)
+                if len(agent_p.memory) > 64:
+                    agent_p.train(64)
             ep_reward += info.get("Reward_Change")
             if crashed:
                 ep_reward = -1
@@ -373,8 +376,6 @@ def step(agent, agent_p, env):
     buffer_done = env.terminated
     done = False
 
-    agent_p.update_mem(old_pstate, action_p, env.reward2, env.last_pstate, buffer_done)
-
     if buffer_done or env.truncated:
         done = True
 
@@ -385,8 +386,11 @@ def step(agent, agent_p, env):
         # agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
         # DDQN
         agent.update_mem(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
+        agent_p.update_mem(old_pstate, action_p, env.reward2, env.curr_pstate, buffer_done)
         if len(agent.memory) > 64:
             agent.train(64)
+        if len(agent_p.memory) > 64:
+            agent_p.train(64)
     return done
 
 
@@ -406,8 +410,6 @@ def prepopulate(agent, agent_p, prepop_steps, env):
             train_model, old_state, old_action, action_p, old_pstate, comms, move, harvest = env.step(agent, agent_p)
             buffer_done = env.terminated
 
-            agent_p.update_mem(old_pstate, action_p, env.reward2, env.last_pstate, buffer_done)
-
             if buffer_done or env.truncated:
                 # DDQN
                 agent.update_target_from_model()
@@ -419,8 +421,11 @@ def prepopulate(agent, agent_p, prepop_steps, env):
             #     agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
                 # DDQN
                 agent.update_mem(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
+                agent_p.update_mem(old_pstate, action_p, env.reward2, env.curr_pstate, buffer_done)
                 if len(agent.memory) > 64:
                     agent.train(64)
+                if len(agent_p.memory) > 64:
+                    agent_p.train(64)
             timestep += 1
 
 def run_experiment(args):

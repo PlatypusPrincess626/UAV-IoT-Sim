@@ -32,10 +32,12 @@ class make_env:
         self.curr_step = 0
         self.last_action = 0
         self.archived_action = 0
+        self.archived_paction = 0
 
         self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
         self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
-        self.last_pstate = [0, 0, 0]
+        self.curr_pstate = [0, 0, 0]
+        self.archived_pstate = [0, 0, 0]
 
         self.ch_sensors = [0 for _ in range(self.num_ch)]
         for CH in range(self.num_ch):
@@ -72,11 +74,13 @@ class make_env:
 
             self.curr_step = 0
             self.last_action = 0
+            self.archived_paction = 0
             self.archived_action = 0
 
             self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
             self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
-            self.last_pstate = [0, 0, 0]
+            self.curr_pstate = [0, 0, 0]
+            self.archived_pstate = [0, 0, 0]
 
             self.curr_reward = 0
             self.reward2 = 0
@@ -99,7 +103,7 @@ class make_env:
     
     def step(self, model, model_p):
         train_model = False
-        action_p = 0.0
+        old_paction = 0.0
         excess_energy = 0
         old_action = 0
         comms, move, harvest = 0, 0, 0
@@ -137,12 +141,16 @@ class make_env:
                     self.curr_state = uav.state
                     self.last_action = action
                     self.terminated = uav.crash
+                    self.curr_pstate = p_state
 
                     old_state = self.archived_state
                     old_action = self.archived_action
-                    old_pstate = self.last_pstate
-                    self.last_pstate = p_state
+                    old_pstate = self.archived_pstate
+                    old_paction = self.archived_paction
 
+                    if action_p > 0:
+                        self.archived_pstate = p_state
+                        self.archived_paction = action_p
                     if used_model:
                         self.archived_state = state
                         self.archived_action = action
@@ -177,7 +185,7 @@ class make_env:
                 "Truncated": self.truncated         # -> Max episode steps reached
             }
 
-        return train_model, old_state, old_action, action_p, old_pstate, comms, move, harvest
+        return train_model, old_state, old_action, old_paction, old_pstate, comms, move, harvest
 
     def reward(self, excess_energy):
         '''
