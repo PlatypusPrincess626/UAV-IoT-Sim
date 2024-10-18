@@ -502,8 +502,8 @@ class get_ddqn_regression_agent():
             # self.target_mean.add(np.mean(nst_predict_target))
             # self.target_min.add(np.argmin(nst_predict_target))
 
-            loss = pow((nst_predict_target - st_predict), 2)
-            self.td_errors.add(loss)
+            # loss = pow((nst_predict_target - st_predict), 2)
+            # self.td_errors.add(loss)
 
             y.append(target)
             index += 1
@@ -511,6 +511,7 @@ class get_ddqn_regression_agent():
 
         # Reshape for Keras Fit
         x_reshape = np.array(x).reshape(batch_size, self.nS)
+        print(y)
         y_reshape = np.array(y)
         epoch_count = 1
         hist = self.model.fit(x_reshape, y_reshape, epochs=epoch_count, verbose=0)
