@@ -285,7 +285,7 @@ class IoT_Device:
 
         my_contribution = state[targetSerial+1][1]
         if my_contribution > self.contribution:
-            self.data_table[self.last_target + 1] += (my_contribution - self.contribution)
+            self.data_table[self.last_target + 1] = my_contribution
             self.age_table[self.last_target] = self.target_time
             self.contribution = my_contribution
 
@@ -335,7 +335,7 @@ class IoT_Device:
                 action = minCH
             model_help = False
             target = full_sensor_list.iat[action + 1, 0]
-            out_state = decision_state
+            out_state = state
 
         # Current Sensor
         elif not targetType and model_help:
