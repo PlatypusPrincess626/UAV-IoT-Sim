@@ -485,7 +485,7 @@ class get_ddqn_regression_agent():
         nst_predict_target = self.model_target.predict(nst)  # Predict from the TARGET
         index = 0
         for state, action, reward, nstate, done in minibatch:
-            x.append(np.reshape(np.array(state), (-1, 2)))
+            x.append(np.reshape(np.array(state), (-1, self.nS)))
             # Predict from state
             nst_action_predict_target = nst_predict_target
             nst_action_predict_model = nst_predict
