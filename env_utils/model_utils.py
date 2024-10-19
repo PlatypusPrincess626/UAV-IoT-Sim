@@ -512,7 +512,6 @@ class get_ddqn_regression_agent():
 
         # Reshape for Keras Fit
         x_reshape = np.array(x).reshape(batch_size, self.nS)
-        print(y)
         y_reshape = np.array(y)
         epoch_count = 1
         hist = self.model.fit(x_reshape, y_reshape, epochs=epoch_count, verbose=0)
