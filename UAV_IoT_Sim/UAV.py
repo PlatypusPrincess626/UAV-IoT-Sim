@@ -256,7 +256,7 @@ class QuadUAV:
         return train_model, change_archives
 
     def receive_energy(self):
-        excess_percent = 1
+        excess_percent = 1.0
         if self.target.type == 2 and self.h == 0:
             t = self.target.charge_time(int(self.indX), int(self.indY), self.is_charging)
 
