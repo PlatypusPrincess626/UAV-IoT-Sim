@@ -377,8 +377,8 @@ class get_ddqn_agent():
         for i in range(epoch_count):
             self.loss.append(hist.history['loss'][i])
         # Decay Epsilon
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
+        # if self.epsilon > self.epsilon_min:
+        #     self.epsilon *= self.epsilon_decay
 
 class get_ddqn_regression_agent():
     def __init__(self, env, nS, nA, epsilon_i=1.0, epsilon_f=0.0, n_epsilon=0.1,
@@ -522,5 +522,5 @@ class get_ddqn_regression_agent():
         for i in range(epoch_count):
             self.loss.append(hist.history['loss'][i])
         # Decay Epsilon
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
+        # if self.epsilon > self.epsilon_min:
+        #     self.epsilon *= self.epsilon_decay
