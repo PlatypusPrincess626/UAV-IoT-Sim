@@ -168,12 +168,12 @@ def evaluate(
                 CH_Metrics[ch][0] = eval_env.curr_state[ch + 1][1]
                 CH_Metrics[ch][1] = eval_env.curr_step - eval_env.curr_state[ch + 1][2]
 
+            agent_p.update_mem(old_pstate, action_p, eval_env.reward2, eval_env.curr_pstate, buffer_done)
             if train_model:
             # if True:
             #     agent.update(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
                 # DDQN
                 agent.update_mem(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
-                agent_p.update_mem(old_pstate, action_p, eval_env.reward2, eval_env.curr_pstate, buffer_done)
                 if len(agent.memory) > 64:
                     agent.train(64)
                 if len(agent_p.memory) > 64:
@@ -378,6 +378,7 @@ def step(agent, agent_p, env):
     if buffer_done or env.truncated:
         done = True
 
+    agent_p.update_mem(old_pstate, action_p, env.reward2, env.curr_pstate, buffer_done)
     if train_model:
     # if True:
         print(f"Training")
@@ -385,7 +386,6 @@ def step(agent, agent_p, env):
         # agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
         # DDQN
         agent.update_mem(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
-        agent_p.update_mem(old_pstate, action_p, env.reward2, env.curr_pstate, buffer_done)
         if len(agent.memory) > 64:
             agent.train(64)
         if len(agent_p.memory) > 64:
@@ -415,12 +415,12 @@ def prepopulate(agent, agent_p, prepop_steps, env):
                 agent_p.update_target_from_model()
                 done = True
 
+            agent_p.update_mem(old_pstate, action_p, env.reward2, env.curr_pstate, buffer_done)
             if train_model:
             # if True:
             #     agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
                 # DDQN
                 agent.update_mem(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
-                agent_p.update_mem(old_pstate, action_p, env.reward2, env.curr_pstate, buffer_done)
                 if len(agent.memory) > 64:
                     agent.train(64)
                 if len(agent_p.memory) > 64:

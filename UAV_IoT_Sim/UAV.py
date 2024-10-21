@@ -333,6 +333,7 @@ class QuadUAV:
             #                                                      self._comms.get("Lora_Upkeep_A")) +
             #                                                round(self._comms.get("LoRa_Current_A")))
 
+            print(math.floor(action_p * 30) > 0)
             if math.floor(action_p * 30) > 0 and self.no_hold:
                 used_model = False
                 self.is_charging = True
