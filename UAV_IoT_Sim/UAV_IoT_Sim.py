@@ -242,7 +242,7 @@ class make_env:
         reward2Change = 1 * rewardPeak + 0 * rewardDataChange + 0 * reward_energy
 
         if self.terminated:
-            rewardChange = -1
+            rewardChange = 0
         
         self.curr_info = {
             "Last_Action": self.last_action,
