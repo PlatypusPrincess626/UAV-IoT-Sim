@@ -252,7 +252,6 @@ class QuadUAV:
 
             else:
                 self.inRange = False
-        print(self.last_AoI, step)
         return train_model, change_archives
 
     def receive_energy(self):
@@ -315,7 +314,7 @@ class QuadUAV:
                 self.target.get_dest(self.state, self.full_sensor_list, model, model_p, step,
                                      self.no_hold, self.force_change, targetType, self.targetSerial)
 
-            # self.state = uav_state
+            print(self.state)
             self.action = action
             self.train_p = True
 
@@ -333,7 +332,6 @@ class QuadUAV:
             #                                                      self._comms.get("Lora_Upkeep_A")) +
             #                                                round(self._comms.get("LoRa_Current_A")))
 
-            print(action_p, math.floor(action_p * 30) > 0)
             if math.floor(action_p * 30) > 0 and self.no_hold:
                 used_model = False
                 self.is_charging = True
