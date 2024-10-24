@@ -447,10 +447,8 @@ class get_ddqn_regression_agent():
 
     def act(self, state):
         r_state = [state[0]/self.state1_max, state[1]/6_800_000, state[2]/self.state2_max]
-        print(self.epsilon)
         if random.randint(0, 1000) < self.epsilon * 1000:
             result = random.randint(0, 1000) / 1000
-            print(result)
             return result
 
         action_vals = self.model.predict(np.reshape(np.array(r_state), (-1, self.nS)))  # Exploit: Use the NN to predict the correct action from this state
@@ -490,7 +488,7 @@ class get_ddqn_regression_agent():
             nst_action_predict_target = nst_predict_target[index]
             nst_action_predict_model = nst_predict[index]
             if reward < 0:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
-                target = -1 * reward + self.gamma * nst_action_predict_target[0]  # Using Q to get T is Double DQNN
+                target = -1 * self.gamma * reward + self.gamma * nst_action_predict_target[0]  # Using Q to get T is Double DQNN
             else:  # Non terminal
                 target = reward  # Using Q to get T is Double DQNN
 

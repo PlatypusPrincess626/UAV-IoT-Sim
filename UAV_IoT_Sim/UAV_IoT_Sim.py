@@ -108,6 +108,7 @@ class make_env:
         old_action = 0
         comms, move, harvest = 0, 0, 0
         old_pstate = [0, 0, 0]
+        self.reward2 = 0
 
         old_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
 
