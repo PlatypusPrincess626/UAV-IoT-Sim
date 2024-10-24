@@ -140,7 +140,6 @@ class make_env:
                         train_model = True
 
                     self.curr_state = uav.state
-                    print(self.curr_state)
                     self.last_action = action
                     self.terminated = uav.crash
                     self.curr_pstate = p_state
