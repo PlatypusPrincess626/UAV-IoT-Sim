@@ -252,7 +252,7 @@ class QuadUAV:
 
             else:
                 self.inRange = False
-
+        print(self.last_AoI)
         return train_model, change_archives
 
     def receive_energy(self):
