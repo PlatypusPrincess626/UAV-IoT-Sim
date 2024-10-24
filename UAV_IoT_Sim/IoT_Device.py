@@ -338,7 +338,7 @@ class IoT_Device:
 
         # Current Sensor
         elif not targetType and model_help:
-            CHstate = self.state = [[0, 0, 0] for _ in range(len(state))]
+            CHstate = [[0, 0, 0] for _ in range(len(state))]
             CHstate[0] = state[0]
             CHstate[0][1] = (self.stored_data + self.contribution)
             oldest_age = [self.age_table[0], self.age_table[1], self.age_table[2], self.age_table[3], self.age_table[4]]
