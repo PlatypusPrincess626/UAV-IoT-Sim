@@ -305,7 +305,6 @@ class IoT_Device:
         for CH in range(len(state) - 1):
             if state[CH + 1][2] < 1.0:
                 target = full_sensor_list.iat[CH + 1, 0]
-                out_state = state
                 model_help = False
                 action = CH
 
@@ -377,7 +376,7 @@ class IoT_Device:
             action = model.act(CHstate)
             self.last_target = CHstate[action+1][0]
             self.target_time = step
-            out_state = state
+            out_state = CHstate
             target = self.sens_table.iat[CHstate[action+1][0], 0]
 
         d_to_targ = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
@@ -393,4 +392,4 @@ class IoT_Device:
         p_state = [d_to_targ, state[0][2], AoI_peak + math.floor(30 * self.action_p)]
         self.action_p = model_p.act(p_state)
 
-        return model_help, True, target, state, out_state, action, self.action_p, p_state
+        return model_help, True, target, out_state, action, self.action_p, p_state
