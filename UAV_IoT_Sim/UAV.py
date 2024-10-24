@@ -315,7 +315,7 @@ class QuadUAV:
                 self.target.get_dest(self.state, self.full_sensor_list, model, model_p, step,
                                      self.no_hold, self.force_change, targetType, self.targetSerial)
 
-            self.state = uav_state
+            # self.state = uav_state
             self.action = action
             self.train_p = True
 

@@ -377,7 +377,7 @@ class IoT_Device:
             action = model.act(CHstate)
             self.last_target = CHstate[action+1][0]
             self.target_time = step
-            out_state = CHstate
+            out_state = state
             target = self.sens_table.iat[CHstate[action+1][0], 0]
 
         d_to_targ = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
