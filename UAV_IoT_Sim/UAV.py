@@ -249,6 +249,16 @@ class QuadUAV:
 
             else:
                 self.inRange = False
+
+        for CH in range(len(self.state) - 1):
+            if device.type == 1:
+                self.state[CH + 1][2] += 1
+            elif device.headSerial != self.full_sensor_list[CH + 1].headSerial:
+                self.state[CH + 1][2] += 1
+            elif not self.inRange:
+                print("Here")
+                self.state[CH + 1][2] += 1
+
         return train_model, change_archives
 
     def receive_energy(self):
