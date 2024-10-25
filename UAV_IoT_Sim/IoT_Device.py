@@ -6,6 +6,7 @@ import numpy
 import math
 import numpy as np
 import pandas as pd
+import copy
 from scipy.interpolate import InterpolatedUnivariateSpline
 
 
@@ -294,12 +295,12 @@ class IoT_Device:
                 if self.age_table[sens] < self.max_AoI:
                     self.max_AoI = self.age_table[sens]
 
-        decision_state = state
+        decision_state = copy.deepcopy(state)
         for CH in range(len(state) - 1):
             decision_state[CH+1][2] = state[CH+1][2] + math.floor(30 * self.action_p)
 
         action = 0
-        out_state = state
+        out_state = copy.deepcopy(state)
         target = None
         model_help = True
         for CH in range(len(state) - 1):
@@ -334,7 +335,6 @@ class IoT_Device:
                 action = minCH
             model_help = False
             target = full_sensor_list.iat[action + 1, 0]
-            out_state = state
 
         # Current Sensor
         elif not targetType and model_help:

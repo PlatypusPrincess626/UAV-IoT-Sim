@@ -131,7 +131,6 @@ class QuadUAV:
         for row in range(len(self.state) - 1):
             self.state[row + 1][1] = 0
             self.state[row + 1][2] = 0
-        print(self.state)
 
     # Internal UAV Mechanics
     def navigate_step(self, env: object):
