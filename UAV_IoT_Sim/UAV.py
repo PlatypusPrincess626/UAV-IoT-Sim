@@ -256,7 +256,6 @@ class QuadUAV:
             elif device.headSerial != self.full_sensor_list.iat[CH + 1, 0].headSerial:
                 self.state[CH + 1][2] += 1
             elif not self.inRange:
-                print("Here")
                 self.state[CH + 1][2] += 1
 
         return train_model, change_archives
@@ -271,9 +270,9 @@ class QuadUAV:
                 self.no_hold = False
 
             self.stored_energy += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
-            excess_percent = 1.5 * (self.stored_energy / (self.max_energy*1_000)) - 1
+            excess_percent = (self.stored_energy / (self.max_energy*1_000)) - 0.5
             if self.stored_energy > self.max_energy * 1_000:
-                excess_percent = 1 - ((self.stored_energy - self.max_energy*1_000) / (self.max_energy*1_000))
+                # excess_percent = ((self.stored_energy - self.max_energy*1_000) / (self.max_energy*1_000))
                 self.stored_energy = self.max_energy * 1_000
 
             self.energy_harvested += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
