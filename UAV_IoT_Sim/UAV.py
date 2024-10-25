@@ -253,7 +253,7 @@ class QuadUAV:
         for CH in range(len(self.state) - 1):
             if device.type == 1:
                 self.state[CH + 1][2] += 1
-            elif device.headSerial != self.full_sensor_list[CH + 1].headSerial:
+            elif device.headSerial != self.full_sensor_list.iat[CH + 1, 0].headSerial:
                 self.state[CH + 1][2] += 1
             elif not self.inRange:
                 print("Here")
