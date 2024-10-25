@@ -243,7 +243,6 @@ class QuadUAV:
                 self.energy_cost(0, totalTime, 0)
 
                 # ADF 2
-                print(self.targetSerial + 1, step - self.last_AoI)
                 self.state[self.targetSerial + 1][2] = step - self.last_AoI
                 self.state[self.targetSerial + 1][1] += totalData
                 self.state[0][1] += totalData
