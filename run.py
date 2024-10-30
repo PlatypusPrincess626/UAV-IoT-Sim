@@ -180,7 +180,7 @@ def evaluate(
                     agent_p.train(64)
             ep_reward += info.get("Reward_Change")
             if crashed:
-                ep_reward = -1
+                ep_reward = 0
 
             if log_metrics and i == eval_episodes-1:
                 CH_Age.append([CH_Metrics[0][1], CH_Metrics[1][1], CH_Metrics[2][1],
@@ -257,7 +257,7 @@ def evaluate(
 
         if crashed:
             num_crashes += 1
-            total_reward += -1
+            total_reward += 0
         else:
             total_reward += ep_reward / (eval_env.curr_step+count)
         total_steps += eval_env.curr_step
