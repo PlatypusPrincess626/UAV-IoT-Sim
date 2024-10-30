@@ -166,7 +166,7 @@ def evaluate(
             ch: int
             for ch in range(len(CH_Metrics)):
                 CH_Metrics[ch][0] = eval_env.curr_state[ch + 1][1]
-                CH_Metrics[ch][1] = eval_env.curr_step - eval_env.curr_state[ch + 1][2]
+                CH_Metrics[ch][1] = eval_env.curr_state[ch + 1][2]
 
             agent_p.update_mem(old_pstate, action_p, eval_env.reward2, eval_env.curr_pstate, buffer_done)
             if train_model:
