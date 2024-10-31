@@ -507,7 +507,7 @@ class get_ddqn_regression_agent():
             target_f[0] = target
             y.append(target_f)
             index += 1
-
+crashed
 
         # Reshape for Keras Fit
         x_reshape = np.array(x).reshape(batch_size, self.nS)
