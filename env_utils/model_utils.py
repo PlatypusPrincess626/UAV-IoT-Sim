@@ -492,7 +492,7 @@ class get_ddqn_regression_agent():
             elif done:
                 target = reward + self.gamma * nst_action_predict_target[0]
             else:  # Non terminal
-                target =    # Using Q to get T is Double DQNN
+                target = reward  # Using Q to get T is Double DQNN
 
             # self.qvalue_max.add(np.argmax(nst_predict))
             # self.qvalue_mean.add(np.mean(nst_predict))
