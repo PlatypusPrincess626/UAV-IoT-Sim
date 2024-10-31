@@ -487,12 +487,12 @@ class get_ddqn_regression_agent():
             # Predict from state
             nst_action_predict_target = nst_predict_target[index]
             nst_action_predict_model = nst_predict[index]
-            if reward < 0:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
+            if reward <= 0:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
                 target = -1 * self.gamma * reward + self.gamma * nst_action_predict_target[0]  # Using Q to get T is Double DQNN
             elif done:
                 target = reward + self.gamma * nst_action_predict_target[0]
             else:  # Non terminal
-                target = reward  # Using Q to get T is Double DQNN
+                target =    # Using Q to get T is Double DQNN
 
             # self.qvalue_max.add(np.argmax(nst_predict))
             # self.qvalue_mean.add(np.mean(nst_predict))
