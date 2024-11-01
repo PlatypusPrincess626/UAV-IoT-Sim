@@ -380,15 +380,15 @@ class get_ddqn_agent():
         # if self.epsilon > self.epsilon_min:
         #     self.epsilon *= self.epsilon_decay
 
-class get_ddqn_regression_agent():
+class get_ddqn_agentp():
     def __init__(self, env, nS, nA, epsilon_i=1.0, epsilon_f=0.0, n_epsilon=0.1,
                  alpha=0.5, gamma=0.95, epsilon=0.5, epsilon_min=0.1, epsilon_decay=0.01):
         # ADF 2.0
         self.nS = nS
         self.nA = nA
-        self.state2_max = env._max_steps
-        self.state1_max = env.dims
-        # ADF 1.0
+
+        self.state1_max = 10_000
+        self.state2_max = 720
 
         self.memory = deque([], maxlen=2500)
         self.alpha = alpha
@@ -417,13 +417,13 @@ class get_ddqn_regression_agent():
     def build_model(self):
         model = tf.keras.Sequential()  # linear stack of layers https://keras.io/models/sequential/
         model.add(tf.keras.layers.Input(shape=(self.nS, )))
-        model.add(tf.keras.layers.Dense(10, activation='relu'))  # [Input] -> Layer 1
+        model.add(tf.keras.layers.Dense(64, activation='relu'))  # [Input] -> Layer 1
         #   Dense: Densely connected layer https://keras.io/layers/core/
         #   24: Number of neurons
         #   input_dim: Number of input variables
         #   activation: Rectified Linear Unit (relu) ranges >= 0
-        model.add(tf.keras.layers.Dense(10, activation='relu'))  # Layer 2 -> 3
-        model.add(tf.keras.layers.Dense(self.nA, activation='sigmoid'))  # Layer 3 -> [output]
+        model.add(tf.keras.layers.Dense(64, activation='relu'))  # Layer 2 -> 3
+        model.add(tf.keras.layers.Dense(self.nA, activation='linear'))  # Layer 3 -> [output]
         #   Size has to match the output (different actions)
         #   Linear activation on the last layer
         model.compile(loss='mean_squared_error',  # Loss function: Mean Squared Error
@@ -446,23 +446,22 @@ class get_ddqn_regression_agent():
         self.model_target.set_weights(self.model.get_weights())
 
     def act(self, state):
-        r_state = [state[0]/self.state1_max, state[1]/6_800_000, state[2]/self.state2_max]
-        if random.randint(0, 1000) < self.epsilon * 1000:
-            result = random.randint(0, 1000) / 1000
-            return result
+        r_state = [state[0] / self.state1_max, state[1] / 6_800_000, state[2] / self.state2_max]
+        if np.random.rand() < self.epsilon:
+            return np.random.randint(self.nA)
 
         action_vals = self.model.predict(np.reshape(np.array(r_state), (-1, self.nS)))  # Exploit: Use the NN to predict the correct action from this state
-        return action_vals[0]
+        return np.argmax(action_vals[0])
 
     def test_action(self, state):  # Exploit
         r_state = [state[0]/self.state1_max, state[1]/6_800_000, state[2]/self.state2_max]
         action_vals = self.model.predict(np.reshape(np.array(r_state), (-1, self.nS))) # Exploit: Use the NN to predict the correct action from this state
-        return action_vals[0]
+        return np.argmax(action_vals[0])
 
     def update_mem(self, state, action, reward, nstate, done):
         # Store the experience in memory
-        r_state = [state[0]/self.state1_max, state[1]/6_800_000, state[2]/self.state2_max]
-        r_nstate = [nstate[0]/self.state1_max, nstate[1]/6_800_000, nstate[2]/self.state2_max]
+        r_state = [state[0] / self.state1_max, state[1] / 6_800_000, state[2] / self.state2_max]
+        r_nstate = [nstate[0] / self.state1_max, nstate[1] / 6_800_000, nstate[2] / self.state2_max]
         self.memory.append((r_state, action, reward, r_nstate, done))
 
     def train(self, batch_size):
@@ -483,16 +482,15 @@ class get_ddqn_regression_agent():
         nst_predict_target = self.model_target.predict(nst)  # Predict from the TARGET
         index = 0
         for state, action, reward, nstate, done in minibatch:
-            x.append(np.reshape(np.array(state), (-1, self.nS)))
+            x.append(np.expand_dims(np.array(state).flatten(), axis=0))
             # Predict from state
             nst_action_predict_target = nst_predict_target[index]
             nst_action_predict_model = nst_predict[index]
-            if reward <= 0:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
-                target = -1 * self.gamma * reward + self.gamma * nst_action_predict_target[0]  # Using Q to get T is Double DQNN
-            elif done:
-                target = reward + self.gamma * nst_action_predict_target[0]
+            if done == True:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
+                target = reward
             else:  # Non terminal
-                target = reward  # Using Q to get T is Double DQNN
+                target = reward + self.gamma * nst_action_predict_target[
+                    np.argmax(nst_action_predict_model)]  # Using Q to get T is Double DQN
 
             # self.qvalue_max.add(np.argmax(nst_predict))
             # self.qvalue_mean.add(np.mean(nst_predict))
@@ -501,12 +499,12 @@ class get_ddqn_regression_agent():
             # self.target_max.add(np.argmax(nst_predict_target))
             # self.target_mean.add(np.mean(nst_predict_target))
             # self.target_min.add(np.argmin(nst_predict_target))
-
-            # loss = pow((nst_predict_target - st_predict), 2)
+            #
+            # loss = (np.square(np.argmax(nst_predict_target) - np.argmax(st_predict)))
             # self.td_errors.add(loss)
 
             target_f = st_predict[index]
-            target_f[0] = target
+            target_f[action] = target
             y.append(target_f)
             index += 1
 

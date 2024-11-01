@@ -51,13 +51,15 @@ class QuadUAV:
         self.maxClimb = 3  # 3 m/s ascent and descent
         self.inRange = True
 
+        self.p_cycle = 0
+        self.p_count = 0
+
         # State
         self.crash = False
         self.model_transit = False
         self.no_hold = True
         self.force_change = False
         self.force_count = 0
-        self.train_p = False
 
         self.origin_state = None
         self.origin_action = None
@@ -84,7 +86,7 @@ class QuadUAV:
         self.cpu_pow = 3.7  # milli-watts/ 2 micro Joule
         self.cpu_amps = 1_000 # micro-amps
 
-        self.charge_rate = 1/3  # 60 min charging time
+        self.charge_rate = 1/3  # 20 min charging time
         self.flight_discharge = 3/4  # 45 min flight time
         self.amp = self.max_energy / self.charge_rate  # Roughly 2.72 A optimal current
         self.stored_energy = self.max_energy * 1_000  # Initialize at full battery
@@ -114,7 +116,6 @@ class QuadUAV:
         self.no_hold = True
         self.force_change = False
         self.force_count = 0
-        self.train_p = False
         self.h = 1
 
         self.target = None
@@ -124,6 +125,8 @@ class QuadUAV:
         self.step_comms_cost = 0
         self.energy_harvested = 0
         self.last_AoI = 0
+        self.p_cycle = 0
+        self.p_count = 0
 
         # Reset State
         self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy * 1_000
@@ -283,6 +286,7 @@ class QuadUAV:
     def set_dest(self, model, model_p, step, _=None):
         train_model = False
         used_model = False
+        train_p = False
         action_p = 0.0
         p_state = [0, 0, 0]
 
@@ -315,33 +319,32 @@ class QuadUAV:
             targetType = 0
             if self.target.type == 1:
                 targetType = 1
+
             # True, True, sensor, CHstate, action, action_p
             used_model, changed_transit, dest, state, action, action_p, p_state = \
                 self.target.get_dest(self.state, self.full_sensor_list, model, model_p, step,
                                      self.no_hold, self.force_change, targetType, self.targetSerial)
 
+            self.p_cycle -= 1
             self.action = action
-            self.train_p = True
 
             if self.model_transit and changed_transit:
                 train_model = True
                 self.model_transit = False
+            if self.is_charging and self.p_count < 1.0:
+                self.is_charging = False
+            if self.h == 0:
+                self.p_count -= 1
 
-            # d2 = 0
-            # d1 = math.sqrt(pow((self.indX - dest.indX), 2) + pow((self.indY - dest.indY), 2))
-            # if dest.type == 1:
-            #     d2 = d1
-            # travel_time = (d1 + d2) / self.maxSpd
-            # energy_needed = travel_time * 1_000 * self.max_energy / (self.flight_discharge * 60 * 60) + \
-            #                 math.ceil(travel_time / 60) * (round(self.cpu_amps + self._comms.get("AmBC_Current_A") +
-            #                                                      self._comms.get("Lora_Upkeep_A")) +
-            #                                                round(self._comms.get("LoRa_Current_A")))
 
-            if math.floor(action_p * 30) > 0 and self.no_hold:
+            if self.p_cycle < 1.0 and self.p_count < 1.0:
+                self.p_cycle = 30
+                self.p_count = action_p
+                train_p = True
                 used_model = False
                 self.is_charging = True
                 self.target = self.target
-                return (train_model, used_model, state, action, action_p, p_state,
+                return (train_model, used_model, train_p, state, action, action_p, p_state,
                         self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
             else:
@@ -364,7 +367,7 @@ class QuadUAV:
                     self.targetX = dest.indX
                     self.targetY = dest.indY
 
-                    return (train_model, used_model, state, action, action_p, p_state,
+                    return (train_model, used_model, train_p, state, action, action_p, p_state,
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
                 else:
@@ -383,9 +386,9 @@ class QuadUAV:
                     self.targetSerial = self.targetHead.headSerial
                     self.targetX = dest.indX
                     self.targetY = dest.indY
-                    return (train_model, used_model, state, action, action_p,  p_state,
+                    return (train_model, used_model, train_p, state, action, action_p,  p_state,
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
-        return (train_model, used_model, self.state, self.targetHead.headSerial, action_p,  p_state,
+        return (train_model, used_model, train_p, self.state, self.targetHead.headSerial, action_p,  p_state,
                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 

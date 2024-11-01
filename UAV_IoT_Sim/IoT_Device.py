@@ -296,9 +296,9 @@ class IoT_Device:
                     self.max_AoI = self.age_table[sens]
 
         decision_state = copy.deepcopy(state)
-        decision_state[0][2] = state[0][2] + round(math.floor(30 * self.action_p) * 6_800_000 / (self.charge_rate * 60))
+        decision_state[0][2] = state[0][2] + round(self.action_p * 6_800_000 / (self.charge_rate * 60))
         for CH in range(len(state) - 1):
-            decision_state[CH+1][2] = state[CH+1][2] + math.floor(30 * self.action_p)
+            decision_state[CH+1][2] = state[CH+1][2] + self.action_p
 
         action = 0
         out_state = copy.deepcopy(state)
@@ -372,7 +372,7 @@ class IoT_Device:
 
             for sens in range(5):
                 CHstate[sens + 1][0], CHstate[sens + 1][1], CHstate[sens + 1][2] = \
-                    (oldest_indx[sens], self.data_table[oldest_indx[sens]], (step-oldest_age[sens]+math.floor(30*self.action_p)))
+                    (oldest_indx[sens], self.data_table[oldest_indx[sens]], (step-oldest_age[sens]+self.action_p))
 
             action = model.act(CHstate)
             self.last_target = CHstate[action+1][0]
@@ -390,8 +390,9 @@ class IoT_Device:
             if AoI > AoI_peak:
                 AoI_peak = AoI
 
-        p_state = [d_to_targ, state[0][2] + round(math.floor(30 * self.action_p) * 6_800_000 / (self.charge_rate * 60)),
-                   AoI_peak + math.floor(30 * self.action_p)]
+        p_state = [d_to_targ, state[0][2] + round(self.action_p * 6_800_000 / (self.charge_rate * 60)),
+                   AoI_peak + self.action_p]
+        # Value from 0 to 30
         self.action_p = model_p.act(p_state)
 
         return model_help, True, target, out_state, action, self.action_p, p_state

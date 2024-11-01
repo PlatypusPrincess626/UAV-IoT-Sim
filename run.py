@@ -146,7 +146,7 @@ def evaluate(
         CH_Metrics = [[0, 0] for _ in range(eval_env.num_ch)]
 
         while not done:
-            train_model, old_state, old_action, action_p, old_pstate, comms, move, harvest = eval_env.step(agent, agent_p)
+            train_model, train_p, old_state, old_action, action_p, old_pstate, comms, move, harvest = eval_env.step(agent, agent_p)
             buffer_done = eval_env.terminated
             info = eval_env.curr_info
             crashed = eval_env.terminated
@@ -168,8 +168,10 @@ def evaluate(
                 CH_Metrics[ch][0] = eval_env.curr_state[ch + 1][1]
                 CH_Metrics[ch][1] = eval_env.curr_state[ch + 1][2]
 
-            agent_p.update_mem(old_pstate, action_p, eval_env.reward2, eval_env.curr_pstate, buffer_done)
-            if train_model:
+            if train_p or done:
+                agent_p.update_mem(old_pstate, action_p, eval_env.reward2, eval_env.curr_pstate, buffer_done)
+
+            if train_model or done:
             # if True:
             #     agent.update(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
                 # DDQN
@@ -178,6 +180,7 @@ def evaluate(
                     agent.train(64)
                 if len(agent_p.memory) > 64:
                     agent_p.train(64)
+
             ep_reward += info.get("Reward_Change")
             if crashed:
                 ep_reward = 0
@@ -371,15 +374,16 @@ def train(
 
 
 def step(agent, agent_p, env):
-    train_model, old_state, old_action, action_p, old_pstate, comms, move, harvest = env.step(agent, agent_p)
+    train_model, train_p, old_state, old_action, action_p, old_pstate, comms, move, harvest = env.step(agent, agent_p)
     buffer_done = env.terminated
     done = False
 
     if buffer_done or env.truncated:
         done = True
 
-    agent_p.update_mem(old_pstate, action_p, env.reward2, env.curr_pstate, buffer_done)
-    if train_model:
+    if train_p or done:
+        agent_p.update_mem(old_pstate, action_p, env.reward2, env.curr_pstate, buffer_done)
+    if train_model or done:
     # if True:
         print(f"Training")
         #QL
@@ -406,7 +410,7 @@ def prepopulate(agent, agent_p, prepop_steps, env):
 
         while not done:
             print(f"Prepop Step: {timestep}")
-            train_model, old_state, old_action, action_p, old_pstate, comms, move, harvest = env.step(agent, agent_p)
+            train_model, train_p, old_state, old_action, action_p, old_pstate, comms, move, harvest = env.step(agent, agent_p)
             buffer_done = env.terminated
 
             if buffer_done or env.truncated:
@@ -415,8 +419,9 @@ def prepopulate(agent, agent_p, prepop_steps, env):
                 agent_p.update_target_from_model()
                 done = True
 
-            agent_p.update_mem(old_pstate, action_p, env.reward2, env.curr_pstate, buffer_done)
-            if train_model:
+            if train_p or done:
+                agent_p.update_mem(old_pstate, action_p, env.reward2, env.curr_pstate, buffer_done)
+            if train_model or done:
             # if True:
             #     agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
                 # DDQN
@@ -448,10 +453,10 @@ def run_experiment(args):
     )
 
     # Power Determination
-    agent_p = model_utils.get_ddqn_regression_agent(
+    agent_p = model_utils.get_ddqn_agentp(
         env,
         3,
-        1
+        30
     )
 
     policy_save_dir = os.path.join(
