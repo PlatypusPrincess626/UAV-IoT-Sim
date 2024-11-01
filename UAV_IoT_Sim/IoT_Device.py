@@ -96,7 +96,7 @@ class IoT_Device:
             self.reset_max = round(self.max_data * 0.25)
             self.stored_data = self.reset_max
             self.contribution = 0
-            self.action_p = 0.0
+            self.action_p = 0
 
             self.solarArea = 2 * 4  # 20 cm x 40 cm
             self._C = 3200  # F (Battery Supported)
@@ -111,7 +111,7 @@ class IoT_Device:
         self.max_AoI = 0
         self.stored_energy = round(self.max_energy * 1_000)
         self.contribution = 0
-        self.action_p = 0.0
+        self.action_p = 0
         if self.type == 1:
             self.stored_data = random.randint(0, self.reset_max)
         else:

@@ -287,7 +287,7 @@ class QuadUAV:
         train_model = False
         used_model = False
         train_p = False
-        action_p = 0.0
+        action_p = 0
         p_state = [0, 0, 0]
 
         if self.targetHead is not None:

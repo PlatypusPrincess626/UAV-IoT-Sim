@@ -351,16 +351,16 @@ class get_ddqn_agent():
                 target = reward + self.gamma * nst_action_predict_target[
                     np.argmax(nst_action_predict_model)]  # Using Q to get T is Double DQN
 
-            self.qvalue_max.add(np.argmax(nst_predict))
-            self.qvalue_mean.add(np.mean(nst_predict))
-            self.qvalue_min.add(np.argmin(nst_predict))
-
-            self.target_max.add(np.argmax(nst_predict_target))
-            self.target_mean.add(np.mean(nst_predict_target))
-            self.target_min.add(np.argmin(nst_predict_target))
-
-            loss = (np.square(np.argmax(nst_predict_target) - np.argmax(st_predict)))
-            self.td_errors.add(loss)
+            # self.qvalue_max.add(np.argmax(nst_predict))
+            # self.qvalue_mean.add(np.mean(nst_predict))
+            # self.qvalue_min.add(np.argmin(nst_predict))
+            #
+            # self.target_max.add(np.argmax(nst_predict_target))
+            # self.target_mean.add(np.mean(nst_predict_target))
+            # self.target_min.add(np.argmin(nst_predict_target))
+            #
+            # loss = (np.square(np.argmax(nst_predict_target) - np.argmax(st_predict)))
+            # self.td_errors.add(loss)
 
             target_f = st_predict[index]
             target_f[action] = target

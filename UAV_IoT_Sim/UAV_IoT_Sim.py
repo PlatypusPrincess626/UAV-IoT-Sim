@@ -104,7 +104,7 @@ class make_env:
     def step(self, model, model_p):
         train_model = False
         train_p = False
-        old_paction = 0.0
+        old_paction = 0
         excess_energy = 1.0
         old_action = 0
         comms, move, harvest = 0, 0, 0
@@ -244,11 +244,11 @@ class make_env:
         rewardPeak = (1 - peakAge / (self.curr_step + 1))
         rewardDataChange = dataChange / 1_498_500
         reward_energy = excess_energy
-        reward2Change = 0.7 * rewardPeak + 0.1 * rewardAvgAge + 0.1 * rewardDataChange + 0.1 * reward_energy
+        reward2Change = 0.8 * rewardPeak + 0.1 * rewardAvgAge + 0.1 * rewardDataChange + 0 * reward_energy
 
         if self.terminated:
             rewardChange = 0
-            reward2Change = -1
+            reward2Change = 0
         
         self.curr_info = {
             "Last_Action": self.last_action,
