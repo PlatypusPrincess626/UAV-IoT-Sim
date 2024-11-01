@@ -347,6 +347,12 @@ class QuadUAV:
                 return (train_model, used_model, train_p, state, action, action_p, p_state,
                         self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
+            elif self.is_charging:
+                used_model = False
+                self.target = self.target
+                return (train_model, used_model, train_p, state, action, action_p, p_state,
+                        self.step_comms_cost, self.step_move_cost, self.energy_harvested)
+
             else:
                 self.no_hold = True
                 self.is_charging = False
