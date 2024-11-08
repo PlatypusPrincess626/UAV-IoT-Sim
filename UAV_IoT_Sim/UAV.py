@@ -362,10 +362,6 @@ class QuadUAV:
                 if dest.type == 1:
                     self.force_count += 1
 
-                    if self.force_change:
-                        self.force_change = False
-                        self.force_count = 0
-
                     if self.force_count > 30:
                         self.force_change = True
 
@@ -380,7 +376,7 @@ class QuadUAV:
                     if dest.headSerial == self.targetSerial and self.inRange:
                         self.force_count += 1
 
-                    elif self.force_change:
+                    elif self.force_change and dest.headSerial != self.targetSerial:
                         self.force_change = False
                         self.force_count = 0
 
