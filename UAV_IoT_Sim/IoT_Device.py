@@ -374,7 +374,7 @@ class IoT_Device:
             #     action = minCH
             # model_help = False
 
-            if action >= len(out_state) - 5:
+            if action >= len(full_sensor_list - 1) :
                 idx = action - len(out_state) - 4
                 self.last_target = CHstate[idx + 1][0]
                 self.target_time = step
