@@ -304,7 +304,7 @@ class IoT_Device:
         out_state = copy.deepcopy(state)
         target = None
         model_help = True
-        for CH in range(len(state) - 1):
+        for CH in range(len(full_sensor_list) - 1):
             if state[CH + 1][2] < 1.0:
                 target = full_sensor_list.iat[CH + 1, 0]
                 model_help = False

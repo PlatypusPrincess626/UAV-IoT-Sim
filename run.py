@@ -402,9 +402,12 @@ def prepopulate(agent, agent_p, prepop_steps, env):
 
     # QL
     agent.decay_epsilon(0)
-    agent_p.decay_epsilon(0)
+    agent_p.decay_epsilon(1)
 
     while timestep < prepop_steps:
+        if timestep > prepop_steps/2:
+            agent.decay_epsilon(1)
+            agent_p.decay_epsilon(0)
         env.reset()
         done = False
 
