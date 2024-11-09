@@ -474,7 +474,7 @@ def run_experiment(args):
     # wandb_kwargs = {"resume": None}
     # logger = get_logger(policy_path, args, wandb_kwargs)
 
-    prepopulate(agent, agent_p, 720, env)
+    prepopulate(agent, agent_p, 7200, env)
     mean_success_rate = RunningAverage(10)
     mean_reward = RunningAverage(10)
     mean_episode_length = RunningAverage(10)
