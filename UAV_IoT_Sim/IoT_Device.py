@@ -312,7 +312,7 @@ class IoT_Device:
 
         # Next CH
         if model_help:
-            CHstate = [[0, 0, 0] for _ in range(5)]
+            CHstate = [[0, 0, 0] for _ in range(6)]
             CHstate[0] = state[0]
             CHstate[0][1] = (self.stored_data + self.contribution)
             oldest_age = [self.age_table[0], self.age_table[1], self.age_table[2], self.age_table[3], self.age_table[4]]
@@ -376,7 +376,7 @@ class IoT_Device:
 
             if action >= len(out_state) - 5:
                 idx = action - len(out_state) - 4
-                self.last_target = CHstate[idx][0]
+                self.last_target = CHstate[idx + 1][0]
                 self.target_time = step
                 target = self.sens_table.iat[self.last_target, 0]
 
