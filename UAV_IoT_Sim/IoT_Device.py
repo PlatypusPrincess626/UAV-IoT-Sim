@@ -311,35 +311,8 @@ class IoT_Device:
                 action = CH
 
         # Next CH
-        if targetType and model_help:
-            action = model.act(decision_state)
-
-            if force_change and action == targetSerial:
-                highest = state[self.headSerial + 1][2]
-                i = 0
-                for sens in range(len(state) - 1):
-                    if (state[sens + 1][2] > highest) and not (sens == targetSerial):
-                        highest = state[sens + 1][2]
-                        action = sens
-                        model_help = False
-
-            if force_change and action == targetSerial:
-                minDist = 10_000.0
-                minCH = 0
-                for CH in range(len(self.full_sensor_list.index) - 1):
-                    if not (self.full_sensor_list.iat[CH + 1, 0].headSerial == targetSerial):
-                        dist = math.sqrt(pow((self.indX - self.full_sensor_list.iat[CH + 1, 0].indX), 2)
-                                         + pow((self.indY - self.full_sensor_list.iat[CH + 1, 0].indY), 2))
-                        if dist < minDist:
-                            minDist = dist
-                            minCH = CH
-                action = minCH
-            model_help = False
-            target = full_sensor_list.iat[action + 1, 0]
-
-        # Current Sensor
-        elif not targetType and model_help:
-            CHstate = [[0, 0, 0] for _ in range(len(state))]
+        if model_help:
+            CHstate = [[0, 0, 0] for _ in range(5)]
             CHstate[0] = state[0]
             CHstate[0][1] = (self.stored_data + self.contribution)
             oldest_age = [self.age_table[0], self.age_table[1], self.age_table[2], self.age_table[3], self.age_table[4]]
@@ -372,13 +345,44 @@ class IoT_Device:
 
             for sens in range(5):
                 CHstate[sens + 1][0], CHstate[sens + 1][1], CHstate[sens + 1][2] = \
-                    (oldest_indx[sens], self.data_table[oldest_indx[sens]], (step-oldest_age[sens]+self.action_p))
+                    (oldest_indx[sens], self.data_table[oldest_indx[sens]], (step - oldest_age[sens] + self.action_p))
 
-            action = model.act(CHstate)
-            self.last_target = CHstate[action+1][0]
-            self.target_time = step
-            out_state = CHstate
-            target = self.sens_table.iat[CHstate[action+1][0], 0]
+            for sens in range(5):
+                out_state[sens - 5] = CHstate[sens]
+
+            action = model.act(decision_state)
+
+            # if force_change and action == targetSerial:
+            #     highest = state[self.headSerial + 1][2]
+            #     i = 0
+            #     for sens in range(len(state) - 1):
+            #         if (state[sens + 1][2] > highest) and not (sens == targetSerial):
+            #             highest = state[sens + 1][2]
+            #             action = sens
+            #             model_help = False
+            #
+            # if force_change and action == targetSerial:
+            #     minDist = 10_000.0
+            #     minCH = 0
+            #     for CH in range(len(self.full_sensor_list.index) - 1):
+            #         if not (self.full_sensor_list.iat[CH + 1, 0].headSerial == targetSerial):
+            #             dist = math.sqrt(pow((self.indX - self.full_sensor_list.iat[CH + 1, 0].indX), 2)
+            #                              + pow((self.indY - self.full_sensor_list.iat[CH + 1, 0].indY), 2))
+            #             if dist < minDist:
+            #                 minDist = dist
+            #                 minCH = CH
+            #     action = minCH
+            # model_help = False
+
+            if action > len(out_state) - 5:
+                idx = action - len(out_state) - 4
+                self.last_target = CHstate[idx][0]
+                self.target_time = step
+                target = self.sens_table.iat[self.last_target, 0]
+
+            else:
+                target = full_sensor_list.iat[action + 1, 0]
+
 
         d_to_targ = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
         if target.type == 1:

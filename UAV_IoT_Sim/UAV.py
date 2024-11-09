@@ -94,7 +94,7 @@ class QuadUAV:
         self.launch_cost = 18.889 # mA
 
         # State used for model
-        self.state = [[0, 0, 0] for _ in range(len(CHList) + 1)]
+        self.state = [[0, 0, 0] for _ in range(len(CHList) + 6)]
 
         self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy * 1_000
         count = 0
@@ -320,6 +320,7 @@ class QuadUAV:
             if self.target.type == 1:
                 targetType = 1
 
+            self.force_change = False
             # True, True, sensor, CHstate, action, action_p
             used_model, changed_transit, dest, state, action, action_p, p_state = \
                 self.target.get_dest(self.state, self.full_sensor_list, model, model_p, step,
