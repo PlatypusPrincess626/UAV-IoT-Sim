@@ -375,7 +375,7 @@ class IoT_Device:
             # model_help = False
 
             if action >= len(full_sensor_list) - 1 :
-                idx = action - len(out_state) - 4
+                idx = action - len(full_sensor_list)
                 self.last_target = CHstate[idx + 1][0]
                 self.target_time = step
                 target = self.sens_table.iat[self.last_target, 0]
