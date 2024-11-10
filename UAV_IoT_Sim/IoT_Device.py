@@ -402,4 +402,4 @@ class IoT_Device:
         # Value from 0 to 30
         self.action_p = model_p.act(p_state)
 
-        return model_help, True, target, out_state, action, self.action_p, p_state
+        return model_help, change_transit, target, out_state, action, self.action_p, p_state
