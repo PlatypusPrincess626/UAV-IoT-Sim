@@ -349,7 +349,7 @@ class IoT_Device:
                     (oldest_indx[sens], self.data_table[oldest_indx[sens]], (step - oldest_age[sens] + self.action_p))
 
             for sens in range(5):
-                out_state[sens - 5] = CHstate[sens]
+                decision_state[sens - 5] = CHstate[sens]
 
             action = model.act(decision_state)
 
@@ -392,7 +392,7 @@ class IoT_Device:
             d_to_targ *= 2
 
         AoI_peak = decision_state[1][2]
-        for entry in range(len(decision_state)-2):
+        for entry in range(len(full_sensor_list)-2):
             AoI = decision_state[entry+2][2]
             if AoI > AoI_peak:
                 AoI_peak = AoI
