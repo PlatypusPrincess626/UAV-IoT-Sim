@@ -387,7 +387,7 @@ class get_ddqn_agentp():
         self.nS = nS
         self.nA = nA
 
-        self.state1_max = 10_000
+        self.state1_max = 1_000
         self.state2_max = 720
 
         self.memory = deque([], maxlen=2500)
