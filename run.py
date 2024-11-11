@@ -202,7 +202,7 @@ def evaluate(
                 CHCoords.append([eval_env.chX[cluster], eval_env.chY[cluster]])
 
         if log_metrics and i == eval_episodes - 1:
-            filename = ("sens_pts2_" + curr_date_time.strftime("%d") + "_" +
+            filename = ("sens_pts_" + curr_date_time.strftime("%d") + "_" +
                         curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
@@ -210,7 +210,7 @@ def evaluate(
                 csvwriter.writerows(SensCoords)
 
         if log_metrics and i == eval_episodes - 1:
-            filename = ("cluster_pts2_" + curr_date_time.strftime("%d") + "_" +
+            filename = ("cluster_pts_" + curr_date_time.strftime("%d") + "_" +
                         curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
@@ -219,7 +219,7 @@ def evaluate(
 
         if log_metrics and i == eval_episodes - 1:
             print(eval_env.ch_sensors)
-            filename = ("age_metrics2_" + curr_date_time.strftime("%d") + "_" +
+            filename = ("age_metrics_" + curr_date_time.strftime("%d") + "_" +
                         curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
@@ -227,7 +227,7 @@ def evaluate(
                 csvwriter.writerows(CH_Age)
 
         if log_metrics and i == eval_episodes - 1:
-            filename = ("data_metrics2_" + curr_date_time.strftime("%d") + "_" +
+            filename = ("data_metrics_" + curr_date_time.strftime("%d") + "_" +
                         curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
@@ -235,7 +235,7 @@ def evaluate(
                 csvwriter.writerows(CH_Data)
 
         if log_metrics and i == eval_episodes - 1:
-            filename = ("uav_metrics2_" + curr_date_time.strftime("%d") + "_" +
+            filename = ("uav_metrics_" + curr_date_time.strftime("%d") + "_" +
                         curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
