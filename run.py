@@ -413,11 +413,12 @@ def prepopulate(agent, agent_p, prepop_steps, env):
             train_model, train_p, old_state, old_action, action_p, old_pstate, comms, move, harvest = env.step(agent, agent_p)
             buffer_done = env.terminated
 
-            # if buffer_done or env.truncated:
+            if buffer_done or env.truncated:
+                done = True
             #     # DDQN
             #     agent.update_target_from_model()
             #     agent_p.update_target_from_model()
-            #     done = True
+
 
             if train_p or done:
                 agent_p.update_mem(old_pstate, int(action_p), env.reward2, env.curr_pstate, buffer_done)
