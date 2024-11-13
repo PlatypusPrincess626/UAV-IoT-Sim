@@ -171,15 +171,11 @@ def evaluate(
             if train_p or done:
                 agent_p.update_mem(old_pstate, int(action_p), eval_env.reward2, eval_env.curr_pstate, buffer_done)
 
-            if train_model or done:
+            if (train_model or eval_env.truncated) and not buffer_done:
             # if True:
             #     agent.update(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
                 # DDQN
                 agent.update_mem(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
-                if len(agent.memory) > 64:
-                    agent.train(64)
-                if len(agent_p.memory) > 64:
-                    agent_p.train(64)
 
             ep_reward += info.get("Reward_Change")
             if crashed:
@@ -243,7 +239,10 @@ def evaluate(
                 csvwriter.writerows(UAV_Metrics)
 
         # DDQN
-        agent.update_target_from_model()
+        if len(agent.memory) > 64:
+            agent.train(64)
+        if len(agent_p.memory) > 64:
+            agent_p.train(64)
 
         accum_avgAoI += avgAoI / (eval_env.curr_step + count)
         accum_peakAoI += peakAoI / (eval_env.curr_step + count)
@@ -293,11 +292,16 @@ def train(
     sr, ret, length = 0.0, 0.0, 0.0
     for timestep in range(total_steps):
         done = step(agent, agent_p, env)
+        if done:
+            if len(agent.memory) > 64:
+                agent.train(64)
+            if len(agent_p.memory) > 64:
+                agent_p.train(64)
         # QL
         agent.decay_epsilon(timestep / total_steps)
         agent_p.decay_epsilon(timestep / total_steps)
 
-        if done:
+        if timestep % (2 * eval_frequency) == 0:
             # DDQN
             agent.update_target_from_model()
             agent_p.update_target_from_model()
@@ -383,17 +387,13 @@ def step(agent, agent_p, env):
 
     if train_p or done:
         agent_p.update_mem(old_pstate, int(action_p), env.reward2, env.curr_pstate, buffer_done)
-    if train_model or done:
+    if (train_model or env.truncated) and not buffer_done:
     # if True:
         print(f"Training")
         #QL
         # agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
         # DDQN
         agent.update_mem(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
-        if len(agent.memory) > 64:
-            agent.train(64)
-        if len(agent_p.memory) > 64:
-            agent_p.train(64)
     return done
 
 
@@ -401,13 +401,10 @@ def prepopulate(agent, agent_p, prepop_steps, env):
     timestep = 0
 
     # QL
-    agent.decay_epsilon(0)
+    agent.decay_epsilon(1)
     agent_p.decay_epsilon(1)
 
     while timestep < prepop_steps:
-        if timestep > prepop_steps/2:
-            agent.decay_epsilon(1)
-            agent_p.decay_epsilon(0)
         env.reset()
         done = False
 
@@ -424,15 +421,15 @@ def prepopulate(agent, agent_p, prepop_steps, env):
 
             if train_p or done:
                 agent_p.update_mem(old_pstate, int(action_p), env.reward2, env.curr_pstate, buffer_done)
-            if train_model or done:
+            # if done:
             # if True:
             #     agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
                 # DDQN
-                agent.update_mem(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
-                if len(agent.memory) > 64:
-                    agent.train(64)
-                if len(agent_p.memory) > 64:
-                    agent_p.train(64)
+                # agent.update_mem(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
+                # if len(agent.memory) > 64:
+                #     agent.train(64)
+                # if len(agent_p.memory) > 64:
+                #     agent_p.train(64)
             timestep += 1
 
 def run_experiment(args):
