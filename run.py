@@ -402,7 +402,7 @@ def prepopulate(agent, agent_p, prepop_steps, env):
 
     # QL
     agent.decay_epsilon(0)
-    agent_p.decay_epsilon(0)
+    agent_p.decay_epsilon(1)
 
     while timestep < prepop_steps:
         env.reset()
@@ -431,7 +431,7 @@ def prepopulate(agent, agent_p, prepop_steps, env):
                 #     agent.train(64)
                 # if len(agent_p.memory) > 64:
                 #     agent_p.train(64)
-            if done:
+            if buffer_done or env.truncated:
                 if len(agent_p.memory) > 64:
                     agent_p.train(64)
             timestep += 1
