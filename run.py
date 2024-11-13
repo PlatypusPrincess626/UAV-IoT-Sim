@@ -403,8 +403,9 @@ def prepopulate(agent, agent_p, prepop_steps, env):
     # QL
     agent.decay_epsilon(0)
     agent_p.decay_epsilon(1)
+    done_p = False
 
-    while timestep < prepop_steps:
+    while not done_p:
         env.reset()
         done = False
 
@@ -413,8 +414,10 @@ def prepopulate(agent, agent_p, prepop_steps, env):
             train_model, train_p, old_state, old_action, action_p, old_pstate, comms, move, harvest = env.step(agent, agent_p)
             buffer_done = env.terminated
 
-            if env.truncated:
+            if buffer_done or env.truncated:
                 done = True
+                if env.truncated:
+                    done_p = True
             #     # DDQN
             #     agent.update_target_from_model()
             #     agent_p.update_target_from_model()
@@ -431,7 +434,7 @@ def prepopulate(agent, agent_p, prepop_steps, env):
                 #     agent.train(64)
                 # if len(agent_p.memory) > 64:
                 #     agent_p.train(64)
-            if buffer_done or env.truncated:
+            if done:
                 if len(agent_p.memory) > 64:
                     agent_p.train(64)
             timestep += 1
