@@ -181,7 +181,6 @@ class QuadUAV:
             self.energy_cost(time, 0, 0)
 
         else:
-            print("here")
             self.crash = True
 
     def energy_cost(self, flight: float = 0.0, lora: float = 0.0, launch: float = 0.0):

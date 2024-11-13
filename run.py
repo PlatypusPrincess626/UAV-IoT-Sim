@@ -415,6 +415,7 @@ def prepopulate(agent, agent_p, prepop_steps, env):
 
             if buffer_done or env.truncated:
                 # DDQN
+                print("Here")
                 agent.update_target_from_model()
                 agent_p.update_target_from_model()
                 done = True
