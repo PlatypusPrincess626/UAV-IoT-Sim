@@ -413,7 +413,7 @@ def prepopulate(agent, agent_p, prepop_steps, env):
             train_model, train_p, old_state, old_action, action_p, old_pstate, comms, move, harvest = env.step(agent, agent_p)
             buffer_done = env.terminated
 
-            if buffer_done or env.truncated:
+            if env.truncated:
                 done = True
             #     # DDQN
             #     agent.update_target_from_model()
@@ -431,6 +431,9 @@ def prepopulate(agent, agent_p, prepop_steps, env):
                 #     agent.train(64)
                 # if len(agent_p.memory) > 64:
                 #     agent_p.train(64)
+            if done:
+                if len(agent_p.memory) > 64:
+                    agent_p.train(64)
             timestep += 1
 
 def run_experiment(args):
