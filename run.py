@@ -401,8 +401,8 @@ def prepopulate(agent, agent_p, prepop_steps, env):
     timestep = 0
 
     # QL
-    agent.decay_epsilon(1)
-    agent_p.decay_epsilon(1)
+    agent.decay_epsilon(0)
+    agent_p.decay_epsilon(0)
 
     while timestep < prepop_steps:
         env.reset()
@@ -420,7 +420,6 @@ def prepopulate(agent, agent_p, prepop_steps, env):
                 done = True
 
             if train_p or done:
-                print(train_p, done)
                 agent_p.update_mem(old_pstate, int(action_p), env.reward2, env.curr_pstate, buffer_done)
             # if done:
             # if True:
