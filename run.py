@@ -299,7 +299,7 @@ def train(
                 agent_p.train(64)
         # QL
         agent.decay_epsilon(timestep / total_steps)
-        agent_p.decay_epsilon(timestep / total_steps)
+        agent_p.decay_epsilon(1)
 
         if timestep % (2 * eval_frequency) == 0:
             # DDQN
