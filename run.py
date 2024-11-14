@@ -478,7 +478,7 @@ def run_experiment(args):
     agent = model_utils.get_ddqn_agent(
         env,
         ((env.num_ch + 6) * 2),
-        env.num_ch + 5
+        env.num_ch
     )
 
     # Power Determination

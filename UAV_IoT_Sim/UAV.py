@@ -94,7 +94,7 @@ class QuadUAV:
         self.launch_cost = 18.889 # mA
 
         # State used for model
-        self.state = [[0, 0, 0] for _ in range(len(CHList) + 6)]
+        self.state = [[0, 0, 0] for _ in range(len(CHList) + 1)]
 
         self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy * 1_000
         count = 0
@@ -328,15 +328,18 @@ class QuadUAV:
 
             self.p_cycle -= 1
             self.action = action
+            if action_p < self.p_count:
+                self.p_count = action_p
 
             if self.model_transit and changed_transit:
                 train_model = True
                 self.model_transit = False
+
             if self.is_charging and self.p_count < 1.0:
                 self.is_charging = False
+
             if self.h == 0:
                 self.p_count -= 1
-
 
             if self.p_cycle < 1.0 and self.p_count < 1.0:
                 self.p_cycle = 30

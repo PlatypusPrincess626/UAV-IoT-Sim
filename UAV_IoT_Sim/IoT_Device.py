@@ -311,45 +311,57 @@ class IoT_Device:
                 model_help = False
                 action = CH
 
+        if not targetType:
+            self.last_target = 0
+            oldest_age = self.age_table[self.last_target]
+            for sens in range(self.num_sensors - 1):
+                if oldest_age < self.age_table[sens + 1]:
+                    self.last_target = sens
+                    oldest_age = self.age_table[sens + 1]
+            target = self.sens_table.iat[self.last_target, 0]
+            self.target_time = step
+            action = self.headSerial
+            model_help = False
+
         # Next CH
-        if model_help:
-            CHstate = [[0, 0, 0] for _ in range(6)]
-            CHstate[0] = state[0]
-            CHstate[0][1] = (self.stored_data + self.contribution)
-            oldest_age = [self.age_table[0], self.age_table[1], self.age_table[2], self.age_table[3], self.age_table[4]]
-            oldest_age.sort()
-            oldest_indx = []
-            for sens in range(5):
-                i = 0
-                while i < 5:
-                    if oldest_age[sens] == self.age_table[i]:
-                        oldest_indx.append(i)
-                    elif i >= 5:
-                        break
-                    i += 1
-
-            for sens in range(self.num_sensors - 5):
-                i = 0
-                while i < 5:
-                    if oldest_age[i] < self.age_table[sens + 5]:
-                        break
-                    i += 1
-                    if self.num_sensors < (sens + i):
-                        break
-
-                if i < 5 and self.num_sensors > (sens + i):
-                    oldest_age.insert(i, self.age_table[sens + 5])
-                    oldest_indx.insert(i, sens + 5)
-                elif self.num_sensors > (sens + i):
-                    oldest_age.append(self.age_table[sens + 5])
-                    oldest_indx.append(sens + 5)
-
-            for sens in range(5):
-                CHstate[sens + 1][0], CHstate[sens + 1][1], CHstate[sens + 1][2] = \
-                    (oldest_indx[sens], self.data_table[oldest_indx[sens]], (step - oldest_age[sens] + self.action_p))
-
-            for sens in range(5):
-                decision_state[sens - 5] = CHstate[sens]
+        elif model_help:
+            # CHstate = [[0, 0, 0] for _ in range(6)]
+            # CHstate[0] = state[0]
+            # CHstate[0][1] = (self.stored_data + self.contribution)
+            # oldest_age = [self.age_table[0], self.age_table[1], self.age_table[2], self.age_table[3], self.age_table[4]]
+            # oldest_age.sort()
+            # oldest_indx = []
+            # for sens in range(5):
+            #     i = 0
+            #     while i < 5:
+            #         if oldest_age[sens] == self.age_table[i]:
+            #             oldest_indx.append(i)
+            #         elif i >= 5:
+            #             break
+            #         i += 1
+            #
+            # for sens in range(self.num_sensors - 5):
+            #     i = 0
+            #     while i < 5:
+            #         if oldest_age[i] < self.age_table[sens + 5]:
+            #             break
+            #         i += 1
+            #         if self.num_sensors < (sens + i):
+            #             break
+            #
+            #     if i < 5 and self.num_sensors > (sens + i):
+            #         oldest_age.insert(i, self.age_table[sens + 5])
+            #         oldest_indx.insert(i, sens + 5)
+            #     elif self.num_sensors > (sens + i):
+            #         oldest_age.append(self.age_table[sens + 5])
+            #         oldest_indx.append(sens + 5)
+            #
+            # for sens in range(5):
+            #     CHstate[sens + 1][0], CHstate[sens + 1][1], CHstate[sens + 1][2] = \
+            #         (oldest_indx[sens], self.data_table[oldest_indx[sens]], (step - oldest_age[sens] + self.action_p))
+            #
+            # for sens in range(5):
+            #     decision_state[sens - 5] = CHstate[sens]
 
             action = model.act(decision_state)
 
@@ -375,16 +387,15 @@ class IoT_Device:
             #     action = minCH
             # model_help = False
 
-            if action >= len(full_sensor_list) - 1 :
-                idx = action - len(full_sensor_list)
-                self.last_target = CHstate[idx + 1][0]
-                self.target_time = step
-                target = self.sens_table.iat[self.last_target, 0]
+            # if action >= len(full_sensor_list) - 1 :
+            #     idx = action - len(full_sensor_list)
+            #     self.last_target = CHstate[idx + 1][0]
+            #     self.target_time = step
+            #     target = self.sens_table.iat[self.last_target, 0]
 
-            else:
-                if action != targetSerial:
-                    change_transit = True
-                target = full_sensor_list.iat[action + 1, 0]
+            if action != targetSerial:
+                change_transit = True
+            target = full_sensor_list.iat[action + 1, 0]
 
 
         d_to_targ = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
