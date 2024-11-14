@@ -410,7 +410,7 @@ def prepopulate(agent, agent_p, prepop_steps, env):
         done = False
 
         while not done:
-            print(f"Prepop Step: {timestep}")
+            print(f"Prepop Step: Training Power Agent")
             train_model, train_p, old_state, old_action, action_p, old_pstate, comms, move, harvest = env.step(agent, agent_p)
             buffer_done = env.terminated
 
@@ -437,7 +437,29 @@ def prepopulate(agent, agent_p, prepop_steps, env):
             if done:
                 if len(agent_p.memory) > 64:
                     agent_p.train(64)
+
+    while timestep < prepop_steps:
+        env.reset()
+        done = False
+
+        while not done:
+            print(f"Prepop Step: {timestep}")
+            train_model, train_p, old_state, old_action, action_p, old_pstate, comms, move, harvest = env.step(agent,                                                                                                 agent_p)
+            buffer_done = env.terminated
+
+            if buffer_done or env.truncated:
+                done = True
+
+            if train_p or done:
+                agent_p.update_mem(old_pstate, int(action_p), env.reward2, env.curr_pstate, buffer_done)
+            if (train_model or env.truncated) and not buffer_done:
+                agent.update_mem(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
             timestep += 1
+
+        if len(agent.memory) > 64:
+            agent.train(64)
+        if len(agent_p.memory) > 64:
+            agent_p.train(64)
 
 def run_experiment(args):
     env_str = args.env
