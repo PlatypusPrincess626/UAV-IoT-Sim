@@ -34,8 +34,8 @@ class make_env:
         self.archived_action = 0
         self.archived_paction = 0
 
-        self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
-        self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
+        self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
+        self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
         self.curr_pstate = [0, 0, 0]
         self.archived_pstate = [0, 0, 0]
 
@@ -77,8 +77,8 @@ class make_env:
             self.archived_paction = 0
             self.archived_action = 0
 
-            self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
-            self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
+            self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
+            self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
             self.curr_pstate = [0, 0, 0]
             self.archived_pstate = [0, 0, 0]
 
@@ -111,7 +111,7 @@ class make_env:
         old_pstate = [0, 0, 0]
         self.reward2 = 0
 
-        old_state = [[0, 0, 0] for _ in range(self.num_ch + 6)]
+        old_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
 
         if not self.terminated:
             if self.curr_step < self._max_steps:
