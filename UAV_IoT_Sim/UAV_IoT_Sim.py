@@ -34,6 +34,9 @@ class make_env:
         self.archived_action = 0
         self.archived_paction = 0
 
+        self.full_reward = 0
+        self.full_reward2 = 0
+
         self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
         self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
         self.curr_pstate = [0, 0, 0]
@@ -77,6 +80,9 @@ class make_env:
             self.archived_paction = 0
             self.archived_action = 0
 
+            self.full_reward = 0
+            self.full_reward2 = 0
+
             self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
             self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
             self.curr_pstate = [0, 0, 0]
@@ -110,6 +116,12 @@ class make_env:
         comms, move, harvest = 0, 0, 0
         old_pstate = [0, 0, 0]
         self.reward2 = 0
+        accum_reward = 0
+        accum_reward_p = 0
+        accum_steps = 0
+        accum_steps_p = 0
+        track_reward = False
+        track_reward_p = False
 
         old_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
 
@@ -140,6 +152,7 @@ class make_env:
                     # train_model = True
                     if train_model or train_model2:
                         train_model = True
+                        self.full_reward = accum_reward / max(accum_steps, 1)
 
                     self.curr_state = uav.state
                     self.last_action = action
@@ -154,13 +167,24 @@ class make_env:
                     if train_p:
                         if self.curr_step < 15:
                             train_p = False
+                        else:
+                            self.full_reward2 = accum_reward_p / accum_steps_p
                         self.archived_pstate = p_state
                         self.archived_paction = action_p
+                        track_reward_p = True
+
                     if used_model:
                         self.archived_state = state
                         self.archived_action = action
+                        track_reward = True
 
                 self.reward(excess_energy)
+                if track_reward:
+                    accum_steps += 1
+                    accum_reward += self.curr_reward
+                if track_reward_p:
+                    accum_steps_p += 1
+                    accum_reward_p += self.reward2
                 self.curr_step += 1
             else:
                 self.truncated = True
