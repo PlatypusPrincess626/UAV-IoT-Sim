@@ -228,7 +228,7 @@ class IoT_Device:
             self.avg_AoI += self.age_table[sens+1]
             if self.age_table[sens+1] < self.max_AoI:
                 self.max_AoI = self.age_table[sens+1]
-        self.avg_AoI /= math.ceil(len(self.age_table))
+        self.avg_AoI = math.ceil(self.avg_AoI / len(self.age_table))
         # ADF 1.0
         # self.max_AoI = step
 
@@ -300,7 +300,7 @@ class IoT_Device:
                 self.avg_AoI = self.age_table[sens+1]
                 if self.age_table[sens+1] < self.max_AoI:
                     self.max_AoI = self.age_table[sens]
-            self.avg_AoI /= math.ceil(len(self.age_table))
+            self.avg_AoI = math.ceil(self.avg_AoI / len(self.age_table))
 
         decision_state = copy.deepcopy(state)
         decision_state[0][2] = state[0][2] + round(self.action_p * 6_800_000 / (self.charge_rate * 60))
