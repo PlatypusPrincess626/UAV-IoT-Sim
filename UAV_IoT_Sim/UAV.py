@@ -329,7 +329,7 @@ class QuadUAV:
             self.p_cycle -= 1
             self.action = action
             if action_p < self.p_count:
-                self.p_count = (self.p_count + action_p) / 2
+                self.p_count = math.ceil((self.p_count + action_p) / 2)
 
             if self.model_transit and changed_transit:
                 train_model = True
