@@ -42,6 +42,7 @@ class make_env:
         self.accum_steps_p = 0.0
         self.track_reward = False
         self.track_reward_p = False
+        self.total_average = 0
 
         self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
         self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
@@ -94,6 +95,7 @@ class make_env:
             self.accum_steps_p = 0.0
             self.track_reward = False
             self.track_reward_p = False
+            self.total_average = 0
 
             self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
             self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
@@ -128,6 +130,7 @@ class make_env:
         comms, move, harvest = 0, 0, 0
         old_pstate = [0, 0, 0]
         self.reward2 = 0
+        self.total_average = 0
 
         old_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
 
@@ -143,6 +146,7 @@ class make_env:
                 for CH in range(self.num_ch):
                     self._env.CHTable.iat[CH, 0].harvest_energy(alpha, self._env, self.curr_step)
                     self._env.CHTable.iat[CH, 0].ch_download(self.curr_step)
+                    self.total_average = self._env.CHTable.iat[CH, 0].avg_AoI
 
                 for uav in range(self._num_uav):
                     uav = self._env.UAVTable.iat[uav, 0]
@@ -243,7 +247,7 @@ class make_env:
                 peakAge = age
             if age < minAge:
                 minAge = age
-        avgAge = totalAge/self.num_ch
+        avgAge = self.total_average / self.num_ch
        
         dataChange = 0
         maxColl = 0.0

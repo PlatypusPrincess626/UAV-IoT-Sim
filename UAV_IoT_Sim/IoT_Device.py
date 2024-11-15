@@ -17,6 +17,7 @@ class IoT_Device:
         self.lat = lat
         self.long = long
         self.max_AoI = 0
+        self.avg_AoI = 0
 
         # Communication Specifications
         self._comms = {
@@ -109,6 +110,7 @@ class IoT_Device:
         self.last_target = 0
         self.target_time = 0
         self.max_AoI = 0
+        self.avg_AoI = 0
         self.stored_energy = round(self.max_energy * 1_000)
         self.contribution = 0
         self.action_p = 0
@@ -221,10 +223,12 @@ class IoT_Device:
 
         # ADF 2.0
         self.max_AoI = self.age_table[0]
+        self.avg_AoI = self.age_table[0]
         for sens in range(len(self.sens_table.index) - 1):
-            if self.age_table[sens] < self.max_AoI:
-                self.max_AoI = self.age_table[sens]
-
+            self.avg_AoI += self.age_table[sens+1]
+            if self.age_table[sens+1] < self.max_AoI:
+                self.max_AoI = self.age_table[sens+1]
+        self.avg_AoI /= math.ceil(len(self.age_table))
         # ADF 1.0
         # self.max_AoI = step
 
@@ -291,9 +295,12 @@ class IoT_Device:
             self.contribution = my_contribution
 
             self.max_AoI = self.age_table[0]
+            self.avg_AoI = self.age_table[0]
             for sens in range(len(self.sens_table.index) - 1):
-                if self.age_table[sens] < self.max_AoI:
+                self.avg_AoI = self.age_table[sens+1]
+                if self.age_table[sens+1] < self.max_AoI:
                     self.max_AoI = self.age_table[sens]
+            self.avg_AoI /= math.ceil(len(self.age_table))
 
         decision_state = copy.deepcopy(state)
         decision_state[0][2] = state[0][2] + round(self.action_p * 6_800_000 / (self.charge_rate * 60))
