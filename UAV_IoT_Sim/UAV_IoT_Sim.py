@@ -146,7 +146,7 @@ class make_env:
                 for CH in range(self.num_ch):
                     self._env.CHTable.iat[CH, 0].harvest_energy(alpha, self._env, self.curr_step)
                     self._env.CHTable.iat[CH, 0].ch_download(self.curr_step)
-                    self.total_average = self._env.CHTable.iat[CH, 0].avg_AoI
+                    self.total_average += self._env.CHTable.iat[CH, 0].avg_AoI
 
                 for uav in range(self._num_uav):
                     uav = self._env.UAVTable.iat[uav, 0]
@@ -247,7 +247,7 @@ class make_env:
                 peakAge = age
             if age < minAge:
                 minAge = age
-        avgAge = self.total_average / self.num_ch
+        avgAge = float(self.total_average) / float(self.num_ch)
        
         dataChange = 0
         maxColl = 0.0
