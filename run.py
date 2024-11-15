@@ -154,7 +154,7 @@ def evaluate(
             if buffer_done or eval_env.truncated:
                 done = True
 
-            print(eval_env.reward2)
+            print(eval_env.accum_reward_p)
             avgAoI += info.get("Avg_Age", 0.0)
             peakAoI += info.get("Peak_Age", 0.0)
             dataDist += info.get("Data_Distribution", 0.0)
