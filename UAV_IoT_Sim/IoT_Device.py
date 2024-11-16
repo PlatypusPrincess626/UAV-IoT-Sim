@@ -241,13 +241,13 @@ class IoT_Device:
                     self.stored_data -= sent_data
                     self.contribution += sent_data
 
-                    return sent_data, self.max_AoI
+                    return sent_data, self.max_AoI, self.avg_AoI
 
                 else:
-                    return 0, self.max_AoI
+                    return 0, self.max_AoI, self.avg_AoI
 
             else:
-                return -1, self.max_AoI
+                return -1, self.max_AoI, self.avg_AoI
         elif self.stored_energy > round(self._comms.get("LoRa_Current_A")):
             if math.sqrt(pow((self.indX - X), 2) + pow((self.indY - Y), 2)) <= self._comms.get("LoRa_Max_Distance_m"):
 
@@ -257,17 +257,17 @@ class IoT_Device:
                     self.contribution += sent_data
 
                     self.stored_energy -= round(self._comms.get("LoRa_Current_A"))
-                    return sent_data, self.max_AoI
+                    return sent_data, self.max_AoI, self.avg_AoI
 
                 else:
                     self.stored_energy -= round(self._comms.get("LoRa_Current_A"))
-                    return 0, self.max_AoI
+                    return 0, self.max_AoI, self.avg_AoI
 
             else:
                 self.stored_energy -= round(self._comms.get("LoRa_Current_A"))
-                return -1, self.max_AoI
+                return -1, self.max_AoI, self.avg_AoI
         else:
-            return -1, self.max_AoI
+            return -1, self.max_AoI, self.avg_AoI
 
     def charge_time(self, X: int, Y: int, charge):
         if abs(self.indX - X) < 1.0 and abs(self.indY - Y) < 1.0:
@@ -301,11 +301,14 @@ class IoT_Device:
                 if self.age_table[sens+1] < self.max_AoI:
                     self.max_AoI = self.age_table[sens]
             self.avg_AoI = math.ceil(self.avg_AoI / len(self.age_table))
+            state[self.headSerial + 1][2] = self.max_AoI
+            state[self.headSerial + 1][3] = self.avg_AoI
 
         decision_state = copy.deepcopy(state)
         decision_state[0][2] = state[0][2] + round(self.action_p * 6_800_000 / (self.charge_rate * 60))
         for CH in range(len(state) - 1):
             decision_state[CH+1][2] = state[CH+1][2] + self.action_p
+            decision_state[CH+1][3] = state[CH+1][3] + self.action_p
 
         action = 0
         out_state = copy.deepcopy(state)
@@ -410,13 +413,16 @@ class IoT_Device:
             d_to_targ *= 2
 
         AoI_peak = decision_state[1][2]
+        AoI_avg = decision_state[1][3]
         for entry in range(len(full_sensor_list)-2):
+            AoI_avg += decision_state[entry+2][3]
             AoI = decision_state[entry+2][2]
             if AoI > AoI_peak:
                 AoI_peak = AoI
+        AoI_avg = math.ceil(AoI_avg / len(full_sensor_list))
 
         p_state = [d_to_targ, state[0][2] + round(self.action_p * 6_800_000 / (self.charge_rate * 60)),
-                   AoI_peak + self.action_p]
+                   AoI_peak + self.action_p, AoI_avg + self.action_p]
         # Value from 0 to 30
         self.action_p = model_p.act(p_state)
 

@@ -44,10 +44,10 @@ class make_env:
         self.track_reward_p = False
         self.total_average = 0
 
-        self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
-        self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
-        self.curr_pstate = [0, 0, 0]
-        self.archived_pstate = [0, 0, 0]
+        self.curr_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
+        self.archived_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
+        self.curr_pstate = [0, 0, 0, 0]
+        self.archived_pstate = [0, 0, 0, 0]
 
         self.ch_sensors = [0 for _ in range(self.num_ch)]
         for CH in range(self.num_ch):
@@ -97,10 +97,10 @@ class make_env:
             self.track_reward_p = False
             self.total_average = 0
 
-            self.curr_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
-            self.archived_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
-            self.curr_pstate = [0, 0, 0]
-            self.archived_pstate = [0, 0, 0]
+            self.curr_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
+            self.archived_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
+            self.curr_pstate = [0, 0, 0, 0]
+            self.archived_pstate = [0, 0, 0, 0]
 
             self.curr_reward = 0
             self.reward2 = 0
@@ -128,11 +128,11 @@ class make_env:
         excess_energy = 1.0
         old_action = 0
         comms, move, harvest = 0, 0, 0
-        old_pstate = [0, 0, 0]
+        old_pstate = [0, 0, 0, 0]
         self.reward2 = 0
         self.total_average = 0
 
-        old_state = [[0, 0, 0] for _ in range(self.num_ch + 1)]
+        old_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
 
         if not self.terminated:
             if self.curr_step < self._max_steps:

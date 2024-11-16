@@ -477,14 +477,14 @@ def run_experiment(args):
     # DDQN
     agent = model_utils.get_ddqn_agent(
         env,
-        ((env.num_ch + 1) * 2),
+        ((env.num_ch + 1) * 3),
         env.num_ch
     )
 
     # Power Determination
     agent_p = model_utils.get_ddqn_agentp(
         env,
-        3,
+        4,
         20
     )
 

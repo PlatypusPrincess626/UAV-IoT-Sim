@@ -16,9 +16,9 @@ from env_utils.logger_utils import RunningAverage
 
 def modify_state(state):
     total_data = state[0][1]
-    refined_state = [[0, 0] for _ in range(len(state))]
+    refined_state = [[0, 0, 0] for _ in range(len(state))]
     np_state = np.array(state)
-    _, _, zmax = np_state.max(axis=0)
+    _, _, zmax, _ = np_state.max(axis=0)
 
     # ADF 2.0
     for i in range(len(state)):
@@ -26,7 +26,8 @@ def modify_state(state):
         if i == 0:
             refined_state[i][1] = state[i][2]/6_800_000
         else:
-            refined_state[i][1] = state[i][2]/max(zmax, 1)
+            refined_state[i][1] = state[i][2] / max(zmax, 1)
+            refined_state[i][2] = state[i][3] / max(zmax, 1)
 
     return refined_state
 
@@ -445,7 +446,8 @@ class get_ddqn_agentp():
         self.model_target.set_weights(self.model.get_weights())
 
     def act(self, state):
-        r_state = [state[0] / self.state1_max, state[1] / 6_800_000, state[2] / self.state2_max]
+        r_state = [state[0] / self.state1_max, state[1] / 6_800_000,
+                   state[2] / self.state2_max, state[3] / self.state2_max]
         if np.random.rand() < self.epsilon:
             return np.random.randint(self.nA)
 
@@ -453,14 +455,17 @@ class get_ddqn_agentp():
         return np.argmax(action_vals[0])
 
     def test_action(self, state):  # Exploit
-        r_state = [state[0]/self.state1_max, state[1]/6_800_000, state[2]/self.state2_max]
+        r_state = [state[0]/self.state1_max, state[1]/6_800_000,
+                   state[2]/self.state2_max, state[3] / self.state2_max]
         action_vals = self.model.predict(np.reshape(np.array(r_state), (-1, self.nS))) # Exploit: Use the NN to predict the correct action from this state
         return np.argmax(action_vals[0])
 
     def update_mem(self, state, action, reward, nstate, done):
         # Store the experience in memory
-        r_state = [state[0] / self.state1_max, state[1] / 6_800_000, state[2] / self.state2_max]
-        r_nstate = [nstate[0] / self.state1_max, nstate[1] / 6_800_000, nstate[2] / self.state2_max]
+        r_state = [state[0] / self.state1_max, state[1] / 6_800_000,
+                   state[2] / self.state2_max, state[3] / self.state2_max]
+        r_nstate = [nstate[0] / self.state1_max, nstate[1] / 6_800_000,
+                    nstate[2] / self.state2_max, nstate[3] / self.state2_max]
         self.memory.append((r_state, action, reward, r_nstate, done))
 
     def train(self, batch_size):

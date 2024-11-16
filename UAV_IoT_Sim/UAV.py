@@ -94,7 +94,7 @@ class QuadUAV:
         self.launch_cost = 18.889 # mA
 
         # State used for model
-        self.state = [[0, 0, 0] for _ in range(len(CHList) + 1)]
+        self.state = [[0, 0, 0, 0] for _ in range(len(CHList) + 1)]
 
         self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy * 1_000
         count = 0
@@ -134,6 +134,7 @@ class QuadUAV:
         for row in range(len(self.state) - 1):
             self.state[row + 1][1] = 0
             self.state[row + 1][2] = 0
+            self.state[row + 1][3] = 0
 
     # Internal UAV Mechanics
     def navigate_step(self, env: object):
@@ -238,7 +239,7 @@ class QuadUAV:
 
                 self.inRange = True
 
-                dataReturn, self.last_AoI = device.ch_upload(int(self.indX), int(self.indY))
+                dataReturn, self.last_AoI, avg_AoI = device.ch_upload(int(self.indX), int(self.indY))
                 dataReturn = max(0, dataReturn)
                 totalData += dataReturn
 
@@ -247,6 +248,7 @@ class QuadUAV:
 
                 # ADF 2
                 self.state[self.targetSerial + 1][2] = step - self.last_AoI
+                self.state[self.targetSerial + 1][3] = step - avg_AoI
                 self.state[self.targetSerial + 1][1] += totalData
                 self.state[0][1] += totalData
 
@@ -256,10 +258,13 @@ class QuadUAV:
         for CH in range(len(self.full_sensor_list) - 1):
             if device.type == 1:
                 self.state[CH + 1][2] += 1
+                self.state[CH + 1][3] += 1
             elif device.headSerial != self.full_sensor_list.iat[CH + 1, 0].headSerial:
                 self.state[CH + 1][2] += 1
+                self.state[CH + 1][3] += 1
             elif not self.inRange:
                 self.state[CH + 1][2] += 1
+                self.state[CH + 1][3] += 1
 
         return train_model, change_archives
 
@@ -288,7 +293,7 @@ class QuadUAV:
         used_model = False
         train_p = False
         action_p = 0
-        p_state = [0, 0, 0]
+        p_state = [0, 0, 0, 0]
 
         if self.targetHead is not None:
             self.last_Head = self.targetHead.headSerial
