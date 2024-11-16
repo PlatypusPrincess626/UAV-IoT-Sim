@@ -348,8 +348,7 @@ class get_ddqn_agent():
             if done == True:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
                 target = reward
             else:  # Non terminal, Using Q to get T is Double DQN
-                target = (reward + self.gamma * np.argmax(nst_action_predict_model)
-                          + self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)])
+                target = (reward + self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)])
 
             # self.qvalue_max.add(np.argmax(nst_predict))
             # self.qvalue_mean.add(np.mean(nst_predict))
@@ -489,8 +488,7 @@ class get_ddqn_agentp():
             if done == True:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
                 target = reward
             else:  # Non terminal, Using Q to get T is Double DQN
-                target = (reward + self.gamma * np.argmax(nst_action_predict_model)
-                          + self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)])
+                target = (reward + self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)])
 
             # self.qvalue_max.add(np.argmax(nst_predict))
             # self.qvalue_mean.add(np.mean(nst_predict))
