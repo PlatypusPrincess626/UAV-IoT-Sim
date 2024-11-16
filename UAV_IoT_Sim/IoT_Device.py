@@ -297,7 +297,7 @@ class IoT_Device:
             self.max_AoI = self.age_table[0]
             self.avg_AoI = self.age_table[0]
             for sens in range(len(self.sens_table.index) - 1):
-                self.avg_AoI = self.age_table[sens+1]
+                self.avg_AoI += self.age_table[sens+1]
                 if self.age_table[sens+1] < self.max_AoI:
                     self.max_AoI = self.age_table[sens]
             self.avg_AoI = math.ceil(self.avg_AoI / len(self.age_table))
