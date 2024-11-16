@@ -178,8 +178,6 @@ def evaluate(
                 agent.update_mem(old_state, old_action, eval_env.full_reward, eval_env.curr_state, buffer_done)
 
             ep_reward += info.get("Reward_Change")
-            if crashed:
-                ep_reward = 0
 
             if log_metrics and i == eval_episodes-1:
                 CH_Age.append([CH_Metrics[0][1], CH_Metrics[1][1], CH_Metrics[2][1],
@@ -198,7 +196,7 @@ def evaluate(
                 CHCoords.append([eval_env.chX[cluster], eval_env.chY[cluster]])
 
         if log_metrics and i == eval_episodes - 1:
-            filename = ("sens_pts2_" + curr_date_time.strftime("%d") + "_" +
+            filename = ("sens_pts0_" + curr_date_time.strftime("%d") + "_" +
                         curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
@@ -206,7 +204,7 @@ def evaluate(
                 csvwriter.writerows(SensCoords)
 
         if log_metrics and i == eval_episodes - 1:
-            filename = ("cluster_pts2_" + curr_date_time.strftime("%d") + "_" +
+            filename = ("cluster_pts0_" + curr_date_time.strftime("%d") + "_" +
                         curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
@@ -215,7 +213,7 @@ def evaluate(
 
         if log_metrics and i == eval_episodes - 1:
             print(eval_env.ch_sensors)
-            filename = ("age_metrics2_" + curr_date_time.strftime("%d") + "_" +
+            filename = ("age_metrics0_" + curr_date_time.strftime("%d") + "_" +
                         curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
@@ -223,7 +221,7 @@ def evaluate(
                 csvwriter.writerows(CH_Age)
 
         if log_metrics and i == eval_episodes - 1:
-            filename = ("data_metrics2_" + curr_date_time.strftime("%d") + "_" +
+            filename = ("data_metrics0_" + curr_date_time.strftime("%d") + "_" +
                         curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
@@ -231,7 +229,7 @@ def evaluate(
                 csvwriter.writerows(CH_Data)
 
         if log_metrics and i == eval_episodes - 1:
-            filename = ("uav_metrics2_" + curr_date_time.strftime("%d") + "_" +
+            filename = ("uav_metrics0_" + curr_date_time.strftime("%d") + "_" +
                         curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
@@ -259,9 +257,7 @@ def evaluate(
 
         if crashed:
             num_crashes += 1
-            total_reward += 0
-        else:
-            total_reward += ep_reward / (eval_env.curr_step+count)
+        total_reward += ep_reward / (eval_env.curr_step+count)
         total_steps += eval_env.curr_step
 
 
