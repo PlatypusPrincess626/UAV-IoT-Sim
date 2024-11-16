@@ -404,7 +404,7 @@ def prepopulate(agent, agent_p, prepop_steps, env):
     agent.decay_epsilon(0)
     agent_p.decay_epsilon(1)
     done_p = False
-
+    """
     while not done_p:
         env.reset()
         done = False
@@ -437,7 +437,7 @@ def prepopulate(agent, agent_p, prepop_steps, env):
             if done:
                 if len(agent_p.memory) > 64:
                     agent_p.train(64)
-
+    """
     while timestep < prepop_steps:
         env.reset()
         done = False
@@ -500,7 +500,7 @@ def run_experiment(args):
     # wandb_kwargs = {"resume": None}
     # logger = get_logger(policy_path, args, wandb_kwargs)
 
-    prepopulate(agent, agent_p, 7200, env)
+    prepopulate(agent, agent_p, 72000, env)
     mean_success_rate = RunningAverage(10)
     mean_reward = RunningAverage(10)
     mean_episode_length = RunningAverage(10)
