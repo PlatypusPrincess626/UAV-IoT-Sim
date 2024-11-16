@@ -288,7 +288,7 @@ class IoT_Device:
     def get_dest(self, state, full_sensor_list, model, model_p, step,
                  no_hold, force_change, targetType, targetSerial, _=None):
 
-        my_contribution = state[targetSerial+1][1]
+        my_contribution = state[self.headSerial + 1][1]
         if my_contribution > self.contribution:
             self.data_table[self.last_target + 1] = my_contribution
             self.age_table[self.last_target] = self.target_time
@@ -319,7 +319,7 @@ class IoT_Device:
                 action = CH
 
         if not targetType:
-            self.last_target = 0
+            self.last_target = self.headSerial
             oldest_age = self.age_table[self.last_target]
             for sens in range(self.num_sensors - 1):
                 if oldest_age < self.age_table[sens + 1]:
