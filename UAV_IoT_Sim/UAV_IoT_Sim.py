@@ -193,8 +193,11 @@ class make_env:
                     self.accum_steps += 1
                     self.accum_reward += self.curr_reward
                 if self.track_reward_p:
-                    self.accum_steps_p += 1
-                    self.accum_reward_p += self.reward2
+                    if self.terminated:
+                        self.accum_reward_p = 0
+                    else:
+                        self.accum_steps_p += 1
+                        self.accum_reward_p += self.reward2
                 self.curr_step += 1
             else:
                 self.truncated = True
