@@ -276,7 +276,7 @@ class make_env:
         rewardChange = 0 * rewardDist + 0.5 * rewardPeak + 0.5 * rewardAvgAge + 0 * rewardDataChange
 
         reward_energy = excess_energy
-        reward2Change = 0.475 * rewardPeak + 0.475 * rewardAvgAge + 0 * rewardDataChange + 0.05 * reward_energy
+        reward2Change = 0.475 * rewardPeak + 0.475 * rewardAvgAge + 0 * rewardDataChange + 0 * reward_energy
 
         if self.terminated:
             rewardChange = 0
