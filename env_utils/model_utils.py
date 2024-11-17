@@ -277,12 +277,12 @@ class get_ddqn_agent():
     def build_model(self):
         model = tf.keras.Sequential()  # linear stack of layers https://keras.io/models/sequential/
         model.add(tf.keras.layers.Input(shape=(self.nS, )))
-        model.add(tf.keras.layers.Dense(250, activation='relu'))  # [Input] -> Layer 1
+        model.add(tf.keras.layers.Dense(128, activation='relu'))  # [Input] -> Layer 1
         #   Dense: Densely connected layer https://keras.io/layers/core/
         #   24: Number of neurons
         #   input_dim: Number of input variables
         #   activation: Rectified Linear Unit (relu) ranges >= 0
-        model.add(tf.keras.layers.Dense(250, activation='relu'))  # Layer 2 -> 3
+        model.add(tf.keras.layers.Dense(128, activation='relu'))  # Layer 2 -> 3
         model.add(tf.keras.layers.Dense(self.nA, activation='linear'))  # Layer 3 -> [output]
         #   Size has to match the output (different actions)
         #   Linear activation on the last layer
@@ -371,7 +371,7 @@ class get_ddqn_agent():
         # Reshape for Keras Fit
         x_reshape = np.array(x).reshape(batch_size, self.nS)
         y_reshape = np.array(y)
-        epoch_count = 100
+        epoch_count = 10
         hist = self.model.fit(x_reshape, y_reshape, epochs=epoch_count, verbose=0)
         # Graph Losses
         for i in range(epoch_count):
@@ -417,12 +417,12 @@ class get_ddqn_agentp():
     def build_model(self):
         model = tf.keras.Sequential()  # linear stack of layers https://keras.io/models/sequential/
         model.add(tf.keras.layers.Input(shape=(self.nS, )))
-        model.add(tf.keras.layers.Dense(64, activation='relu'))  # [Input] -> Layer 1
+        model.add(tf.keras.layers.Dense(32, activation='relu'))  # [Input] -> Layer 1
         #   Dense: Densely connected layer https://keras.io/layers/core/
         #   24: Number of neurons
         #   input_dim: Number of input variables
         #   activation: Rectified Linear Unit (relu) ranges >= 0
-        model.add(tf.keras.layers.Dense(64, activation='relu'))  # Layer 2 -> 3
+        model.add(tf.keras.layers.Dense(32, activation='relu'))  # Layer 2 -> 3
         model.add(tf.keras.layers.Dense(self.nA, activation='linear'))  # Layer 3 -> [output]
         #   Size has to match the output (different actions)
         #   Linear activation on the last layer
@@ -515,7 +515,7 @@ class get_ddqn_agentp():
         # Reshape for Keras Fit
         x_reshape = np.array(x).reshape(batch_size, self.nS)
         y_reshape = np.array(y)
-        epoch_count = 100
+        epoch_count = 10
         hist = self.model.fit(x_reshape, y_reshape, epochs=epoch_count, verbose=0)
         # Graph Losses
         for i in range(epoch_count):
