@@ -285,7 +285,7 @@ class IoT_Device:
         else:
             return 0
 
-    def get_dest(self, state, full_sensor_list, model, model_p, step,
+    def get_dest(self, state, full_sensor_list, model, model_p, step, p_count,
                  no_hold, force_change, targetType, targetSerial, _=None):
 
         my_contribution = state[self.headSerial + 1][1]
@@ -305,10 +305,10 @@ class IoT_Device:
             state[self.headSerial + 1][3] = self.avg_AoI
 
         decision_state = copy.deepcopy(state)
-        decision_state[0][2] = state[0][2] + round(self.action_p * 6_800_000 / (self.charge_rate * 60))
+        decision_state[0][2] = state[0][2] + round(p_count * 6_800_000 / (self.charge_rate * 60))
         for CH in range(len(state) - 1):
-            decision_state[CH+1][2] = state[CH+1][2] + self.action_p
-            decision_state[CH+1][3] = state[CH+1][3] + self.action_p
+            decision_state[CH+1][2] = state[CH+1][2] + p_count
+            decision_state[CH+1][3] = state[CH+1][3] + p_count
 
         action = 0
         out_state = copy.deepcopy(state)
@@ -368,7 +368,7 @@ class IoT_Device:
             #
             # for sens in range(5):
             #     CHstate[sens + 1][0], CHstate[sens + 1][1], CHstate[sens + 1][2] = \
-            #         (oldest_indx[sens], self.data_table[oldest_indx[sens]], (step - oldest_age[sens] + self.action_p))
+            #         (oldest_indx[sens], self.data_table[oldest_indx[sens]], (step - oldest_age[sens] + p_count))
             #
             # for sens in range(5):
             #     decision_state[sens - 5] = CHstate[sens]
@@ -421,8 +421,8 @@ class IoT_Device:
                 AoI_peak = AoI
         AoI_avg = math.ceil(AoI_avg / len(full_sensor_list))
 
-        p_state = [d_to_targ, state[0][2] + round(self.action_p * 6_800_000 / (self.charge_rate * 60)),
-                   AoI_peak + self.action_p, AoI_avg + self.action_p]
+        p_state = [d_to_targ, state[0][2] + round(p_count * 6_800_000 / (self.charge_rate * 60)),
+                   AoI_peak + p_count, AoI_avg + p_count]
         # Value from 0 to 30
         self.action_p = model_p.act(p_state)
 

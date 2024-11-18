@@ -328,7 +328,7 @@ class QuadUAV:
             self.force_change = False
             # True, True, sensor, CHstate, action, action_p
             used_model, changed_transit, dest, state, action, action_p, p_state = \
-                self.target.get_dest(self.state, self.full_sensor_list, model, model_p, step,
+                self.target.get_dest(self.state, self.full_sensor_list, model, model_p, step, self.p_count,
                                      self.no_hold, self.force_change, targetType, self.targetSerial)
 
             self.p_cycle -= 1
