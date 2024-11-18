@@ -164,7 +164,7 @@ class make_env:
                         train_model = True
                         self.full_reward = self.accum_reward / max(self.accum_steps, 1)
 
-                    self.curr_state = uav.state
+                    self.curr_state = state
                     self.last_action = action
                     self.terminated = uav.crash
                     self.curr_pstate = p_state
