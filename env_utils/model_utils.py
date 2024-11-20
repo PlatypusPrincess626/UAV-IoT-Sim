@@ -277,12 +277,12 @@ class get_ddqn_agent():
     def build_model(self):
         model = tf.keras.Sequential()  # linear stack of layers https://keras.io/models/sequential/
         model.add(tf.keras.layers.Input(shape=(self.nS, )))
-        model.add(tf.keras.layers.Dense(192, activation='relu'))  # [Input] -> Layer 1
+        model.add(tf.keras.layers.Dense(96, activation='relu'))  # [Input] -> Layer 1
         #   Dense: Densely connected layer https://keras.io/layers/core/
         #   24: Number of neurons
         #   input_dim: Number of input variables
         #   activation: Rectified Linear Unit (relu) ranges >= 0
-        model.add(tf.keras.layers.Dense(192, activation='relu'))  # Layer 2 -> 3
+        model.add(tf.keras.layers.Dense(32, activation='relu'))  # Layer 2 -> 3
         model.add(tf.keras.layers.Dense(self.nA, activation='softmax'))  # Layer 3 -> [output]
         #   Size has to match the output (different actions)
         #   Linear activation on the last layer
@@ -417,12 +417,12 @@ class get_ddqn_agentp():
     def build_model(self):
         model = tf.keras.Sequential()  # linear stack of layers https://keras.io/models/sequential/
         model.add(tf.keras.layers.Input(shape=(self.nS, )))
-        model.add(tf.keras.layers.Dense(48, activation='relu'))  # [Input] -> Layer 1
+        model.add(tf.keras.layers.Dense(2, activation='relu'))  # [Input] -> Layer 1
         #   Dense: Densely connected layer https://keras.io/layers/core/
         #   24: Number of neurons
         #   input_dim: Number of input variables
         #   activation: Rectified Linear Unit (relu) ranges >= 0
-        model.add(tf.keras.layers.Dense(48, activation='relu'))  # Layer 2 -> 3
+        model.add(tf.keras.layers.Dense(8, activation='relu'))  # Layer 2 -> 3
         model.add(tf.keras.layers.Dense(self.nA, activation='softmax'))  # Layer 3 -> [output]
         #   Size has to match the output (different actions)
         #   Linear activation on the last layer
