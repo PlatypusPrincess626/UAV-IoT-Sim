@@ -6,7 +6,6 @@ import numpy as np
 
 class QuadUAV:
     def __init__(self, X: int, Y: int, long: float, lat: float, uavNum: int, CHList: list):
-        self.action = None
         self.type = 3
         self.serial = uavNum
         self.typeStr = "UAV"
@@ -280,7 +279,6 @@ class QuadUAV:
             self.stored_energy += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
             excess_percent = (self.stored_energy / (self.max_energy*1_000))
             if self.stored_energy > self.max_energy * 1_000:
-                excess_percent = 0
                 self.stored_energy = self.max_energy * 1_000
 
             self.energy_harvested += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
@@ -288,12 +286,9 @@ class QuadUAV:
 
         return excess_percent
 
-    def set_dest(self, model, model_p, step, _=None):
+    def set_dest(self, model, step, _=None, changed_transit=None):
         train_model = False
         used_model = False
-        train_p = False
-        action_p = 0
-        p_state = [0, 0, 0, 0]
 
         if self.targetHead is not None:
             self.last_Head = self.targetHead.headSerial
@@ -327,82 +322,73 @@ class QuadUAV:
 
             self.force_change = False
             # True, True, sensor, CHstate, action, action_p
-            used_model, changed_transit, dest, state, action, action_p, p_state = \
-                self.target.get_dest(self.state, self.full_sensor_list, model, model_p, step, self.p_count,
-                                     self.no_hold, self.force_change, targetType, self.targetSerial)
-
-            self.p_cycle -= 1
-            self.action = action
-            if action_p < self.p_count:
-                self.p_count = math.ceil((self.p_count + action_p) / 2)
-
-            if changed_transit and self.p_count < 1.0:
-                self.p_cycle = 0
-
-            if self.model_transit and changed_transit:
-                train_model = True
-                self.model_transit = False
-
-            if self.is_charging and self.p_count < 1.0:
-                self.is_charging = False
+            used_model, dest, state, action = self.target.get_dest(self.state, self.full_sensor_list, model,
+                                    step, self.p_count, self.force_change, targetType, self.targetSerial)
 
             if self.h == 0:
                 self.p_count -= 1
 
-            if self.p_cycle < 1.0 and self.p_count < 1.0:
-                self.p_cycle = 30
-                self.p_count = action_p
-                train_p = True
-                used_model = False
+            if self.model_transit:
+                train_model = True
+                self.model_transit = False
+
+            if self.is_charging and self.p_count <= 0:
+                train_model = True
+                self.is_charging = False
+
+            '''
+            Check action for charging
+            '''
+            if action > len(self.state)-1 and not self.is_charging:
+                self.p_count = (action - 4) * 4
                 self.is_charging = True
                 self.target = self.target
-                return (train_model, used_model, train_p, state, action, action_p, p_state,
+                return (train_model, used_model, state, action,
                         self.step_comms_cost, self.step_move_cost, self.energy_harvested)
+
+            elif action > len(self.state)-1:
+                if (action - 4) * 4 < self.p_count:
+                    self.p_count = (action - 4) * 4
+                    self.target = self.target
+                    return (train_model, used_model, state, action,
+                            self.step_comms_cost, self.step_move_cost, self.energy_harvested)
+                else:
+                    used_model = False
+                    self.target = self.target
+                    return (train_model, used_model, state, action,
+                            self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
             elif self.is_charging:
                 used_model = False
                 self.target = self.target
-                return (train_model, used_model, train_p, state, action, action_p, p_state,
+                return (train_model, used_model, state, action,
                         self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
             else:
-                self.no_hold = True
+                '''
+                Default to setting trajectory
+                '''
                 self.is_charging = False
                 if used_model:
                     self.model_transit = True
 
                 if dest.type == 1:
-                    self.force_count += 1
-
-                    if self.force_count > 30:
-                        self.force_change = True
-
                     self.target = dest
                     self.targetX = dest.indX
                     self.targetY = dest.indY
 
-                    return (train_model, used_model, train_p, state, action, action_p, p_state,
+                    return (train_model, used_model, state, action,
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
                 else:
-                    if dest.headSerial == self.targetSerial and self.inRange:
-                        self.force_count += 1
-
-                    elif self.force_change and dest.headSerial != self.targetSerial:
-                        self.force_change = False
-                        self.force_count = 0
-
-                    if self.force_count > 30:
-                        self.force_change = True
-
                     self.target = dest
                     self.targetHead = dest
                     self.targetSerial = self.targetHead.headSerial
                     self.targetX = dest.indX
                     self.targetY = dest.indY
-                    return (train_model, used_model, train_p, state, action, action_p,  p_state,
+                    return (train_model, used_model, state, action,
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
-        return (train_model, used_model, train_p, self.state, self.targetHead.headSerial, action_p,  p_state,
+        return (train_model, used_model, self.state, self.targetHead.headSerial,
                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 

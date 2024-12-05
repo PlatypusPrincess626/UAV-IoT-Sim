@@ -7,15 +7,17 @@ from UAV_IoT_Sim import Environment, IoT_Device, UAV
 
 class make_env:
     def __init__(
-        self,
-        scene: str = "test",
-        num_sensors: int = 50,
-        num_ch: int = 5,
-        num_uav: int = 1,
-        max_num_steps: int = 720
+            self,
+            scene: str = "test",
+            num_sensors: int = 50,
+            num_ch: int = 5,
+            num_uav: int = 1,
+            max_num_steps: int = 720
     ):
         self.scene = scene
         self._env = Environment.sim_env(scene, num_sensors, num_uav, num_ch, max_num_steps)
+        self.seed = self._env.seed
+
         self.sensX = self._env.xPts
         self.sensY = self._env.yPts
         self.chX = self._env.chX
@@ -28,26 +30,22 @@ class make_env:
         self._num_uav = num_uav
         self._max_steps = max_num_steps
         self.dims = self._env.dim
-        
+
         self.curr_step = 0
         self.last_action = 0
         self.archived_action = 0
-        self.archived_paction = 0
 
-        self.full_reward = 0.0
-        self.full_reward2 = 0.0
-        self.accum_reward = 0.0
-        self.accum_reward_p = 0.0
+        self.full_reward = [0, 0, 0, 0]
+        self.accum_reward = [0, 0, 0, 0]
         self.accum_steps = 0.0
-        self.accum_steps_p = 0.0
+
         self.track_reward = False
         self.track_reward_p = False
         self.total_average = 0
 
-        self.curr_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
-        self.archived_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
-        self.curr_pstate = [0, 0, 0, 0]
-        self.archived_pstate = [0, 0, 0, 0]
+        self.curr_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 3)]
+        self.archived_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 3)]
+        self.raw_reward = [0, 0, 0, 0]
 
         self.ch_sensors = [0 for _ in range(self.num_ch)]
         for CH in range(self.num_ch):
@@ -57,12 +55,12 @@ class make_env:
         self.reward2 = 0
         self.curr_info = {
             "Last_Action": None,
-            "Reward_Change": 0.0,          # -> Change in reward at step
-            "Avg_Age": 0.0,               # -> avgAoI
-            "Peak_Age": 0.0,              # -> peakAoI
-            "Data_Distribution": 0.0,     # -> Distribution of Data
-            "Total_Data_Change": 0.0,      # -> Change in Total Data
-            "Total_Data": 0.0,            # -> Total Data
+            "Reward_Change": 0.0,  # -> Change in reward at step
+            "Avg_Age": 0.0,  # -> avgAoI
+            "Peak_Age": 0.0,  # -> peakAoI
+            "Data_Distribution": 0.0,  # -> Distribution of Data
+            "Total_Data_Change": 0.0,  # -> Change in Total Data
+            "Total_Data": 0.0,  # -> Total Data
             "Crashed": False,
             "Truncated": False
         }
@@ -71,7 +69,7 @@ class make_env:
         self.truncated = False
         self.terminated = False
         self._curr_total_data = 0
-    
+
     def reset(self):
         if self.scene == "test":
             for sensor in range(self._num_sensors):
@@ -84,35 +82,31 @@ class make_env:
 
             self.curr_step = 0
             self.last_action = 0
-            self.archived_paction = 0
             self.archived_action = 0
 
-            self.full_reward = 0.0
-            self.full_reward2 = 0.0
-            self.accum_reward = 0.0
-            self.accum_reward_p = 0.0
+            self.full_reward = [0, 0, 0, 0]
+            self.accum_reward = [0, 0, 0, 0]
             self.accum_steps = 0.0
-            self.accum_steps_p = 0.0
+
             self.track_reward = False
             self.track_reward_p = False
             self.total_average = 0
 
-            self.curr_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
-            self.archived_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
-            self.curr_pstate = [0, 0, 0, 0]
-            self.archived_pstate = [0, 0, 0, 0]
+            self.curr_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 3)]
+            self.archived_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 3)]
+            self.raw_reward = [0, 0, 0, 0]
 
             self.curr_reward = 0
             self.reward2 = 0
             self.curr_info = {
                 "Last_Action": None,
-                "Reward_Change": 0.0,          # -> Change in reward at step
-                "Avg_Age": 0.0,               # -> avgAoI
-                "Peak_Age": 0.0,              # -> peakAoI
-                "Data_Distribution": 0.0,     # -> Distribution of Data
-                "Total_Data_Change": 0.0,      # -> Change in Total Data
-                "Total_Data": 0.0,            # -> Total Data
-                "Crashed": False, 
+                "Reward_Change": 0.0,  # -> Change in reward at step
+                "Avg_Age": 0.0,  # -> avgAoI
+                "Peak_Age": 0.0,  # -> peakAoI
+                "Data_Distribution": 0.0,  # -> Distribution of Data
+                "Total_Data_Change": 0.0,  # -> Change in Total Data
+                "Total_Data": 0.0,  # -> Total Data
+                "Crashed": False,
                 "Truncated": False
             }
 
@@ -120,23 +114,20 @@ class make_env:
             self.terminated = False
             self._curr_total_data = 0
             return self._env
-    
+
     def step(self, model, model_p):
         train_model = False
-        train_p = False
-        old_paction = 0
         excess_energy = 1.0
         old_action = 0
         comms, move, harvest = 0, 0, 0
-        old_pstate = [0, 0, 0, 0]
         self.reward2 = 0
         self.total_average = 0
 
-        old_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
+        old_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 3)]
 
         if not self.terminated:
             if self.curr_step < self._max_steps:
-                x = self.curr_step/60 + 2
+                x = self.curr_step / 60 + 2
                 alpha = abs(104 - 65 * x + 47 * pow(x, 2) - 12 * pow(x, 3) + pow(x, 4))
 
                 for sens in range(self._num_sensors):
@@ -150,7 +141,7 @@ class make_env:
 
                 for uav in range(self._num_uav):
                     uav = self._env.UAVTable.iat[uav, 0]
-                    train_model, used_model, train_p, state, action, action_p, p_state, comms, move, harvest = (
+                    train_model, used_model, state, action, comms, move, harvest = (
                         uav.set_dest(model, model_p, self.curr_step))
                     uav.navigate_step(self._env)
                     self.uavX = uav.indX
@@ -160,74 +151,62 @@ class make_env:
                     excess_energy = uav.receive_energy()
 
                     # train_model = True
-                    if train_model or train_model2:
-                        train_model = True
-                        self.full_reward = self.accum_reward / max(self.accum_steps, 1)
+                    if train_model:
+                        self.full_reward = [self.accum_reward[1] / max(self.accum_steps, 1),
+                                         self.accum_reward[2] / max(self.accum_steps, 1),
+                                         self.accum_reward[3] / max(self.accum_steps, 1)]
+                        self.accum_reward = [0, 0, 0, 0]
 
-                    self.curr_state = uav.state
+                    self.reward(excess_energy)
+                    self.curr_state = state
+
                     self.last_action = action
                     self.terminated = uav.crash
-                    self.curr_pstate = p_state
 
                     old_state = self.archived_state
                     old_action = self.archived_action
-                    old_pstate = self.archived_pstate
-                    old_paction = self.archived_paction
-
-                    if train_p:
-                        if self.curr_step < 15:
-                            train_p = False
-                        else:
-                            self.full_reward2 = self.accum_reward_p / max(self.accum_steps_p, 1)
-                        self.archived_pstate = p_state
-                        self.archived_paction = action_p
-                        self.track_reward_p = True
 
                     if used_model:
-                        self.archived_state = state
+                        self.archived_state = self.curr_state
                         self.archived_action = action
                         self.track_reward = True
 
-                self.reward(excess_energy)
                 if self.track_reward:
                     self.accum_steps += 1
-                    self.accum_reward += self.curr_reward
-                if self.track_reward_p:
-                    if self.terminated:
-                        self.accum_reward_p = 0
-                    else:
-                        self.accum_steps_p += 1
-                        self.accum_reward_p += self.reward2
+                    self.accum_reward = [0, self.accum_reward[1] + self.raw_reward[1],
+                                         self.accum_reward[2] + self.raw_reward[2],
+                                         self.accum_reward[3] + self.raw_reward[3]]
                 self.curr_step += 1
+
             else:
                 self.truncated = True
-                self.curr_info={
+                self.curr_info = {
                     "Last_Action": self.last_action,
-                    "Reward_Change": 0,        # -> Change in reward at step
-                    "Avg_Age": 0,                   # -> avgAoI
-                    "Peak_Age": 0,                 # -> peakAoI
-                    "Data_Distribution": 0,     # -> Distribution of Data
-                    "Total_Data_Change": 0,      # -> Change in Total Data
-                    "Total_Data": self._curr_total_data, # -> Total Data
-                    "Crashed": self.terminated,         # -> True if UAV is crashed
-                    "Truncated": self.truncated         # -> Max episode steps reached
+                    "Reward_Change": 0,  # -> Change in reward at step
+                    "Avg_Age": 0,  # -> avgAoI
+                    "Peak_Age": 0,  # -> peakAoI
+                    "Data_Distribution": 0,  # -> Distribution of Data
+                    "Total_Data_Change": 0,  # -> Change in Total Data
+                    "Total_Data": self._curr_total_data,  # -> Total Data
+                    "Crashed": self.terminated,  # -> True if UAV is crashed
+                    "Truncated": self.truncated  # -> Max episode steps reached
                 }
         else:
             self.curr_reward = 0
             self.reward2 = 0
             self.curr_info = {
                 "Last_Action": self.last_action,
-                "Reward_Change": 0,        # -> Change in reward at step
-                "Avg_Age": 0,                   # -> avgAoI
-                "Peak_Age": 0,                 # -> peakAoI
-                "Data_Distribution": 0,     # -> Distribution of Data
-                "Total_Data_Change": 0,      # -> Change in Total Data
-                "Total_Data": self._curr_total_data, # -> Total Data
-                "Crashed": self.terminated,         # -> True if UAV is crashed
-                "Truncated": self.truncated         # -> Max episode steps reached
+                "Reward_Change": 0,  # -> Change in reward at step
+                "Avg_Age": 0,  # -> avgAoI
+                "Peak_Age": 0,  # -> peakAoI
+                "Data_Distribution": 0,  # -> Distribution of Data
+                "Total_Data_Change": 0,  # -> Change in Total Data
+                "Total_Data": self._curr_total_data,  # -> Total Data
+                "Crashed": self.terminated,  # -> True if UAV is crashed
+                "Truncated": self.truncated  # -> Max episode steps reached
             }
 
-        return train_model, train_p, old_state, old_action, old_paction, old_pstate, comms, move, harvest
+        return train_model, old_state, old_action, comms, move, harvest
 
     def reward(self, excess_energy):
         '''
@@ -251,7 +230,7 @@ class make_env:
             if age < minAge:
                 minAge = age
         avgAge = float(self.total_average) / float(self.num_ch)
-       
+
         dataChange = 0
         maxColl = 0.0
         minColl = 1.0
@@ -267,7 +246,7 @@ class make_env:
             else:
                 dataChange = max(0, self.curr_state[index][1] - self._curr_total_data)
                 self._curr_total_data += abs(round(dataChange))
-        
+
         distOffset = maxColl - minColl
 
         age_threshold = 120
@@ -284,18 +263,20 @@ class make_env:
         if self.terminated:
             rewardChange = -5
             reward2Change = -5
-        
+
         self.curr_info = {
             "Last_Action": self.last_action,
-            "Reward_Change": rewardChange,        # -> Change in reward at step
-            "Avg_Age": avgAge,                   # -> avgAoI
-            "Peak_Age": peakAge,                 # -> peakAoI
-            "Data_Distribution": distOffset,     # -> Distribution of Data
-            "Total_Data_Change": dataChange,      # -> Change in Total Data
-            "Total_Data": self._curr_total_data, # -> Total Data
-            "Crashed": self.terminated,         # -> True if UAV is crashed
-            "Truncated": self.truncated         # -> Max episode steps reached
+            "Reward_Change": rewardChange,  # -> Change in reward at step
+            "Avg_Age": avgAge,  # -> avgAoI
+            "Peak_Age": peakAge,  # -> peakAoI
+            "Data_Distribution": distOffset,  # -> Distribution of Data
+            "Total_Data_Change": dataChange,  # -> Change in Total Data
+            "Total_Data": self._curr_total_data,  # -> Total Data
+            "Crashed": self.terminated,  # -> True if UAV is crashed
+            "Truncated": self.truncated  # -> Max episode steps reached
         }
-        
+
         self.curr_reward = rewardChange
         self.reward2 = reward2Change
+
+        self.raw_reward = [0, rewardPeak, rewardAvgAge, reward_energy]
