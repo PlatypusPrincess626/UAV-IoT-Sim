@@ -308,7 +308,7 @@ class IoT_Device:
         target = targetSerial
         model_help = True
         change_transit = False
-        out_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 3)]
+        out_state = [[0, 0, 0, 0] for _ in range(len(full_sensor_list) + 3)]
         out_state[0:(len(full_sensor_list)+1)]
 
         average_dist = 0
@@ -366,7 +366,7 @@ class IoT_Device:
                     (1 - (AoI_avg + p_count) / (0.5 * age_threshold)),
                     ((state[0][2] + round(p_count * 6_800_000 / (self.charge_rate * 60))) / (self.max_energy*1_000))]
 
-            decision_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 3)]
+            decision_state = [[0, 0, 0, 0] for _ in range(len(full_sensor_list) + 3)]
             decision_state[0:(len(state)+1)]  = state_copy
             decision_state[(len(state)+1)]    = p_state
             decision_state[-1]              = expt_rwd
