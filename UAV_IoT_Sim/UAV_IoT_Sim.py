@@ -141,8 +141,7 @@ class make_env:
 
                 for uav in range(self._num_uav):
                     uav = self._env.UAVTable.iat[uav, 0]
-                    train_model, used_model, state, action, comms, move, harvest = (
-                        uav.set_dest(model, model_p, self.curr_step))
+                    train_model, used_model, state, action, comms, move, harvest = uav.set_dest(model, self.curr_step)
                     uav.navigate_step(self._env)
                     self.uavX = uav.indX
                     self.uavY = uav.indY
