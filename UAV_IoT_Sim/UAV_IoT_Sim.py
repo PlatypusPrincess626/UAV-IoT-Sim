@@ -115,7 +115,7 @@ class make_env:
             self._curr_total_data = 0
             return self._env
 
-    def step(self, model, model_p):
+    def step(self, model):
         train_model = False
         excess_energy = 1.0
         old_action = 0
