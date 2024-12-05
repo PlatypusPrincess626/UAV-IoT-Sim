@@ -309,7 +309,7 @@ class IoT_Device:
         model_help = True
         change_transit = False
         out_state = [[0, 0, 0, 0] for _ in range(len(full_sensor_list) + 3)]
-        out_state[0:(len(full_sensor_list)+1)]
+        out_state[0:(len(full_sensor_list)+1)] = state
 
         average_dist = 0
         for CH in range(len(full_sensor_list) - 1):

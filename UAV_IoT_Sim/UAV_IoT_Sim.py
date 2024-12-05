@@ -1,4 +1,6 @@
 # Dependecies to Import
+import copy
+
 import pandas as pd
 
 # Simulation Files to Import
@@ -157,7 +159,8 @@ class make_env:
                         self.accum_reward = [0, 0, 0, 0]
 
                     self.reward(excess_energy)
-                    self.curr_state = state
+                    self.curr_state = copy.deepcopy(state)
+                    self.curr_state[-1] = self.curr_reward
 
                     self.last_action = action
                     self.terminated = uav.crash
@@ -218,7 +221,7 @@ class make_env:
         peakAge = 0
         minAge = self.curr_step
 
-        for index in range(len(self.curr_state) - 1):
+        for index in range(len(self.curr_state) - 3):
             age = self.curr_state[index + 1][2]
             # age = self.curr_step - self.curr_state[index + 1][2]
             # if age > self._aoi_threshold:
@@ -235,7 +238,7 @@ class make_env:
         minColl = 1.0
         index: int
 
-        for index in range(len(self.curr_state)):
+        for index in range(len(self.curr_state) - 2):
             if index > 0:
                 val = self.curr_state[index][1] / (max(self._curr_total_data, 1))
                 if val > maxColl:

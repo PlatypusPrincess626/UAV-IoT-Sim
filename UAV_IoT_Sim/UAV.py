@@ -389,6 +389,6 @@ class QuadUAV:
                     return (train_model, used_model, state, action,
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
-        return (train_model, used_model, self.state, self.targetHead.headSerial,
+        return (train_model, used_model, [self.state, [0, 0, 0, 0], [0, 0, 0, 0]], self.targetHead.headSerial,
                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
