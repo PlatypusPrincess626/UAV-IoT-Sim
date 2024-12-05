@@ -389,6 +389,9 @@ class QuadUAV:
                     return (train_model, used_model, state, action,
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
-        return (train_model, used_model, [self.state, [0, 0, 0, 0], [0, 0, 0, 0]], self.targetHead.headSerial,
+        out_state = [[0, 0, 0, 0] for _ in range(len(self.full_sensor_list) + 3)]
+        out_state[0:(len(self.full_sensor_list)+1)] = self.state
+
+        return (train_model, used_model, out_state, self.targetHead.headSerial,
                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
