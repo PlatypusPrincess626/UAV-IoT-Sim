@@ -344,7 +344,7 @@ class get_ddqn_agent():
             if done:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
                 target = np.array(reward).mean()
             else:  # Non terminal, Using Q to get T is Double DQN
-                target = (np.array(reward).mean() +
+                target = ((np.array([0.45, 0.45, 0.1]) @ np.array(reward)) +
                           self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)])
 
             target_f = st_predict[index]
