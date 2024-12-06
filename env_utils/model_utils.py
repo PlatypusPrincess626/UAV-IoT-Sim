@@ -248,7 +248,7 @@ class get_gann_agent:
 
 class get_ddqn_agent():
     def __init__(self, env, nS, nA, epsilon_i=1.0, epsilon_f=0.0, n_epsilon=0.9,
-                 alpha=0.5, gamma=0.95, epsilon=0.5, epsilon_min=0.1, epsilon_decay=0.01):
+                 alpha=0.001, gamma=0.95, epsilon=0.5, epsilon_min=0.1, epsilon_decay=0.01):
         # ADF 2.0
         self.nS = nS
         self.nA = nA
@@ -272,12 +272,12 @@ class get_ddqn_agent():
     def build_model(self):
         model = tf.keras.Sequential()  # linear stack of layers https://keras.io/models/sequential/
         model.add(tf.keras.layers.Input(shape=(self.nS, )))
-        model.add(tf.keras.layers.Dense(96, activation='relu'))  # [Input] -> Layer 1
+        model.add(tf.keras.layers.Dense(256, activation='relu'))  # [Input] -> Layer 1
         #   Dense: Densely connected layer https://keras.io/layers/core/
         #   24: Number of neurons
         #   input_dim: Number of input variables
         #   activation: Rectified Linear Unit (relu) ranges >= 0
-        model.add(tf.keras.layers.Dense(32, activation='relu'))  # Layer 2 -> 3
+        model.add(tf.keras.layers.Dense(256, activation='relu'))  # Layer 2 -> 3
         model.add(tf.keras.layers.Dense(self.nA, activation='softmax'))  # Layer 3 -> [output]
         #   Size has to match the output (different actions)
         #   Linear activation on the last layer
