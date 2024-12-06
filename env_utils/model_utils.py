@@ -247,7 +247,7 @@ class get_gann_agent:
 
 
 class get_ddqn_agent():
-    def __init__(self, env, nS, nA, epsilon_i=1.0, epsilon_f=0.0, n_epsilon=0.1,
+    def __init__(self, env, nS, nA, epsilon_i=1.0, epsilon_f=0.0, n_epsilon=0.99,
                  alpha=0.5, gamma=0.95, epsilon=0.5, epsilon_min=0.1, epsilon_decay=0.01):
         # ADF 2.0
         self.nS = nS
