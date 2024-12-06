@@ -160,7 +160,8 @@ class make_env:
 
                     self.reward(excess_energy)
                     self.curr_state = copy.deepcopy(state)
-                    self.curr_state[-1] = self.raw_reward
+                    if self.curr_state[-1] == [0, 0, 0, 0]:
+                        self.curr_state[-1] = self.raw_reward
 
                     self.last_action = action
                     self.terminated = uav.crash
