@@ -283,7 +283,7 @@ def train(
 
         if timestep % eval_frequency == 0:
             sr, ret, length, avgAoI, peakAoI, dataDist, dataColl, CH_Metrics, \
-                comms, move, harvest = evaluate(agent, env, eval_episodes)
+                comms, move, harvest = evaluate(agent, env, eval_episodes, False)
 
         print(
             f"Training Steps: {timestep}, Env: {env_str}, Sucess Rate: {sr:.2f}, Return: {ret:.2f}, Episode Length: {length:.2f}"
@@ -323,7 +323,7 @@ def prepopulate(agent, prepop_steps, env):
         while not done:
             print(f"Prepop Step: {timestep}")
             train_model, old_state, old_action, comms, move, harvest = env.step(agent)
-            buffer_done = env.terminated
+            buffer_done = env.terminatedb
 
             if buffer_done or env.truncated:
                 done = True
