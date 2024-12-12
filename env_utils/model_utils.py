@@ -283,7 +283,7 @@ class get_ddqn_agent():
         #   Size has to match the output (different actions)
         #   Linear activation on the last layer
         model.compile(loss='Huber',
-                      optimizer=tf.keras.optimizers.Nadam(learning_rate=self.alpha))
+                      optimizer=tf.keras.optimizers.Adam(learning_rate=self.alpha))
         return model
 
     def decay_epsilon(self, n):
