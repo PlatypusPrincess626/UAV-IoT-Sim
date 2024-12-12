@@ -107,8 +107,7 @@ class sim_env:
             self.numObst = 500                # Number of obstacles decided
             self.stepSize = 'min'               # Frequency of time steps
             self.times = pd.date_range('2021-01-01 8:00', freq=self.stepSize, periods=max_num_steps, tz="MST")
-            self.seed = '2021-01-01 8:00'
-            random.seed(self.seed)
+            random.seed('2021-01-01 8:00')
             
             
         self.envMap = self.makeMap()    

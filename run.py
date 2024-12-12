@@ -440,8 +440,7 @@ def prepopulate(agent, agent_p, prepop_steps, env):
 
         while not done:
             print(f"Prepop Step: {timestep}")
-            train_model, train_p, old_state, old_action, action_p, old_pstate, comms, move, harvest = env.step(agent,
-                                                                                                               agent_p)
+            train_model, train_p, old_state, old_action, action_p, old_pstate, comms, move, harvest = env.step(agent,                                                                                                 agent_p)
             buffer_done = env.terminated
 
             if buffer_done or env.truncated:
