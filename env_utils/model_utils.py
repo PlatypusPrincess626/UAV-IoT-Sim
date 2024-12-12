@@ -282,7 +282,8 @@ class get_ddqn_agent():
         model.add(tf.keras.layers.Dense(self.nA, activation='softmax'))  # Layer 3 -> [output]
         #   Size has to match the output (different actions)
         #   Linear activation on the last layer
-        model.compile(loss='Tversky',  # Loss function: Mean Squared Error
+        model.compile(loss=tf.keras.losses.Tversky(alpha=0.5, beta=0.5, reduction="sum_over_batch_size",
+                                                name="tversky", dtype=None),  # Loss function: Mean Squared Error
                       optimizer=tf.keras.optimizers.Nadam(
                           learning_rate=self.alpha))  # Optimaizer: Adam (Feel free to check other options)
         return model
