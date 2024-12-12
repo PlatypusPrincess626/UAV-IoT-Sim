@@ -247,8 +247,8 @@ class get_gann_agent:
 
 
 class get_ddqn_agent():
-    def __init__(self, env, nS, nA, epsilon_i=1.0, epsilon_f=0.0, n_epsilon=0.9,
-                 alpha=0.001, gamma=0.95, epsilon=0.5, epsilon_min=0.1, epsilon_decay=0.01):
+    def __init__(self, env, nS, nA, epsilon_i=1.0, epsilon_f=0.0, n_epsilon=0.1,
+                 alpha=0.5, gamma=0.95, epsilon=0.5, epsilon_min=0.1, epsilon_decay=0.01):
         # ADF 2.0
         self.nS = nS
         self.nA = nA
@@ -272,18 +272,18 @@ class get_ddqn_agent():
     def build_model(self):
         model = tf.keras.Sequential()  # linear stack of layers https://keras.io/models/sequential/
         model.add(tf.keras.layers.Input(shape=(self.nS, )))
-        model.add(tf.keras.layers.Dense(128, activation='relu'))  # [Input] -> Layer 1
+        model.add(tf.keras.layers.Dense(96, activation='relu'))  # [Input] -> Layer 1
         #   Dense: Densely connected layer https://keras.io/layers/core/
         #   24: Number of neurons
         #   input_dim: Number of input variables
         #   activation: Rectified Linear Unit (relu) ranges >= 0
-        model.add(tf.keras.layers.Dense(128, activation='relu'))  # Layer 2 -> 3
-        model.add(tf.keras.layers.Dense(128, activation='relu'))  # Layer 2 -> 3
+        model.add(tf.keras.layers.Dense(32, activation='relu'))  # Layer 2 -> 3
         model.add(tf.keras.layers.Dense(self.nA, activation='softmax'))  # Layer 3 -> [output]
         #   Size has to match the output (different actions)
         #   Linear activation on the last layer
-        model.compile(loss='Huber',
-                      optimizer=tf.keras.optimizers.Adam(learning_rate=self.alpha))
+        model.compile(loss='mean_squared_error',  # Loss function: Mean Squared Error
+                      optimizer=tf.keras.optimizers.Adam(
+                          learning_rate=self.alpha))  # Optimaizer: Adam (Feel free to check other options)
         return model
 
     def decay_epsilon(self, n):
@@ -344,7 +344,7 @@ class get_ddqn_agent():
             if done:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
                 target = np.array(reward).mean()
             else:  # Non terminal, Using Q to get T is Double DQN
-                target = ((np.array([0.45, 0.45, 0.1]) @ np.array(reward)) +
+                target = (np.array(reward).mean() +
                           self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)])
 
             target_f = st_predict[index]

@@ -332,7 +332,7 @@ class QuadUAV:
                 train_model = True
                 self.model_transit = False
 
-            if self.is_charging and (self.p_count <= 0 or self.state[0][2] >= 6_800_000):
+            if self.is_charging and self.p_count <= 0:
                 train_model = True
                 self.is_charging = False
 

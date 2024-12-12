@@ -372,8 +372,6 @@ class IoT_Device:
             decision_state[-1]              = expt_rwd
 
             action = model.act(decision_state)
-            if state[0][2] >= 6_800_000 and action > 4:
-                action = min(random.randint(0, 4), model.act(decision_state))
             out_state = decision_state
 
         return model_help, target, out_state, action
