@@ -282,7 +282,7 @@ class get_ddqn_agent():
         model.add(tf.keras.layers.Dense(self.nA, activation='softmax'))  # Layer 3 -> [output]
         #   Size has to match the output (different actions)
         #   Linear activation on the last layer
-        model.compile(loss=tf.keras.losses.CTC(reduction='sum_over_batch_size', name='ctc'),
+        model.compile(loss='Huber',
                       optimizer=tf.keras.optimizers.Nadam(learning_rate=self.alpha))
         return model
 
