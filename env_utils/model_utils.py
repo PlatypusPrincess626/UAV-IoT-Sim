@@ -287,8 +287,8 @@ class get_ddqn_agent():
         model.add(tf.keras.layers.Dense(self.nA, activation='tanh'))  # Layer 3 -> [output]
         #   Size has to match the output (different actions)
         #   Linear activation on the last layer
-        model.compile(loss='Huber',  # Loss function: Mean Squared Error
-                      optimizer=tf.keras.optimizers.Nadam(
+        model.compile(loss='mean_squared_error',  # Loss function: Mean Squared Error
+                      optimizer=tf.keras.optimizers.Adam(
                           learning_rate=self.alpha))  # Optimaizer: Adam (Feel free to check other options)
         return model
 
@@ -433,8 +433,8 @@ class get_ddqn_agentp():
         model.add(tf.keras.layers.Dense(self.nA, activation='tanh'))  # Layer 3 -> [output]
         #   Size has to match the output (different actions)
         #   Linear activation on the last layer
-        model.compile(loss='Huber',  # Loss function: Mean Squared Error
-                      optimizer=tf.keras.optimizers.Nadam(
+        model.compile(loss='mean_squared_error',  # Loss function: Mean Squared Error
+                      optimizer=tf.keras.optimizers.Adam(
                           learning_rate=self.alpha))  # Optimaizer: Adam (Feel free to check other options)
         return model
 
