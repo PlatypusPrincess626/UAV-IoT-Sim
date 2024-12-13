@@ -1,5 +1,6 @@
 # Dependecies to Import
 import pandas as pd
+import numpy as np
 
 # Simulation Files to Import
 from UAV_IoT_Sim import Environment, IoT_Device, UAV
@@ -48,6 +49,11 @@ class make_env:
         self.archived_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
         self.curr_pstate = [0, 0, 0, 0]
         self.archived_pstate = [0, 0, 0, 0]
+        self.rewards = [0.0, 0.0, 0.0]
+        self.accum_rewards = [0.0, 0.0, 0.0]
+        self.archived_rewards = [0.0, 0.0, 0.0]
+        self.accum_rewardsp = [0.0, 0.0, 0.0]
+        self.archived_rewardsp = [0.0, 0.0, 0.0]
 
         self.ch_sensors = [0 for _ in range(self.num_ch)]
         for CH in range(self.num_ch):
@@ -101,6 +107,12 @@ class make_env:
             self.archived_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
             self.curr_pstate = [0, 0, 0, 0]
             self.archived_pstate = [0, 0, 0, 0]
+            self.rewards = [0.0, 0.0, 0.0]
+            self.accum_rewards = [0.0, 0.0, 0.0]
+            self.archived_rewards = [0.0, 0.0, 0.0]
+            self.accum_rewardsp = [0.0, 0.0, 0.0]
+            self.archived_rewardsp = [0.0, 0.0, 0.0]
+
 
             self.curr_reward = 0
             self.reward2 = 0
@@ -163,6 +175,9 @@ class make_env:
                     if train_model or train_model2:
                         train_model = True
                         self.full_reward = self.accum_reward / max(self.accum_steps, 1)
+                        self.archived_rewards = np.array([self.accum_rewards[0] / max(self.accum_steps, 1),
+                                                 self.accum_rewards[1] / max(self.accum_steps, 1),
+                                                 self.accum_rewards[2] / max(self.accum_steps, 1)])
 
                     self.curr_state = uav.state
                     self.last_action = action
@@ -179,26 +194,35 @@ class make_env:
                             train_p = False
                         else:
                             self.full_reward2 = self.accum_reward_p / max(self.accum_steps_p, 1)
+                            self.archived_rewardsp = np.array([self.accum_rewardsp[0] / max(self.accum_steps, 1),
+                                                 self.accum_rewardsp[1] / max(self.accum_steps, 1),
+                                                 self.accum_rewardsp[2] / max(self.accum_steps, 1)])
                         self.archived_pstate = p_state
                         self.archived_paction = action_p
                         self.track_reward_p = True
+                        self.accum_rewardsp = [0.0, 0.0, 0.0]
 
                     if used_model:
                         self.archived_state = state
                         self.archived_action = action
                         self.track_reward = True
+                        self.accum_rewards = [0.0, 0.0, 0.0]
 
                 self.reward(excess_energy)
                 if self.track_reward:
                     self.accum_steps += 1
                     self.accum_reward += self.curr_reward
+                    self.accum_rewards += self.rewards
+
                 if self.track_reward_p:
                     if self.terminated:
                         self.accum_reward_p = 0
                     else:
                         self.accum_steps_p += 1
                         self.accum_reward_p += self.reward2
+                        self.accum_rewardsp += self.rewards
                 self.curr_step += 1
+
             else:
                 self.truncated = True
                 self.curr_info={
@@ -299,3 +323,5 @@ class make_env:
         
         self.curr_reward = rewardChange
         self.reward2 = reward2Change
+
+        self.rewards = [rewardPeak, rewardAvgAge, reward_energy]

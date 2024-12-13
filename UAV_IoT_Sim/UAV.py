@@ -343,7 +343,7 @@ class QuadUAV:
                 train_model = True
                 self.model_transit = False
 
-            if self.is_charging and self.p_count < 1.0:
+            if self.is_charging and (self.p_count < 1.0 or self.state[0][2] == self.max_energy * 1_000):
                 self.is_charging = False
 
             if self.h == 0:
@@ -375,7 +375,7 @@ class QuadUAV:
                     self.force_count += 1
 
                     if self.force_count > 30:
-                        self.force_change = True
+                        self.force_change = False
 
                     self.target = dest
                     self.targetX = dest.indX
@@ -393,7 +393,7 @@ class QuadUAV:
                         self.force_count = 0
 
                     if self.force_count > 30:
-                        self.force_change = True
+                        self.force_change = False
 
                     self.target = dest
                     self.targetHead = dest
