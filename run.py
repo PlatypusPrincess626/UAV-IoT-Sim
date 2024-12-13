@@ -398,7 +398,7 @@ def prepopulate(agent, agent_p, prepop_steps, env):
 
     # QL
     agent.decay_epsilon(0)
-    agent_p.decay_epsilon(1)
+    agent_p.decay_epsilon(0)
     done_p = False
     """
     while not done_p:
@@ -440,6 +440,7 @@ def prepopulate(agent, agent_p, prepop_steps, env):
 
         while not done:
             print(f"Prepop Step: {timestep}")
+            agent_p.decay_epsilon(timestep / prepop_steps)
             train_model, train_p, old_state, old_action, action_p, old_pstate, comms, move, harvest = env.step(agent,                                                                                                 agent_p)
             buffer_done = env.terminated
 
