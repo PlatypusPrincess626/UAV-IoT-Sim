@@ -4,6 +4,7 @@ from typing import List
 
 import numpy
 import math
+import networkx as nx
 import numpy as np
 import pandas as pd
 import copy
@@ -84,6 +85,9 @@ class IoT_Device:
             self.num_sensors = 0
             self.headSerial = clusterheadNum
             self.last_target = 0
+            self.tour = None
+            self.tourA = None
+            self.tourB = None
             self.target_time = 0
             self.typeStr = "Clusterhead"
 
@@ -109,11 +113,16 @@ class IoT_Device:
     def reset(self):
         self.last_target = 0
         self.target_time = 0
+        self.tour = None
+        self.tourA = None
+        self.tourB = None
+
         self.max_AoI = 0
         self.avg_AoI = 0
         self.stored_energy = round(self.max_energy * 1_000)
         self.contribution = 0
         self.action_p = 0
+
         if self.type == 1:
             self.stored_data = random.randint(0, self.reset_max)
         else:
@@ -155,7 +164,10 @@ class IoT_Device:
         power = abs(alpha / 100) * interference * powDensity * self.solarArea
 
         if power * 1_000_000 > 0.0:
-            self.stored_energy += round((power / self._comms.get("LoRa_Voltage_V")) * 1_000_000)
+            if self.stored_energy < (0.8 * self.max_energy * 1_000):
+                self.stored_energy += round(2 * 1_000 * self.max_energy / ((self.charge_rate) * 60))
+            else:
+                self.stored_energy += round(0.5 * 1_000 * (self.max_energy / ((self.charge_rate) * 60)))
             self.solar_powered = True
         else:
             self.solar_powered = False
@@ -285,12 +297,29 @@ class IoT_Device:
         else:
             return 0
 
-    def get_dest(self, state, full_sensor_list, model, model_p, step, p_count,
-                 no_hold, force_change, targetType, targetSerial, _=None):
+    def get_dest(self, state, full_sensor_list, model, model_p, step, p_count, targetType, targetSerial, _=None):
+        """
+        Returns next destination for the UAV.
 
+        Args:
+            state:              state recieved from UAV including important metrics
+            full_sensor_list:   list of sensor objects without regard to metrics
+            model:              model for deciding UAV destination
+            model_p:            model for UAV charging plan
+            step:               the current timestep
+            p_count:            time left for charging (made by previous decision)
+            targetType:         flag for sensor or UAV targeting
+            targetSerial:       current cluster target of UAV trajectory (should be self?)
+            _:                  variable with value "None"
+
+        Returns:
+
+        """
+
+        # Must check through list of sensors... Must recieve data on how much each sensor contributes.
         my_contribution = state[self.headSerial + 1][1]
         if my_contribution > self.contribution:
-            self.data_table[self.last_target + 1] = my_contribution
+            self.data_table[self.last_target + 1] = my_contribution     # self.last_target outdated, needs list of targets
             self.age_table[self.last_target] = self.target_time
             self.contribution = my_contribution
 
@@ -321,96 +350,86 @@ class IoT_Device:
                 model_help = False
                 action = CH
 
+        dist = 0
         if not targetType:
+            """
+            For sensor targeting use Christofides
+            """
+            inactive = []
+            for sens in range(len(self.active_table)):
+                if not sens:
+                    inactive.append(sens+1)     # Sensors on range 1 to num_sens
+
+            G = nx.Graph()
+            for i in range(len(inactive)+1):
+                for j in range(i+1, len(inactive)+1):
+                    if i == 0:
+                        G.add_edge(
+                            i,
+                            j,
+                            weight = math.sqrt(pow((self.sens_table.iat[inactive[j-1], 0].indX - self.indX), 2)
+                                               + pow((self.sens_table.iat[inactive[j-1], 0].indY - self.indY), 2))
+                        )  # Use Euclidean distance (2-norm) as graph weight
+                    else:
+                        G.add_edge(
+                            i,
+                            j,
+                            weight = math.sqrt(pow((self.sens_table.iat[inactive[j-1], 0].indX
+                                                    - self.sens_table.iat[inactive[i-1], 0].indX), 2)
+                                               + pow((self.sens_table.iat[inactive[j-1], 0].indY
+                                                      - self.sens_table.iat[inactive[i-1], 0].indY), 2))
+                        )
+
+            tour = nx.algorithms.approximation.christofides(G)
+            dists = []
+            for i in range(len(tour)-1):
+                if i == 0:
+                    dists.append(math.sqrt(pow((self.sens_table.iat[inactive[tour[i+1]-1], 0].indX - self.indX), 2)
+                                          + pow((self.sens_table.iat[inactive[tour[i+1]-1], 0].indY - self.indY), 2)))
+                elif i+1 == 0:
+                    dists.append(math.sqrt(pow((self.sens_table.iat[inactive[tour[i]-1], 0].indX - self.indX), 2)
+                                          + pow((self.sens_table.iat[inactive[tour[i]-1], 0].indY - self.indY), 2)))
+                else:
+                    dists.append(math.sqrt(pow((self.sens_table.iat[inactive[tour[i+1]-1], 0].indX -
+                                               self.sens_table.iat[inactive[tour[i]-1], 0].indX), 2)
+                                          + pow((self.sens_table.iat[inactive[tour[i+1]-1], 0].indY -
+                                                 self.sens_table.iat[inactive[tour[i]-1], 0].indY), 2)))
+
+            # split into two function if too much distance
+            if sum(dists) >= (0.6 * 60 * 60 * 5):
+                tour1 = tour[0:(len(tour)/2)]
+                tour1.append(0)
+                tour2 = tour[(len(tour)/2):]
+                tour2.insert(0, 0)
+                self.tourA = [self.sens_table.iat[inactive[tour1[i+1]-1], 0] for i in range(len(tour1)-1)]
+                dist = sum(dists[0:(len(tour)/2)])
+                self.tourB = [self.sens_table.iat[inactive[tour2[i+1]-1], 0] for i in range(len(tour2)-1)]
+                self.next_dist = sum(dists[(len(tour)/2):])
+            else:
+                self.tour = [self.sens_table.iat[inactive[tour[i+1]-1], 0] for i in range(len(tour)-1)]
+                dist = sum(dists)
+
             self.last_target = self.headSerial
-            oldest_age = self.age_table[self.last_target]
-            for sens in range(self.num_sensors - 1):
-                if oldest_age < self.age_table[sens + 1]:
-                    self.last_target = sens
-                    oldest_age = self.age_table[sens + 1]
-            target = self.sens_table.iat[self.last_target, 0]
+            target = self.tour[0]
             self.target_time = step
             action = self.headSerial
             model_help = False
 
+
         # Next CH
         elif model_help:
-            # CHstate = [[0, 0, 0] for _ in range(6)]
-            # CHstate[0] = state[0]
-            # CHstate[0][1] = (self.stored_data + self.contribution)
-            # oldest_age = [self.age_table[0], self.age_table[1], self.age_table[2], self.age_table[3], self.age_table[4]]
-            # oldest_age.sort()
-            # oldest_indx = []
-            # for sens in range(5):
-            #     i = 0
-            #     while i < 5:
-            #         if oldest_age[sens] == self.age_table[i]:
-            #             oldest_indx.append(i)
-            #         elif i >= 5:
-            #             break
-            #         i += 1
-            #
-            # for sens in range(self.num_sensors - 5):
-            #     i = 0
-            #     while i < 5:
-            #         if oldest_age[i] < self.age_table[sens + 5]:
-            #             break
-            #         i += 1
-            #         if self.num_sensors < (sens + i):
-            #             break
-            #
-            #     if i < 5 and self.num_sensors > (sens + i):
-            #         oldest_age.insert(i, self.age_table[sens + 5])
-            #         oldest_indx.insert(i, sens + 5)
-            #     elif self.num_sensors > (sens + i):
-            #         oldest_age.append(self.age_table[sens + 5])
-            #         oldest_indx.append(sens + 5)
-            #
-            # for sens in range(5):
-            #     CHstate[sens + 1][0], CHstate[sens + 1][1], CHstate[sens + 1][2] = \
-            #         (oldest_indx[sens], self.data_table[oldest_indx[sens]], (step - oldest_age[sens] + p_count))
-            #
-            # for sens in range(5):
-            #     decision_state[sens - 5] = CHstate[sens]
+            """
+            For choosing next CH
+            """
+
 
             action = model.act(decision_state)
-
-            # if force_change and action == targetSerial:
-            #     highest = state[self.headSerial + 1][2]
-            #     i = 0
-            #     for sens in range(len(state) - 1):
-            #         if (state[sens + 1][2] > highest) and not (sens == targetSerial):
-            #             highest = state[sens + 1][2]
-            #             action = sens
-            #             model_help = False
-            #
-            # if force_change and action == targetSerial:
-            #     minDist = 10_000.0
-            #     minCH = 0
-            #     for CH in range(len(self.full_sensor_list.index) - 1):
-            #         if not (self.full_sensor_list.iat[CH + 1, 0].headSerial == targetSerial):
-            #             dist = math.sqrt(pow((self.indX - self.full_sensor_list.iat[CH + 1, 0].indX), 2)
-            #                              + pow((self.indY - self.full_sensor_list.iat[CH + 1, 0].indY), 2))
-            #             if dist < minDist:
-            #                 minDist = dist
-            #                 minCH = CH
-            #     action = minCH
-            # model_help = False
-
-            # if action >= len(full_sensor_list) - 1 :
-            #     idx = action - len(full_sensor_list)
-            #     self.last_target = CHstate[idx + 1][0]
-            #     self.target_time = step
-            #     target = self.sens_table.iat[self.last_target, 0]
 
             if action != targetSerial:
                 change_transit = True
             target = full_sensor_list.iat[action + 1, 0]
 
-
-        d_to_targ = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
-        if target.type == 1:
-            d_to_targ *= 2
+            dist = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
 
         AoI_peak = decision_state[1][2]
         AoI_avg = decision_state[1][3]
@@ -421,9 +440,75 @@ class IoT_Device:
                 AoI_peak = AoI
         AoI_avg = math.ceil(AoI_avg / len(full_sensor_list))
 
-        p_state = [d_to_targ, state[0][2] + round(p_count * 6_800_000 / (self.charge_rate * 60)),
+        p_state = [dist, state[0][2] + round(p_count * 6_800_000 / (self.charge_rate * 60)),
                    AoI_peak + p_count, AoI_avg + p_count]
         # Value from 0 to 30
         self.action_p = model_p.act(p_state)
 
         return model_help, change_transit, target, decision_state, action, self.action_p, p_state
+
+    # CHstate = [[0, 0, 0] for _ in range(6)]
+    # CHstate[0] = state[0]
+    # CHstate[0][1] = (self.stored_data + self.contribution)
+    # oldest_age = [self.age_table[0], self.age_table[1], self.age_table[2], self.age_table[3], self.age_table[4]]
+    # oldest_age.sort()
+    # oldest_indx = []
+    # for sens in range(5):
+    #     i = 0
+    #     while i < 5:
+    #         if oldest_age[sens] == self.age_table[i]:
+    #             oldest_indx.append(i)
+    #         elif i >= 5:
+    #             break
+    #         i += 1
+    #
+    # for sens in range(self.num_sensors - 5):
+    #     i = 0
+    #     while i < 5:
+    #         if oldest_age[i] < self.age_table[sens + 5]:
+    #             break
+    #         i += 1
+    #         if self.num_sensors < (sens + i):
+    #             break
+    #
+    #     if i < 5 and self.num_sensors > (sens + i):
+    #         oldest_age.insert(i, self.age_table[sens + 5])
+    #         oldest_indx.insert(i, sens + 5)
+    #     elif self.num_sensors > (sens + i):
+    #         oldest_age.append(self.age_table[sens + 5])
+    #         oldest_indx.append(sens + 5)
+    #
+    # for sens in range(5):
+    #     CHstate[sens + 1][0], CHstate[sens + 1][1], CHstate[sens + 1][2] = \
+    #         (oldest_indx[sens], self.data_table[oldest_indx[sens]], (step - oldest_age[sens] + p_count))
+    #
+    # for sens in range(5):
+    #     decision_state[sens - 5] = CHstate[sens]
+
+    # if force_change and action == targetSerial:
+    #     highest = state[self.headSerial + 1][2]
+    #     i = 0
+    #     for sens in range(len(state) - 1):
+    #         if (state[sens + 1][2] > highest) and not (sens == targetSerial):
+    #             highest = state[sens + 1][2]
+    #             action = sens
+    #             model_help = False
+    #
+    # if force_change and action == targetSerial:
+    #     minDist = 10_000.0
+    #     minCH = 0
+    #     for CH in range(len(self.full_sensor_list.index) - 1):
+    #         if not (self.full_sensor_list.iat[CH + 1, 0].headSerial == targetSerial):
+    #             dist = math.sqrt(pow((self.indX - self.full_sensor_list.iat[CH + 1, 0].indX), 2)
+    #                              + pow((self.indY - self.full_sensor_list.iat[CH + 1, 0].indY), 2))
+    #             if dist < minDist:
+    #                 minDist = dist
+    #                 minCH = CH
+    #     action = minCH
+    # model_help = False
+
+    # if action >= len(full_sensor_list) - 1 :
+    #     idx = action - len(full_sensor_list)
+    #     self.last_target = CHstate[idx + 1][0]
+    #     self.target_time = step
+    #     target = self.sens_table.iat[self.last_target, 0]

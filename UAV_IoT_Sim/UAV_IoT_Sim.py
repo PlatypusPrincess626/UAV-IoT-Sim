@@ -143,6 +143,7 @@ class make_env:
         old_pstate = [0, 0, 0, 0]
         self.reward2 = 0
         self.total_average = 0
+        bad_target = False
 
         old_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
 
@@ -162,11 +163,13 @@ class make_env:
 
                 for uav in range(self._num_uav):
                     uav = self._env.UAVTable.iat[uav, 0]
+                    bad_target = uav.bad_target
                     train_model, used_model, train_p, state, action, action_p, p_state, comms, move, harvest = (
                         uav.set_dest(model, model_p, self.curr_step))
                     uav.navigate_step(self._env)
                     self.uavX = uav.indX
                     self.uavY = uav.indY
+
 
                     train_model2, change_archives = uav.receive_data(self.curr_step)
                     excess_energy = uav.receive_energy()
@@ -178,6 +181,10 @@ class make_env:
                         self.archived_rewards = np.array([self.accum_rewards[0] / max(self.accum_steps, 1),
                                                  self.accum_rewards[1] / max(self.accum_steps, 1),
                                                  self.accum_rewards[2] / max(self.accum_steps, 1)])
+                        if bad_target:
+                            self.full_reward = [-1.0, -1.0, -1.0]
+                            self.archived_rewards = np.array([-1.0, -1.0, -1.0])
+
 
                     self.curr_state = uav.state
                     self.last_action = action

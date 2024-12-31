@@ -39,11 +39,15 @@ class QuadUAV:
         self.targetHead = None
         self.last_Head = None
         self.targetSerial = 0
+        self.tour = None
+        self.tour_iter = 0
+
         self.targetX = int(X)
         self.targetY = int(Y)
         self.lat = lat
         self.long = long
         self.last_AoI = 0
+        self.bad_target = False
 
         # Movement
         self.maxSpd = 15  # 15 m/s max speed cap
@@ -87,7 +91,7 @@ class QuadUAV:
         self.cpu_amps = 1_000 # micro-amps
 
         self.charge_rate = 1/3  # 20 min charging time
-        self.flight_discharge = 3/4  # 45 min flight time
+        self.flight_discharge = 1 # 45 min flight time
         self.amp = self.max_energy / self.charge_rate  # Roughly 2.72 A optimal current
         self.stored_energy = self.max_energy * 1_000  # Initialize at full battery
         self.is_charging = False
@@ -121,6 +125,10 @@ class QuadUAV:
         self.target = None
         self.targetHead = None
         self.last_Head = None
+        self.tour = None
+        self.tour_iter = 0
+        self.bad_target = False
+
         self.step_move_cost = 0
         self.step_comms_cost = 0
         self.energy_harvested = 0
@@ -215,7 +223,13 @@ class QuadUAV:
                     self._comms.get("AmBC_Max_Distance_m"):
 
                 totalData += dataReturn
-                self.target = self.targetHead
+
+                if self.tour_iter < len(self.tour):
+                    self.target = self.tour[self.tour_iter]
+                    self.tour_iter += 1
+                else:
+                    self.target = self.targetHead
+
                 self.targetX = self.targetHead.indX
                 self.targetY = self.targetHead.indY
                 self.inRange = True
@@ -277,7 +291,11 @@ class QuadUAV:
                     abs(self.indY-self.targetY) < 1.0 and t < 1.0):
                 self.no_hold = False
 
-            self.stored_energy += round(t * 1_000 * (self.max_energy / (self.charge_rate * 60 * 60)))
+            if self.stored_energy < (0.8 * 1_000 * self.max_energy):
+                self.stored_energy += round(2 * t * 1_000 * (self.max_energy / ((self.charge_rate) * 60 * 60)))
+            else:
+                self.stored_energy += round(0.5 * t * 1_000 * (self.max_energy / ((self.charge_rate) * 60 * 60)))
+
             excess_percent = (self.stored_energy / (self.max_energy*1_000))
             if self.stored_energy > self.max_energy * 1_000:
                 excess_percent = 0
@@ -322,14 +340,14 @@ class QuadUAV:
 
         else:
             targetType = 0
-            if self.target.type == 1:
+            if self.target.type == 1 or self.bad_target:
                 targetType = 1
 
             self.force_change = False
             # True, True, sensor, CHstate, action, action_p
             used_model, changed_transit, dest, state, action, action_p, p_state = \
                 self.target.get_dest(self.state, self.full_sensor_list, model, model_p, step, self.p_count,
-                                     self.no_hold, self.force_change, targetType, self.targetSerial)
+                                     targetType, self.targetSerial)
 
             self.p_cycle -= 1
             self.action = action
@@ -372,11 +390,8 @@ class QuadUAV:
                     self.model_transit = True
 
                 if dest.type == 1:
-                    self.force_count += 1
-
-                    if self.force_count > 30:
-                        self.force_change = False
-
+                    self.tour = self.target.tour
+                    self.tour_iter = 1
                     self.target = dest
                     self.targetX = dest.indX
                     self.targetY = dest.indY
@@ -385,15 +400,10 @@ class QuadUAV:
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
                 else:
-                    if dest.headSerial == self.targetSerial and self.inRange:
-                        self.force_count += 1
-
-                    elif self.force_change and dest.headSerial != self.targetSerial:
-                        self.force_change = False
-                        self.force_count = 0
-
-                    if self.force_count > 30:
-                        self.force_change = False
+                    if dest.headSerial == self.targetSerial:
+                        self.bad_target = True
+                    elif self.bad_target:
+                        self.bad_target = False
 
                     self.target = dest
                     self.targetHead = dest
