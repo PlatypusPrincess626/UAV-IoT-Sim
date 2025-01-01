@@ -284,6 +284,7 @@ class get_ddqn_agent():
         #   input_dim: Number of input variables
         #   activation: Rectified Linear Unit (relu) ranges >= 0
         model.add(tf.keras.layers.Dense(128, activation='relu'))  # Layer 2 -> 3
+        model.add(tf.keras.layers.Dense(128, activation='relu'))  # Layer 2 -> 3
         model.add(tf.keras.layers.Dense(self.nA, activation='tanh'))  # Layer 3 -> [output]
         #   Size has to match the output (different actions)
         #   Linear activation on the last layer
@@ -348,11 +349,11 @@ class get_ddqn_agent():
             nst_action_predict_target = nst_predict_target[index]
             nst_action_predict_model = nst_predict[index]
             if done:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
-                target = ((self.lamb * (np.array([0.45, 0.45, 0.1]) @ reward)) +
+                target = ((self.lamb * (np.array([0.5, 0.5, 0.0]) @ reward)) +
                           (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
             else:  # Non terminal, Using Q to get T is Double DQN
                 target = (self.lamb *
-                          ((np.array([0.45, 0.45, 0.1]) @ reward) +
+                          ((np.array([0.5, 0.5, 0.0]) @ reward) +
                            self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)]) +
                           (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
 
@@ -428,7 +429,7 @@ class get_ddqn_agentp():
         #   24: Number of neurons
         #   input_dim: Number of input variables
         #   activation: Rectified Linear Unit (relu) ranges >= 0
-        model.add(tf.keras.layers.Dense(8, activation='relu'))  # Layer 2 -> 3
+        model.add(tf.keras.layers.Dense(64, activation='relu'))  # Layer 2 -> 3
         model.add(tf.keras.layers.Dense(64, activation='relu'))  # Layer 2 -> 3
         model.add(tf.keras.layers.Dense(self.nA, activation='tanh'))  # Layer 3 -> [output]
         #   Size has to match the output (different actions)
