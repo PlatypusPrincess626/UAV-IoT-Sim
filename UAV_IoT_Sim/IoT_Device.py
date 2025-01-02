@@ -421,8 +421,6 @@ class IoT_Device:
             """
             For choosing next CH
             """
-
-
             action = model.act(decision_state)
 
             if action != targetSerial:
