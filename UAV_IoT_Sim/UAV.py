@@ -64,6 +64,7 @@ class QuadUAV:
         self.no_hold = True
         self.force_change = False
         self.force_count = 0
+        self.targetType = 0
 
         self.origin_state = None
         self.origin_action = None
@@ -128,6 +129,7 @@ class QuadUAV:
         self.tour = None
         self.tour_iter = 0
         self.bad_target = False
+        self.targetType = 0
 
         self.step_move_cost = 0
         self.step_comms_cost = 0
@@ -339,15 +341,16 @@ class QuadUAV:
             self.target = self.target
 
         else:
-            targetType = 0
-            if self.target.type == 1 or self.bad_target:
-                targetType = 1
+            ### TargetType > sensor
+            self.targetType = 1 - self.targetType
+            if self.bad_target:
+                self.targetType = 1
 
             self.force_change = False
             # True, True, sensor, CHstate, action, action_p
             used_model, changed_transit, dest, state, action, action_p, p_state = \
                 self.target.get_dest(self.state, self.full_sensor_list, model, model_p, step, self.p_count,
-                                     targetType, self.targetSerial)
+                                     self.targetType, self.targetSerial)
 
             self.p_cycle -= 1
             self.action = action
@@ -356,6 +359,13 @@ class QuadUAV:
 
             if changed_transit and self.p_count < 1.0:
                 self.p_cycle = 0
+
+            if self.bad_target:
+                self.bad_target = False
+
+            if self.targetType == 1:
+                if dest.headSerial == self.targetSerial:
+                    self.bad_target = True
 
             if self.model_transit and changed_transit:
                 train_model = True
@@ -367,7 +377,7 @@ class QuadUAV:
             if self.h == 0:
                 self.p_count -= 1
 
-            if self.p_cycle < 1.0 and self.p_count < 1.0:
+            if self.p_cycle < 1.0 and self.p_count < 1.0 and not self.bad_target:
                 self.p_cycle = 30
                 self.p_count = action_p
                 train_p = True
@@ -400,11 +410,6 @@ class QuadUAV:
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
                 else:
-                    if dest.headSerial == self.targetSerial:
-                        self.bad_target = True
-                    elif self.bad_target:
-                        self.bad_target = False
-
                     self.target = dest
                     self.targetHead = dest
                     self.targetSerial = self.targetHead.headSerial
