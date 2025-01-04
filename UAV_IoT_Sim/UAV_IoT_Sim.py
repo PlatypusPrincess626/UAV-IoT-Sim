@@ -177,12 +177,12 @@ class make_env:
                     # train_model = True
                     if train_model or train_model2:
                         train_model = True
-                        self.full_reward = self.accum_reward / max(self.accum_steps, 1)
+                        self.full_reward = np.array(self.accum_reward / max(self.accum_steps, 1))
                         self.archived_rewards = np.array([self.accum_rewards[0] / max(self.accum_steps, 1),
                                                  self.accum_rewards[1] / max(self.accum_steps, 1),
                                                  self.accum_rewards[2] / max(self.accum_steps, 1)])
                         if bad_target:
-                            self.full_reward = [-1.0, -1.0, -1.0]
+                            self.full_reward = np.array([-1.0, -1.0, -1.0])
                             self.archived_rewards = np.array([-1.0, -1.0, -1.0])
 
 
@@ -200,7 +200,7 @@ class make_env:
                         if self.curr_step < 15:
                             train_p = False
                         else:
-                            self.full_reward2 = self.accum_reward_p / max(self.accum_steps_p, 1)
+                            self.full_reward2 = np.array(self.accum_reward_p / max(self.accum_steps_p, 1))
                             self.archived_rewardsp = np.array([self.accum_rewardsp[0] / max(self.accum_steps, 1),
                                                  self.accum_rewardsp[1] / max(self.accum_steps, 1),
                                                  self.accum_rewardsp[2] / max(self.accum_steps, 1)])
