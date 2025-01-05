@@ -283,7 +283,7 @@ class get_ddqn_agent():
         #   24: Number of neurons
         #   input_dim: Number of input variables
         #   activation: Rectified Linear Unit (relu) ranges >= 0
-        model.add(tf.keras.layers.Dense(128, activation='relu'))  # Layer 2 -> 3
+        # model.add(tf.keras.layers.Dense(128, activation='relu'))  # Layer 2 -> 3
         model.add(tf.keras.layers.Dense(128, activation='relu'))  # Layer 2 -> 3
         model.add(tf.keras.layers.Dense(self.nA, activation='tanh'))  # Layer 3 -> [output]
         #   Size has to match the output (different actions)
@@ -348,7 +348,7 @@ class get_ddqn_agent():
             # Predict from state
             nst_action_predict_target = nst_predict_target[index]
             nst_action_predict_model = nst_predict[index]
-            if reward.mean() <= -1.0:
+            if reward.mean() == -1.0:
                 target = -1.0
             elif done:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
                 target = ((self.lamb * (np.array([0.5, 0.5, 0.0]) @ reward)) +
@@ -431,7 +431,7 @@ class get_ddqn_agentp():
         #   24: Number of neurons
         #   input_dim: Number of input variables
         #   activation: Rectified Linear Unit (relu) ranges >= 0
-        model.add(tf.keras.layers.Dense(64, activation='relu'))  # Layer 2 -> 3
+        # model.add(tf.keras.layers.Dense(64, activation='relu'))  # Layer 2 -> 3
         model.add(tf.keras.layers.Dense(64, activation='relu'))  # Layer 2 -> 3
         model.add(tf.keras.layers.Dense(self.nA, activation='tanh'))  # Layer 3 -> [output]
         #   Size has to match the output (different actions)
