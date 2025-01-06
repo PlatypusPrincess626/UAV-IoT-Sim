@@ -453,10 +453,10 @@ def prepopulate(agent, agent_p, prepop_steps, env):
                 agent.update_mem(old_state, old_action, env.archived_rewards, env.curr_state, buffer_done)
             timestep += 1
 
-        if len(agent.memory) > 64:
-            agent.train(64)
-        if len(agent_p.memory) > 64:
-            agent_p.train(64)
+        if len(agent.memory) > 128:
+            agent.train(128)
+        if len(agent_p.memory) > 128:
+            agent_p.train(128)
 
 def run_experiment(args):
     env_str = args.env
