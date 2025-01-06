@@ -348,7 +348,7 @@ class get_ddqn_agent():
             # Predict from state
             nst_action_predict_target = nst_predict_target[index]
             nst_action_predict_model = nst_predict[index]
-            if reward.mean() == -1.0:
+            if np.array(reward).mean() == -1.0:
                 target = -1.0
             elif done:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
                 target = ((self.lamb * (np.array([0.5, 0.5, 0.0]) @ reward)) +
