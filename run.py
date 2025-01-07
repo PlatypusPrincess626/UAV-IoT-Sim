@@ -449,12 +449,12 @@ def prepopulate(agent, agent_p, prepop_steps, env):
 
             if train_p or done:
                 agent_p.update_mem(old_pstate, int(action_p), env.archived_rewardsp, env.curr_pstate, buffer_done)
-            if (train_model or env.truncated) and not buffer_done:
-                agent.update_mem(old_state, old_action, env.archived_rewards, env.curr_state, buffer_done)
+            # if (train_model or env.truncated) and not buffer_done:
+            #     agent.update_mem(old_state, old_action, env.archived_rewards, env.curr_state, buffer_done)
             timestep += 1
 
-        if len(agent.memory) > 128:
-            agent.train(128)
+        # if len(agent.memory) > 128:
+        #     agent.train(128)
         if len(agent_p.memory) > 128:
             agent_p.train(128)
 

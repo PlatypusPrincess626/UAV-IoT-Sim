@@ -377,7 +377,8 @@ class QuadUAV:
             if self.h == 0:
                 self.p_count -= 1
 
-            if self.p_cycle < 1.0 and self.p_count < 1.0 and not self.bad_target:
+            if (self.p_cycle < 1.0 and self.p_count < 1.0 and
+                    (not self.bad_target and self.state[0][2] <= 0.8 * self.max_energy * 1_000)):
                 self.p_cycle = 30
                 self.p_count = action_p
                 train_p = True
