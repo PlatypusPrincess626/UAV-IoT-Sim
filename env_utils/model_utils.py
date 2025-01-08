@@ -244,7 +244,7 @@ class get_gann_agent:
 
 class get_ddqn_agent():
     def __init__(self, env, nS, nA, epsilon_i=1.0, epsilon_f=0.0, n_epsilon=0.1,
-                 alpha=0.5, gamma=0.95, epsilon=0.5, epsilon_min=0.1, epsilon_decay=0.01, lamb=0.5):
+                 alpha=0.5, gamma=0.95, epsilon=0.5, epsilon_min=0.1, epsilon_decay=0.01, lamb=0.80):
         # ADF 2.0
         self.nS = nS
         self.nA = nA
@@ -348,8 +348,9 @@ class get_ddqn_agent():
             # Predict from state
             nst_action_predict_target = nst_predict_target[index]
             nst_action_predict_model = nst_predict[index]
-            if np.array(reward).mean() == -1.0:
-                target = -1.0
+            if np.array(reward).mean() <= -1.0:
+                target = ((self.lamb * -1) +
+                          (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
             elif done:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
                 target = ((self.lamb * (np.array([0.5, 0.5, 0.0]) @ reward)) +
                           (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
@@ -390,7 +391,7 @@ class get_ddqn_agent():
 
 class get_ddqn_agentp():
     def __init__(self, env, nS, nA, epsilon_i=1.0, epsilon_f=0.0, n_epsilon=0.1,
-                 alpha=0.5, gamma=0.95, epsilon=0.5, epsilon_min=0.1, epsilon_decay=0.01, lamb=0.5):
+                 alpha=0.5, gamma=0.95, epsilon=0.5, epsilon_min=0.1, epsilon_decay=0.01, lamb=0.75):
         # ADF 2.0
         self.nS = nS
         self.nA = nA

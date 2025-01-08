@@ -482,7 +482,7 @@ def run_experiment(args):
     agent_p = model_utils.get_ddqn_agentp(
         env,
         4,
-        20
+        10
     )
 
     policy_save_dir = os.path.join(
