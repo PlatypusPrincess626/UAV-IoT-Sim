@@ -310,14 +310,14 @@ class make_env:
         rewardChange = 0 * rewardDist + 0.5 * rewardPeak + 0.5 * rewardAvgAge + 0 * rewardDataChange
 
         reward_energy = excess_energy
-        reward2Change = 0.5 * rewardPeak + 0.5 * rewardAvgAge + 0 * rewardDataChange + 0 * reward_energy
+        reward2Change = 0.25 * rewardPeak + 0.25 * rewardAvgAge + 0 * rewardDataChange + 0.5 * reward_energy
 
         if self.terminated:
             rewardChange = -5
             reward2Change = -5
         
         self.curr_info = {
-            "Last_Action": self.last_action,
+            "Last_Action": max(self.last_action, -1),
             "Reward_Change": rewardChange,        # -> Change in reward at step
             "Avg_Age": avgAge,                   # -> avgAoI
             "Peak_Age": peakAge,                 # -> peakAoI
