@@ -237,10 +237,10 @@ def evaluate(
                 csvwriter.writerows(UAV_Metrics)
 
         # DDQN
-        if len(agent.memory) > 64:
-            agent.train(64)
-        if len(agent_p.memory) > 64:
-            agent_p.train(64)
+        if len(agent.memory) > 128:
+            agent.train(128)
+        if len(agent_p.memory) > 128:
+            agent_p.train(128)
 
         accum_avgAoI += avgAoI / (eval_env.curr_step + count)
         accum_peakAoI += peakAoI / (eval_env.curr_step + count)
@@ -289,10 +289,10 @@ def train(
     for timestep in range(total_steps):
         done = step(agent, agent_p, env)
         if done:
-            if len(agent.memory) > 64:
-                agent.train(64)
-            if len(agent_p.memory) > 64:
-                agent_p.train(64)
+            if len(agent.memory) > 128:
+                agent.train(128)
+            if len(agent_p.memory) > 128:
+                agent_p.train(128)
         # QL
         agent.decay_epsilon(timestep / total_steps)
         agent_p.decay_epsilon(1)
