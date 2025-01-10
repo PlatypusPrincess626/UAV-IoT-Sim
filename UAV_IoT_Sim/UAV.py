@@ -229,13 +229,16 @@ class QuadUAV:
                 if self.tour_iter < len(self.tour):
                     self.target = self.tour[self.tour_iter]
                     self.tour_iter += 1
+                    train_model, change_archives = False, False
                 else:
+                    # Assess Reward at this point
                     self.target = self.targetHead
+                    train_model, change_archives = True, True
 
                 self.targetX = self.targetHead.indX
                 self.targetY = self.targetHead.indY
                 self.inRange = True
-                train_model, change_archives = True, True
+
 
             else:
                 self.inRange = False
@@ -366,9 +369,9 @@ class QuadUAV:
             if self.targetType == 1:
                 if dest.headSerial == self.targetSerial:
                     self.bad_target = True
+                    train_model = True
 
             if self.model_transit and changed_transit:
-                train_model = True
                 self.model_transit = False
 
             if self.is_charging and (self.p_count < 1.0 or self.state[0][2] >= 0.8 * self.max_energy * 1_000):
