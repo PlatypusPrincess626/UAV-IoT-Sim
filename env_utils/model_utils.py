@@ -320,11 +320,11 @@ class get_ddqn_agent():
         action_vals = self.model.predict(np.expand_dims(np.array(r_state).flatten(), axis=0))  # Exploit: Use the NN to predict the correct action from this state
         return np.argmax(action_vals[0])
 
-    def update_mem(self, state, action, reward, nstate, done):
+    def update_mem(self, state, action, reward, nstate, done, step):
         # Store the experience in memory
         r_state = modify_state(state)
         r_nstate = modify_state(nstate)
-        self.memory.append((r_state, action, reward, r_nstate, done))
+        self.memory.append((r_state, action, reward, r_nstate, done, step))
 
     def train(self, batch_size):
         # Execute the experience replay
@@ -343,21 +343,21 @@ class get_ddqn_agent():
         nst_predict = self.model.predict(nst)
         nst_predict_target = self.model_target.predict(nst)  # Predict from the TARGET
         index = 0
-        for state, action, reward, nstate, done in minibatch:
+        for state, action, reward, nstate, done, step in minibatch:
             x.append(np.expand_dims(np.array(state).flatten(), axis=0))
             # Predict from state
             nst_action_predict_target = nst_predict_target[index]
             nst_action_predict_model = nst_predict[index]
-            if self.epsilon < 0.5:
+            if (step/720) > 0.5:
                 if np.array(reward).mean() <= -1.0:
                     target = ((self.lamb * -1) +
                               (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
                 elif done:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
-                    target = ((self.lamb * (np.array([0.5, 0.5, 0.0]) @ reward)) +
+                    target = ((self.lamb * (np.array([0.75, 0.25, 0.0]) @ reward)) +
                               (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
                 else:  # Non terminal, Using Q to get T is Double DQN
                     target = (self.lamb *
-                              ((np.array([0.5, 0.5, 0.0]) @ reward) +
+                              ((np.array([0.75, 0.25, 0.0]) @ reward) +
                                self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)]) +
                               (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
             else:

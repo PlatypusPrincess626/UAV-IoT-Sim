@@ -136,6 +136,7 @@ def evaluate(
     for i in range(eval_episodes):
         eval_env.reset()
 
+        step = 1
         done = False
         crashed = False
         ep_reward = 0
@@ -169,13 +170,15 @@ def evaluate(
                 CH_Metrics[ch][1] = eval_env.curr_state[ch + 1][2]
 
             if train_p or done:
-                agent_p.update_mem(old_pstate, int(action_p), eval_env.archived_rewardsp, eval_env.curr_pstate, buffer_done)
+                agent_p.update_mem(old_pstate, int(action_p), eval_env.archived_rewardsp,
+                                   eval_env.curr_pstate, buffer_done)
 
             if (train_model or eval_env.truncated) and not buffer_done:
             # if True:
             #     agent.update(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
                 # DDQN
-                agent.update_mem(old_state, old_action, eval_env.archived_rewards, eval_env.curr_state, buffer_done)
+                agent.update_mem(old_state, old_action, eval_env.archived_rewards,
+                                 eval_env.curr_state, buffer_done, eval_env.curr_step)
 
             ep_reward += info.get("Reward_Change")
 
@@ -389,7 +392,7 @@ def step(agent, agent_p, env):
         #QL
         # agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
         # DDQN
-        agent.update_mem(old_state, old_action, env.archived_rewards, env.curr_state, buffer_done)
+        agent.update_mem(old_state, old_action, env.archived_rewards, env.curr_state, buffer_done, env.curr_step)
     return done
 
 
@@ -450,11 +453,12 @@ def prepopulate(agent, agent_p, prepop_steps, env):
             if train_p or done:
                 agent_p.update_mem(old_pstate, int(action_p), env.archived_rewardsp, env.curr_pstate, buffer_done)
             # if (train_model or env.truncated) and not buffer_done:
-            #     agent.update_mem(old_state, old_action, env.archived_rewards, env.curr_state, buffer_done)
+                agent.update_mem(old_state, old_action, env.archived_rewards,
+                                 env.curr_state, buffer_done, env.curr_step)
             timestep += 1
 
-        # if len(agent.memory) > 128:
-        #     agent.train(128)
+        if len(agent.memory) > 128:
+            agent.train(128)
         if len(agent_p.memory) > 128:
             agent_p.train(128)
 
