@@ -173,17 +173,18 @@ class make_env:
 
                     train_model2, change_archives = uav.receive_data(self.curr_step)
                     excess_energy = uav.receive_energy()
+                    self.reward(excess_energy)
 
                     # train_model = True
                     if train_model or train_model2:
                         train_model = True
                         self.full_reward = self.accum_reward / max(self.accum_steps, 1)
-                        self.archived_rewards = np.array([self.accum_rewards[0] / max(self.accum_steps, 1),
-                                                 self.accum_rewards[1] / max(self.accum_steps, 1),
-                                                 self.accum_rewards[2] / max(self.accum_steps, 1)])
-                        if bad_target:
-                            self.full_reward = -1
-                            self.archived_rewards = np.array([-1.0, -1.0, -1.0])
+                        self.archived_rewards = np.array([self.rewards[0] - self.accum_rewards[0],
+                                                 self.rewards[1] - self.accum_rewards[1],
+                                                 self.rewards[2] - self.accum_rewards[2]])
+                        # if bad_target:
+                        #     self.full_reward = -1
+                        #     self.archived_rewards = np.array([-1.0, -1.0, -1.0])
 
 
                     self.curr_state = uav.state
@@ -207,19 +208,18 @@ class make_env:
                         self.archived_pstate = p_state
                         self.archived_paction = action_p
                         self.track_reward_p = True
-                        self.accum_rewardsp = [0.0, 0.0, 0.0]
+                        self.accum_rewardsp = self.rewards
 
                     if used_model:
                         self.archived_state = state
                         self.archived_action = action
                         self.track_reward = True
-                        self.accum_rewards = [0.0, 0.0, 0.0]
+                        self.accum_rewards = self.rewards
 
-                self.reward(excess_energy)
                 if self.track_reward:
                     self.accum_steps += 1
                     self.accum_reward += self.curr_reward
-                    self.accum_rewards += self.rewards
+                    # self.accum_rewards += self.rewards
 
                 if self.track_reward_p:
                     if self.terminated:
@@ -227,7 +227,8 @@ class make_env:
                     else:
                         self.accum_steps_p += 1
                         self.accum_reward_p += self.reward2
-                        self.accum_rewardsp += self.rewards
+                        # self.accum_rewardsp += self.rewards
+
                 self.curr_step += 1
 
             else:
