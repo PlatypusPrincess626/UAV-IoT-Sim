@@ -429,7 +429,7 @@ class IoT_Device:
             """
             action = model.act(decision_state)
 
-            while action != targetSerial:
+            if action != targetSerial:
                 change_transit = True
             target = full_sensor_list.iat[action + 1, 0]
 
