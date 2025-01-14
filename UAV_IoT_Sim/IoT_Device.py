@@ -347,7 +347,7 @@ class IoT_Device:
         dist = 0
 
         for CH in range(len(full_sensor_list) - 1):
-            if (state[CH + 1][2] - (step + 1)) < 1.0:
+            if (step - state[CH + 1][2]) < 1.0:
                 target = full_sensor_list.iat[CH + 1, 0]
                 model_help = False
                 action = CH
