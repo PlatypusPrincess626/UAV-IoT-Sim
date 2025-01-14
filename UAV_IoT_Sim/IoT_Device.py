@@ -427,11 +427,10 @@ class IoT_Device:
             """
             For choosing next CH
             """
-            print("used model")
             action = model.act(decision_state)
 
             while action == targetSerial:
-                action = random.randint(0, (len(full_sensor_list) - 1))
+                action = random.randint(0, (len(full_sensor_list) - 2))
             change_transit = True
             target = full_sensor_list.iat[action + 1, 0]
 
