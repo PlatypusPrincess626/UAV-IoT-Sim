@@ -427,6 +427,7 @@ class IoT_Device:
             """
             For choosing next CH
             """
+            print("used model")
             action = model.act(decision_state)
 
             while action == targetSerial:

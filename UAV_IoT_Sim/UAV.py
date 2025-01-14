@@ -233,6 +233,7 @@ class QuadUAV:
                 else:
                     # Assess Reward at this point
                     self.target = self.targetHead
+                    self.targetType = 1
                     train_model, change_archives = True, True
 
                 self.targetX = self.targetHead.indX
@@ -336,15 +337,14 @@ class QuadUAV:
 
         elif not self.inRange:
             self.target = self.target
+            self.p_cycle -= 1
 
         elif self.target.type == 1:
             self.target = self.target
+            self.p_cycle -= 1
 
         else:
             ### TargetType > sensor
-            self.targetType = 1 - self.targetType
-            if self.bad_target:
-                self.targetType = 1
 
             # True, True, sensor, CHstate, action, action_p
             used_model, changed_transit, dest, state, action, dist, peak, avg = \
@@ -374,18 +374,22 @@ class QuadUAV:
                 2) If tour would result in emergency situation
                 """
                 if self.state[0][2] <= 0.2 * self.max_energy * 1_000:
-                    self.p_count = round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate))
+                    self.p_count = min(self.p_cycle * (1/2),
+                                       round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
 
                 elif (self.state[0][2] -
                       1.5 * (dist / self.maxSpd) * (1_000 * self.max_energy / (self.flight_discharge * 60)) <=
                       0.2 * self.max_energy * 1_000):
-                    self.p_count = round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate))
+                    self.p_count = min(self.p_cycle * (1/2),
+                                       round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
 
                 else:
                     if peak <= 240:
-                        self.p_count = round(0.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate))
+                        self.p_count = min(self.p_cycle * (1/2),
+                                           round(0.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
                     elif avg <= 120:
-                        self.p_count = round(0.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate))
+                        self.p_count = min(self.p_cycle * (1/2),
+                                           round(0.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
                     else:
                         self.p_count = 0
 
@@ -424,11 +428,17 @@ class QuadUAV:
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
                 else:
+                    if dest.headSerial == self.targetSerial:
+                        self.targetType = 1
+                    else:
+                        self.targetType = 0
+
                     self.target = dest
                     self.targetHead = dest
                     self.targetSerial = self.targetHead.headSerial
                     self.targetX = dest.indX
                     self.targetY = dest.indY
+
                     return (train_model, used_model, state, action,
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
