@@ -114,7 +114,7 @@ class make_env:
             self._curr_total_data = 0
             return self._env
     
-    def step(self, model, model_p):
+    def step(self, model):
         train_model = False
         old_action = 0
         comms, move, harvest = 0, 0, 0
