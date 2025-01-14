@@ -430,6 +430,7 @@ class QuadUAV:
                 else:
                     if dest.headSerial == self.targetSerial:
                         self.targetType = 1
+                        self.bad_target = True
                     else:
                         self.targetType = 0
 

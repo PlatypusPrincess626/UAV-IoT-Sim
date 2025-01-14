@@ -145,7 +145,9 @@ class make_env:
 
                     train_model2, change_archives = uav.receive_data(self.curr_step)
                     excess_energy = uav.receive_energy()
-                    self.reward(excess_energy)
+                    bad_target = uav.bad_target
+
+                    self.reward(excess_energy, bad_target)
 
                     # train_model = True
                     if train_model or train_model2:
@@ -154,6 +156,9 @@ class make_env:
                         self.archived_rewards = np.array([self.rewards[0] - self.accum_rewards[0],
                                                           self.rewards[1] - self.accum_rewards[1],
                                                           self.rewards[2] - self.accum_rewards[2]])
+                        if bad_target:
+                            self.rewards = [-1.0, -1.0, 0.0]
+
 
                     self.curr_state = uav.state
                     self.last_action = action
@@ -203,7 +208,7 @@ class make_env:
 
         return train_model, old_state, old_action, comms, move, harvest
 
-    def reward(self, excess_energy):
+    def reward(self, excess_energy, bad_target):
         '''
         Distribution of Data
         Average AoI
