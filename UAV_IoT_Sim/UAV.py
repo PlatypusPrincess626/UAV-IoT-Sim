@@ -311,12 +311,9 @@ class QuadUAV:
 
         return excess_percent
 
-    def set_dest(self, model, model_p, step, _=None):
+    def set_dest(self, model, step, _=None):
         train_model = False
         used_model = False
-        train_p = False
-        action_p = 0
-        p_state = [0, 0, 0, 0]
 
         if self.targetHead is not None:
             self.last_Head = self.targetHead.headSerial
@@ -349,22 +346,15 @@ class QuadUAV:
             if self.bad_target:
                 self.targetType = 1
 
-            self.force_change = False
             # True, True, sensor, CHstate, action, action_p
-            used_model, changed_transit, dest, state, action, action_p, p_state = \
-                self.target.get_dest(self.state, self.full_sensor_list, model, model_p, step, self.p_count,
-                                     self.targetType, self.targetSerial)
+            used_model, changed_transit, dest, state, action, dist, peak, avg = \
+                self.target.get_dest(self.state, self.full_sensor_list, model, step, self.targetType, self.targetSerial)
 
             self.p_cycle -= 1
             self.action = action
-            if action_p < self.p_count:
-                self.p_count = math.ceil((self.p_count + action_p) / 2)
 
             if changed_transit and self.p_count < 1.0:
                 self.p_cycle = 0
-
-            if self.bad_target:
-                self.bad_target = False
 
             if self.targetType == 1:
                 if dest.headSerial == self.targetSerial:
@@ -374,27 +364,46 @@ class QuadUAV:
             if self.model_transit and changed_transit:
                 self.model_transit = False
 
-            if self.is_charging and (self.p_count < 1.0 or self.state[0][2] >= 0.8 * self.max_energy * 1_000):
-                self.is_charging = False
+            # self.state[0][2] <= 0.8 * self.max_energy * 1_000
+            if self.p_cycle < 1.0 and self.p_count < 1.0:
+                self.p_cycle = 30
+                """
+                Dynamic determination of charging time.
+                1) Emergency Charge when below threshold to 1.5 * needed
+                2) If tour would result in emergency situation
+                """
+                if self.state[0][2] <= 0.2 * self.max_energy * 1_000:
+                    self.p_count = round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate))
+
+                elif (self.state[0][2] -
+                      1.5 * (dist / self.maxSpd) * (1_000 * self.max_energy / (self.flight_discharge * 60)) <=
+                      0.2 * self.max_energy * 1_000):
+                    self.p_count = round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate))
+
+                else:
+                    if peak <= 240:
+                        self.p_count = round(0.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate))
+                    elif avg <= 120:
+                        self.p_count = round(0.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate))
+                    else:
+                        self.p_count = 0
+
+                used_model = False
+                self.is_charging = True
+                self.target = self.target
+                return (train_model, used_model, state, action,
+                        self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
             if self.h == 0:
                 self.p_count -= 1
 
-            if (self.p_cycle < 1.0 and self.p_count < 1.0 and
-                    (not self.bad_target and self.state[0][2] <= 0.8 * self.max_energy * 1_000)):
-                self.p_cycle = 30
-                self.p_count = action_p
-                train_p = True
-                used_model = False
-                self.is_charging = True
-                self.target = self.target
-                return (train_model, used_model, train_p, state, action, action_p, p_state,
-                        self.step_comms_cost, self.step_move_cost, self.energy_harvested)
+            if self.is_charging and (self.p_count < 1.0 or self.state[0][2] >= 0.8 * self.max_energy * 1_000):
+                self.is_charging = False
 
             elif self.is_charging:
                 used_model = False
                 self.target = self.target
-                return (train_model, used_model, train_p, state, action, action_p, p_state,
+                return (train_model, used_model, state, action,
                         self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
             else:
@@ -410,7 +419,7 @@ class QuadUAV:
                     self.targetX = dest.indX
                     self.targetY = dest.indY
 
-                    return (train_model, used_model, train_p, state, action, action_p, p_state,
+                    return (train_model, used_model, state, action,
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
                 else:
@@ -419,9 +428,9 @@ class QuadUAV:
                     self.targetSerial = self.targetHead.headSerial
                     self.targetX = dest.indX
                     self.targetY = dest.indY
-                    return (train_model, used_model, train_p, state, action, action_p,  p_state,
+                    return (train_model, used_model, state, action,
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
-        return (train_model, used_model, train_p, self.state, self.targetHead.headSerial, action_p,  p_state,
+        return (train_model, used_model, self.state, self.targetHead.headSerial,
                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 

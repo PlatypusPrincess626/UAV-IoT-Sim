@@ -33,34 +33,25 @@ class make_env:
         self.curr_step = 0
         self.last_action = 0
         self.archived_action = 0
-        self.archived_paction = 0
 
         self.full_reward = 0.0
-        self.full_reward2 = 0.0
         self.accum_reward = 0.0
-        self.accum_reward_p = 0.0
         self.accum_steps = 0.0
-        self.accum_steps_p = 0.0
         self.track_reward = False
-        self.track_reward_p = False
         self.total_average = 0
 
         self.curr_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
         self.archived_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
-        self.curr_pstate = [0, 0, 0, 0]
-        self.archived_pstate = [0, 0, 0, 0]
         self.rewards = [0.0, 0.0, 0.0]
         self.accum_rewards = [0.0, 0.0, 0.0]
         self.archived_rewards = [0.0, 0.0, 0.0]
-        self.accum_rewardsp = [0.0, 0.0, 0.0]
-        self.archived_rewardsp = [0.0, 0.0, 0.0]
 
         self.ch_sensors = [0 for _ in range(self.num_ch)]
         for CH in range(self.num_ch):
             self.ch_sensors[CH] = self._env.CHTable.iat[CH, 0].num_sensors
 
         self.curr_reward = 0
-        self.reward2 = 0
+
         self.curr_info = {
             "Last_Action": None,
             "Reward_Change": 0.0,          # -> Change in reward at step
@@ -90,32 +81,22 @@ class make_env:
 
             self.curr_step = 0
             self.last_action = 0
-            self.archived_paction = 0
             self.archived_action = 0
 
             self.full_reward = 0.0
-            self.full_reward2 = 0.0
             self.accum_reward = 0.0
-            self.accum_reward_p = 0.0
             self.accum_steps = 0.0
-            self.accum_steps_p = 0.0
             self.track_reward = False
-            self.track_reward_p = False
             self.total_average = 0
 
             self.curr_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
             self.archived_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
-            self.curr_pstate = [0, 0, 0, 0]
-            self.archived_pstate = [0, 0, 0, 0]
             self.rewards = [0.0, 0.0, 0.0]
             self.accum_rewards = [0.0, 0.0, 0.0]
             self.archived_rewards = [0.0, 0.0, 0.0]
-            self.accum_rewardsp = [0.0, 0.0, 0.0]
-            self.archived_rewardsp = [0.0, 0.0, 0.0]
-
 
             self.curr_reward = 0
-            self.reward2 = 0
+
             self.curr_info = {
                 "Last_Action": None,
                 "Reward_Change": 0.0,          # -> Change in reward at step
@@ -135,15 +116,9 @@ class make_env:
     
     def step(self, model, model_p):
         train_model = False
-        train_p = False
-        old_paction = 0
-        excess_energy = 1.0
         old_action = 0
         comms, move, harvest = 0, 0, 0
-        old_pstate = [0, 0, 0, 0]
-        self.reward2 = 0
         self.total_average = 0
-        bad_target = False
 
         old_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
 
@@ -163,13 +138,10 @@ class make_env:
 
                 for uav in range(self._num_uav):
                     uav = self._env.UAVTable.iat[uav, 0]
-                    bad_target = uav.bad_target
-                    train_model, used_model, train_p, state, action, action_p, p_state, comms, move, harvest = (
-                        uav.set_dest(model, model_p, self.curr_step))
+                    train_model, used_model, state, action, comms, move, harvest = (uav.set_dest(model, self.curr_step))
                     uav.navigate_step(self._env)
                     self.uavX = uav.indX
                     self.uavY = uav.indY
-
 
                     train_model2, change_archives = uav.receive_data(self.curr_step)
                     excess_energy = uav.receive_energy()
@@ -180,35 +152,15 @@ class make_env:
                         train_model = True
                         self.full_reward = self.accum_reward / max(self.accum_steps, 1)
                         self.archived_rewards = np.array([self.rewards[0] - self.accum_rewards[0],
-                                                 self.rewards[1] - self.accum_rewards[1],
-                                                 self.rewards[2] - self.accum_rewards[2]])
-                        # if bad_target:
-                        #     self.full_reward = -1
-                        #     self.archived_rewards = np.array([-1.0, -1.0, -1.0])
-
+                                                          self.rewards[1] - self.accum_rewards[1],
+                                                          self.rewards[2] - self.accum_rewards[2]])
 
                     self.curr_state = uav.state
                     self.last_action = action
                     self.terminated = uav.crash
-                    self.curr_pstate = p_state
 
                     old_state = self.archived_state
                     old_action = self.archived_action
-                    old_pstate = self.archived_pstate
-                    old_paction = self.archived_paction
-
-                    if train_p:
-                        if self.curr_step < 15:
-                            train_p = False
-                        else:
-                            self.full_reward2 = np.array(self.accum_reward_p / max(self.accum_steps_p, 1))
-                            self.archived_rewardsp = np.array([self.accum_rewardsp[0] / max(self.accum_steps, 1),
-                                                 self.accum_rewardsp[1] / max(self.accum_steps, 1),
-                                                 self.accum_rewardsp[2] / max(self.accum_steps, 1)])
-                        self.archived_pstate = p_state
-                        self.archived_paction = action_p
-                        self.track_reward_p = True
-                        self.accum_rewardsp = self.rewards
 
                     if used_model:
                         self.archived_state = state
@@ -219,21 +171,12 @@ class make_env:
                 if self.track_reward:
                     self.accum_steps += 1
                     self.accum_reward += self.curr_reward
-                    # self.accum_rewards += self.rewards
-
-                if self.track_reward_p:
-                    if self.terminated:
-                        self.accum_reward_p = 0
-                    else:
-                        self.accum_steps_p += 1
-                        self.accum_reward_p += self.reward2
-                        # self.accum_rewardsp += self.rewards
 
                 self.curr_step += 1
 
             else:
                 self.truncated = True
-                self.curr_info={
+                self.curr_info = {
                     "Last_Action": self.last_action,
                     "Reward_Change": 0,        # -> Change in reward at step
                     "Avg_Age": 0,                   # -> avgAoI
@@ -246,7 +189,6 @@ class make_env:
                 }
         else:
             self.curr_reward = 0
-            self.reward2 = 0
             self.curr_info = {
                 "Last_Action": self.last_action,
                 "Reward_Change": 0,        # -> Change in reward at step
@@ -259,7 +201,7 @@ class make_env:
                 "Truncated": self.truncated         # -> Max episode steps reached
             }
 
-        return train_model, train_p, old_state, old_action, old_paction, old_pstate, comms, move, harvest
+        return train_model, old_state, old_action, comms, move, harvest
 
     def reward(self, excess_energy):
         '''
@@ -274,7 +216,6 @@ class make_env:
 
         for index in range(len(self.curr_state) - 1):
             age = self.curr_state[index + 1][2]
-            # age = self.curr_step - self.curr_state[index + 1][2]
             # if age > self._aoi_threshold:
             #     age = self._aoi_threshold
             totalAge += age
@@ -302,20 +243,21 @@ class make_env:
         
         distOffset = maxColl - minColl
 
-        age_threshold = 120
         rewardDist = 1 - distOffset
-        rewardPeak = (1 - peakAge / age_threshold)
-        rewardAvgAge = (1 - avgAge / (0.5 * age_threshold))
+
+        rewardPeak = (1-peakAge/self._aoi_threshold) if (1-peakAge/self._aoi_threshold) > 0 else (
+                (1-peakAge/self._aoi_threshold)/3
+        )
+
+        rewardAvgAge = (1-avgAge/(0.5 * self._aoi_threshold)) if (1-avgAge/(0.5 * self._aoi_threshold)) > 0 else (
+                (1-avgAge/(0.5 * self._aoi_threshold))/6)
+
         rewardDataChange = dataChange / 1_498_500
 
         rewardChange = 0 * rewardDist + 0.5 * rewardPeak + 0.5 * rewardAvgAge + 0 * rewardDataChange
 
-        reward_energy = excess_energy
-        reward2Change = 0.25 * rewardPeak + 0.25 * rewardAvgAge + 0 * rewardDataChange + 0.5 * reward_energy
-
         if self.terminated:
-            rewardChange = -5
-            reward2Change = -5
+            rewardChange = -1
         
         self.curr_info = {
             "Last_Action": max(self.last_action, -1),
@@ -330,6 +272,5 @@ class make_env:
         }
         
         self.curr_reward = rewardChange
-        self.reward2 = reward2Change
 
-        self.rewards = [max(rewardPeak, -1), max(rewardAvgAge, -1), max(reward_energy, -1)]
+        self.rewards = [max(rewardPeak, -1), max(rewardAvgAge, -1), 0.0]

@@ -98,7 +98,6 @@ def get_args():
 
 def evaluate(
         agent,
-        agent_p,
         eval_env,
         eval_episodes,
         log_metrics=False,
@@ -106,7 +105,6 @@ def evaluate(
         logger=None,
         start_time=None
 ):
-    info = None
     total_reward = 0
     num_crashes = 0
     total_steps = 0
@@ -131,12 +129,10 @@ def evaluate(
 
     # QL
     agent.decay_epsilon(1)
-    agent_p.decay_epsilon(1)
 
     for i in range(eval_episodes):
         eval_env.reset()
 
-        step = 1
         done = False
         crashed = False
         ep_reward = 0
@@ -147,7 +143,7 @@ def evaluate(
         CH_Metrics = [[0, 0] for _ in range(eval_env.num_ch)]
 
         while not done:
-            train_model, train_p, old_state, old_action, action_p, old_pstate, comms, move, harvest = eval_env.step(agent, agent_p)
+            train_model, old_state, old_action, comms, move, harvest = eval_env.step(agent)
             buffer_done = eval_env.terminated
             info = eval_env.curr_info
             crashed = eval_env.terminated
@@ -155,7 +151,8 @@ def evaluate(
             if buffer_done or eval_env.truncated:
                 done = True
 
-            print(eval_env.accum_reward_p/max(eval_env.accum_steps_p, 1))
+            print(eval_env.full_reward)
+
             avgAoI += info.get("Avg_Age", 0.0)
             peakAoI += info.get("Peak_Age", 0.0)
             dataDist += info.get("Data_Distribution", 0.0)
@@ -169,13 +166,8 @@ def evaluate(
                 CH_Metrics[ch][0] = eval_env.curr_state[ch + 1][1]
                 CH_Metrics[ch][1] = eval_env.curr_state[ch + 1][2]
 
-            if train_p or done:
-                agent_p.update_mem(old_pstate, int(action_p), eval_env.archived_rewardsp,
-                                   eval_env.curr_pstate, buffer_done)
-
             if (train_model or eval_env.truncated) and not buffer_done:
-            # if True:
-            #     agent.update(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
+                # agent.update(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
                 # DDQN
                 agent.update_mem(old_state, old_action, eval_env.archived_rewards,
                                  eval_env.curr_state, buffer_done, eval_env.curr_step)
@@ -199,7 +191,7 @@ def evaluate(
                 CHCoords.append([eval_env.chX[cluster], eval_env.chY[cluster]])
 
         if log_metrics and i == eval_episodes - 1:
-            filename = ("sens_pts0_" + curr_date_time.strftime("%d") + "_" +
+            filename = ("sens_pts_" + curr_date_time.strftime("%d") + "_" +
                         curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
@@ -207,7 +199,7 @@ def evaluate(
                 csvwriter.writerows(SensCoords)
 
         if log_metrics and i == eval_episodes - 1:
-            filename = ("cluster_pts0_" + curr_date_time.strftime("%d") + "_" +
+            filename = ("cluster_pts_" + curr_date_time.strftime("%d") + "_" +
                         curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
@@ -216,7 +208,7 @@ def evaluate(
 
         if log_metrics and i == eval_episodes - 1:
             print(eval_env.ch_sensors)
-            filename = ("age_metrics0_" + curr_date_time.strftime("%d") + "_" +
+            filename = ("age_metrics_" + curr_date_time.strftime("%d") + "_" +
                         curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
@@ -224,7 +216,7 @@ def evaluate(
                 csvwriter.writerows(CH_Age)
 
         if log_metrics and i == eval_episodes - 1:
-            filename = ("data_metrics0_" + curr_date_time.strftime("%d") + "_" +
+            filename = ("data_metrics_" + curr_date_time.strftime("%d") + "_" +
                         curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
@@ -232,7 +224,7 @@ def evaluate(
                 csvwriter.writerows(CH_Data)
 
         if log_metrics and i == eval_episodes - 1:
-            filename = ("uav_metrics0_" + curr_date_time.strftime("%d") + "_" +
+            filename = ("uav_metrics_" + curr_date_time.strftime("%d") + "_" +
                         curr_date_time.strftime("%m") + ".csv")
             open(filename, 'x')
             with open(filename, 'w') as csvfile:
@@ -242,8 +234,6 @@ def evaluate(
         # DDQN
         if len(agent.memory) > 128:
             agent.train(128)
-        if len(agent_p.memory) > 128:
-            agent_p.train(128)
 
         accum_avgAoI += avgAoI / (eval_env.curr_step + count)
         accum_peakAoI += peakAoI / (eval_env.curr_step + count)
@@ -273,7 +263,6 @@ def evaluate(
 
 def train(
         agent,
-        agent_p,
         env: object,
         env_str: str,
         total_steps: int,
@@ -286,24 +275,21 @@ def train(
         logger=None,
 ):
     start_time = time()
-    # agent.eval_off()
     env.reset()
     sr, ret, length = 0.0, 0.0, 0.0
+
     for timestep in range(total_steps):
-        done = step(agent, agent_p, env)
+        done = step(agent, env)
+
         if done:
             if len(agent.memory) > 128:
                 agent.train(128)
-            if len(agent_p.memory) > 128:
-                agent_p.train(128)
         # QL
         agent.decay_epsilon(timestep / total_steps)
-        agent_p.decay_epsilon(1)
 
         if timestep % (2 * eval_frequency) == 0:
             # DDQN
             agent.update_target_from_model()
-            agent_p.update_target_from_model()
             env.reset()
 
         if timestep % eval_frequency == 0:
@@ -320,7 +306,7 @@ def train(
                 "losses/hours": hours,
             }
             sr, ret, length, avgAoI, peakAoI, dataDist, dataColl, CH_Metrics, \
-                comms, move, harvest = evaluate(agent, agent_p, env, eval_episodes)
+                comms, move, harvest = evaluate(agent, env, eval_episodes)
 
             log_vals.update(
                 {
@@ -334,10 +320,6 @@ def train(
                 }
             )
 
-            # logger.log(
-            #     log_vals,
-            #     step=timestep,
-            # )
 
         print(
             f"Training Steps: {timestep}, Env: {env_str}, Sucess Rate: {sr:.2f}, Return: {ret:.2f}, Episode Length: {length:.2f}"
@@ -356,7 +338,7 @@ def train(
         "losses/hours": hours,
     }
     sr, ret, length, avgAoI, peakAoI, dataDist, dataColl, CH_Metrics, \
-        comms, move, harvest = evaluate(agent, agent_p, env, eval_episodes, True, env_str, start_time)
+        comms, move, harvest = evaluate(agent, env, eval_episodes, True, env_str, start_time)
 
     log_vals.update(
         {
@@ -370,24 +352,16 @@ def train(
         }
     )
 
-    # logger.log(
-    #     log_vals,
-    #     step=total_steps,
-    # )
 
-
-def step(agent, agent_p, env):
-    train_model, train_p, old_state, old_action, action_p, old_pstate, comms, move, harvest = env.step(agent, agent_p)
+def step(agent, env):
+    train_model, old_state, old_action, comms, move, harvest = env.step(agent)
     buffer_done = env.terminated
     done = False
 
     if buffer_done or env.truncated:
         done = True
 
-    if train_p or done:
-        agent_p.update_mem(old_pstate, int(action_p), env.archived_rewardsp, env.curr_pstate, buffer_done)
     if (train_model or env.truncated) and not buffer_done:
-    # if True:
         print(f"Training")
         #QL
         # agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
@@ -396,71 +370,30 @@ def step(agent, agent_p, env):
     return done
 
 
-def prepopulate(agent, agent_p, prepop_steps, env):
+def prepopulate(agent, prepop_steps, env):
     timestep = 0
-
     # QL
     agent.decay_epsilon(0)
-    agent_p.decay_epsilon(0)
-    done_p = False
-    """
-    while not done_p:
-        env.reset()
-        done = False
 
-        while not done:
-            print(f"Prepop Step: Training Power Agent")
-            train_model, train_p, old_state, old_action, action_p, old_pstate, comms, move, harvest = env.step(agent, agent_p)
-            buffer_done = env.terminated
-
-            if buffer_done or env.truncated:
-                done = True
-                if env.truncated:
-                    done_p = True
-            #     # DDQN
-            #     agent.update_target_from_model()
-            #     agent_p.update_target_from_model()
-
-
-            if train_p or done:
-                agent_p.update_mem(old_pstate, int(action_p), env.full_reward2, env.curr_pstate, buffer_done)
-            # if done:
-            # if True:
-            #     agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
-                # DDQN
-                # agent.update_mem(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
-                # if len(agent.memory) > 64:
-                #     agent.train(64)
-                # if len(agent_p.memory) > 64:
-                #     agent_p.train(64)
-            if done:
-                if len(agent_p.memory) > 64:
-                    agent_p.train(64)
-    """
     while timestep < prepop_steps:
         env.reset()
         done = False
 
         while not done:
             print(f"Prepop Step: {timestep}")
-            agent_p.decay_epsilon(timestep / prepop_steps)
-            train_model, train_p, old_state, old_action, action_p, old_pstate, comms, move, harvest = env.step(agent,                                                                                                 agent_p)
+            train_model, old_state, old_action, comms, move, harvest = env.step(agent)
             buffer_done = env.terminated
 
             if buffer_done or env.truncated:
                 done = True
 
-            if train_p or done:
-                agent_p.update_mem(old_pstate, int(action_p), env.archived_rewardsp, env.curr_pstate, buffer_done)
-            # if (train_model or env.truncated) and not buffer_done:
+            if (train_model or env.truncated) and not buffer_done:
                 agent.update_mem(old_state, old_action, env.archived_rewards,
                                  env.curr_state, buffer_done, env.curr_step)
             timestep += 1
 
         if len(agent.memory) > 128:
             agent.train(128)
-        if len(agent_p.memory) > 128:
-            agent_p.train(128)
 
 def run_experiment(args):
     env_str = args.env
@@ -482,13 +415,6 @@ def run_experiment(args):
         env.num_ch
     )
 
-    # Power Determination
-    agent_p = model_utils.get_ddqn_agentp(
-        env,
-        4,
-        10
-    )
-
     policy_save_dir = os.path.join(
         os.getcwd(), "policies", args.project_name
     )
@@ -498,10 +424,7 @@ def run_experiment(args):
         f"model={args.model}"
     )
 
-    # wandb_kwargs = {"resume": None}
-    # logger = get_logger(policy_path, args, wandb_kwargs)
-
-    prepopulate(agent, agent_p, 72000, env)
+    prepopulate(agent, 72000, env)
     mean_success_rate = RunningAverage(10)
     mean_reward = RunningAverage(10)
     mean_episode_length = RunningAverage(10)
@@ -509,7 +432,6 @@ def run_experiment(args):
     print("Beginning Training")
     train(
         agent,
-        agent_p,
         env,
         args.env,
         args.steps,
