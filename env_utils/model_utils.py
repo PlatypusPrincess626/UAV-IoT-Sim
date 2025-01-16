@@ -244,7 +244,7 @@ class get_gann_agent:
 
 class get_ddqn_agent():
     def __init__(self, env, nS, nA, epsilon_i=1.0, epsilon_f=0.0, n_epsilon=0.1,
-                 alpha=0.5, gamma=0.95, epsilon=0.5, epsilon_min=0.1, epsilon_decay=0.01, lamb=1):
+                 alpha=0.5, gamma=0.95, epsilon=0.5, epsilon_min=0.1, epsilon_decay=0.01, lamb=0.1):
         # ADF 2.0
         self.nS = nS
         self.nA = nA
@@ -278,13 +278,13 @@ class get_ddqn_agent():
     def build_model(self):
         model = tf.keras.Sequential()  # linear stack of layers https://keras.io/models/sequential/
         model.add(tf.keras.layers.Input(shape=(self.nS, )))
-        model.add(tf.keras.layers.Dense(64, activation='relu'))  # [Input] -> Layer 1
+        model.add(tf.keras.layers.Dense(128, activation='relu'))  # [Input] -> Layer 1
         #   Dense: Densely connected layer https://keras.io/layers/core/
         #   24: Number of neurons
         #   input_dim: Number of input variables
         #   activation: Rectified Linear Unit (relu) ranges >= 0
         # model.add(tf.keras.layers.Dense(128, activation='relu'))  # Layer 2 -> 3
-        model.add(tf.keras.layers.Dense(64, activation='relu'))  # Layer 2 -> 3
+        model.add(tf.keras.layers.Dense(128, activation='relu'))  # Layer 2 -> 3
         model.add(tf.keras.layers.Dense(self.nA, activation='tanh'))  # Layer 3 -> [output]
         #   Size has to match the output (different actions)
         #   Linear activation on the last layer
@@ -353,11 +353,11 @@ class get_ddqn_agent():
                     target = ((self.lamb * -1) +
                               (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
                 elif done:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
-                    target = ((self.lamb * (np.array([0.75, 0.25, 0.0]) @ reward)) +
+                    target = ((self.lamb * (np.array([0.9, 0.1, 0.0]) @ reward)) +
                               (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
                 else:  # Non terminal, Using Q to get T is Double DQN
                     target = (self.lamb *
-                              ((np.array([0.75, 0.25, 0.0]) @ reward) +
+                              ((np.array([0.9, 0.1, 0.0]) @ reward) +
                                self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)]) +
                               (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
             else:
@@ -365,24 +365,14 @@ class get_ddqn_agent():
                     target = ((self.lamb * -1) +
                               (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
                 elif done:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
-                    target = ((self.lamb * (np.array([0.1, 0.9, 0.0]) @ reward)) +
+                    target = ((self.lamb * (np.array([0.1, 0.45, 0.45]) @ reward)) +
                               (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
                 else:  # Non terminal, Using Q to get T is Double DQN
                     target = (self.lamb *
-                              ((np.array([0.1, 0.9, 0.0]) @ reward) +
+                              ((np.array([0.1, 0.45, 0.45]) @ reward) +
                                self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)]) +
                               (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
 
-            # self.qvalue_max.add(np.argmax(nst_predict))
-            # self.qvalue_mean.add(np.mean(nst_predict))
-            # self.qvalue_min.add(np.argmin(nst_predict))
-            #
-            # self.target_max.add(np.argmax(nst_predict_target))
-            # self.target_mean.add(np.mean(nst_predict_target))
-            # self.target_min.add(np.argmin(nst_predict_target))
-            #
-            # loss = (np.square(np.argmax(nst_predict_target) - np.argmax(st_predict)))
-            # self.td_errors.add(loss)
 
             target_f = st_predict[index]
             target_f[action] = target

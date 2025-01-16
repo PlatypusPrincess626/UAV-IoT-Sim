@@ -339,22 +339,12 @@ class IoT_Device:
             decision_state[CH+1][2] = state[CH+1][2] + p_count
             decision_state[CH+1][3] = state[CH+1][3] + p_count
 
-        action = 0
+        action = -1
         out_state = copy.deepcopy(state)
         target = None
         model_help = True
         change_transit = False
         dist = 0
-
-        for CH in range(len(full_sensor_list) - 1):
-            if (step - state[CH + 1][2]) < 1.0:
-                target = full_sensor_list.iat[CH + 1, 0]
-                model_help = False
-                action = CH
-
-                target = full_sensor_list.iat[action + 1, 0]
-                dist = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
-
 
         if not targetType:
             """
@@ -427,7 +417,16 @@ class IoT_Device:
             """
             For choosing next CH
             """
-            action = model.act(decision_state)
+            for CH in range(len(full_sensor_list) - 1):
+                if (step - state[CH + 1][2]) < 1.0:
+                    target = full_sensor_list.iat[CH + 1, 0]
+                    model_help = False
+                    action = CH
+
+                    target = full_sensor_list.iat[action + 1, 0]
+                    dist = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
+            if action < 0:
+                action = model.act(decision_state)
 
             if action != targetSerial:
                 change_transit = True

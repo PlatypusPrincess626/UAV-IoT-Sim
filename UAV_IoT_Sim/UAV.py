@@ -64,7 +64,7 @@ class QuadUAV:
         self.no_hold = True
         self.force_change = False
         self.force_count = 0
-        self.targetType = 0
+        self.targetType = 1
 
         self.origin_state = None
         self.origin_action = None
@@ -129,7 +129,7 @@ class QuadUAV:
         self.tour = None
         self.tour_iter = 0
         self.bad_target = False
-        self.targetType = 0
+        self.targetType = 1
 
         self.step_move_cost = 0
         self.step_comms_cost = 0
@@ -334,6 +334,7 @@ class QuadUAV:
             self.targetX = minCH.indX
             self.targetY = minCH.indY
             self.targetSerial = self.targetHead.headSerial
+            self.targetType = 0
 
         elif not self.inRange:
             self.target = self.target

@@ -278,4 +278,4 @@ class make_env:
         
         self.curr_reward = rewardChange
 
-        self.rewards = [max(rewardPeak, -1), max(rewardAvgAge, -1), 0.0]
+        self.rewards = [max(rewardPeak, -1), max(rewardAvgAge, -1), rewardDist]
