@@ -157,7 +157,7 @@ class make_env:
                                                           self.rewards[1] - self.accum_rewards[1],
                                                           self.rewards[2] - self.accum_rewards[2]])
                         if bad_target:
-                            self.rewards = [-1.0, -1.0, -1.0]
+                            self.rewards = [0.0, 0.0, 0.0]
 
 
                     self.curr_state = uav.state
@@ -250,19 +250,16 @@ class make_env:
 
         rewardDist = 1 - distOffset
 
-        rewardPeak = (1-peakAge/self._aoi_threshold) if (1-peakAge/self._aoi_threshold) > 0 else (
-                (1-peakAge/self._aoi_threshold)/3
-        )
+        rewardPeak = (1-peakAge/self._aoi_threshold) if (1-peakAge/self._aoi_threshold) > 0 else 0
 
-        rewardAvgAge = (1-avgAge/(0.5 * self._aoi_threshold)) if (1-avgAge/(0.5 * self._aoi_threshold)) > 0 else (
-                (1-avgAge/(0.5 * self._aoi_threshold))/6)
+        rewardAvgAge = (1-avgAge/(0.5 * self._aoi_threshold)) if (1-avgAge/(0.5 * self._aoi_threshold)) > 0 else 0
 
         rewardDataChange = dataChange / 1_498_500
 
         rewardChange = 0 * rewardDist + 0.5 * rewardPeak + 0.5 * rewardAvgAge + 0 * rewardDataChange
 
         if self.terminated:
-            rewardChange = -1
+            rewardChange = 0
         
         self.curr_info = {
             "Last_Action": max(self.last_action, -1),
@@ -278,4 +275,4 @@ class make_env:
         
         self.curr_reward = rewardChange
 
-        self.rewards = [max(rewardPeak, -1), max(rewardAvgAge, -1), rewardDist]
+        self.rewards = [max(rewardPeak, 0), max(rewardAvgAge, 0), rewardDist]

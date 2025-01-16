@@ -285,7 +285,7 @@ class get_ddqn_agent():
         #   activation: Rectified Linear Unit (relu) ranges >= 0
         # model.add(tf.keras.layers.Dense(128, activation='relu'))  # Layer 2 -> 3
         model.add(tf.keras.layers.Dense(128, activation='relu'))  # Layer 2 -> 3
-        model.add(tf.keras.layers.Dense(self.nA, activation='tanh'))  # Layer 3 -> [output]
+        model.add(tf.keras.layers.Dense(self.nA, activation='softmax'))  # Layer 3 -> [output]
         #   Size has to match the output (different actions)
         #   Linear activation on the last layer
         model.compile(loss='mean_squared_error',  # Loss function: Mean Squared Error
@@ -349,8 +349,8 @@ class get_ddqn_agent():
             nst_action_predict_target = nst_predict_target[index]
             nst_action_predict_model = nst_predict[index]
             if (step/720) > 0.5:
-                if np.array(reward).mean() <= -1.0:
-                    target = ((self.lamb * -1) +
+                if np.array(reward).mean() <= 0.0:
+                    target = ((self.lamb * 0) +
                               (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
                 elif done:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
                     target = ((self.lamb * (np.array([0.9, 0.1, 0.0]) @ reward)) +
@@ -361,8 +361,8 @@ class get_ddqn_agent():
                                self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)]) +
                               (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
             else:
-                if np.array(reward).mean() <= -1.0:
-                    target = ((self.lamb * -1) +
+                if np.array(reward).mean() <= 0.0:
+                    target = ((self.lamb * 0.0) +
                               (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
                 elif done:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
                     target = ((self.lamb * (np.array([0.1, 0.45, 0.45]) @ reward)) +
@@ -437,7 +437,7 @@ class get_ddqn_agentp():
         #   activation: Rectified Linear Unit (relu) ranges >= 0
         # model.add(tf.keras.layers.Dense(64, activation='relu'))  # Layer 2 -> 3
         model.add(tf.keras.layers.Dense(32, activation='relu'))  # Layer 2 -> 3
-        model.add(tf.keras.layers.Dense(self.nA, activation='tanh'))  # Layer 3 -> [output]
+        model.add(tf.keras.layers.Dense(self.nA, activation='softmax'))  # Layer 3 -> [output]
         #   Size has to match the output (different actions)
         #   Linear activation on the last layer
         model.compile(loss='mean_squared_error',  # Loss function: Mean Squared Error
