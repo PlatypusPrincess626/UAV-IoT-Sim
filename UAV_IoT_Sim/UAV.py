@@ -358,6 +358,9 @@ class QuadUAV:
             if changed_transit and self.p_count < 1.0:
                 self.p_cycle = 0
 
+            if self.bad_target:
+                self.bad_target = False
+
             if self.targetType == 1:
                 if dest.headSerial == self.targetSerial:
                     self.bad_target = True
@@ -434,6 +437,7 @@ class QuadUAV:
                         self.bad_target = True
                     else:
                         self.targetType = 0
+                        self.bad_target = False
 
                     self.target = dest
                     self.targetHead = dest

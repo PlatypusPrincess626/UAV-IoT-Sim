@@ -423,8 +423,6 @@ class IoT_Device:
                     model_help = False
                     action = CH
 
-                    target = full_sensor_list.iat[action + 1, 0]
-                    dist = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
             if action < 0:
                 action = model.act(decision_state)
 
