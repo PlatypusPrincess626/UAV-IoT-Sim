@@ -157,7 +157,7 @@ class make_env:
                                                           self.rewards[1] - self.accum_rewards[1],
                                                           self.rewards[2] - self.accum_rewards[2]])
                         if bad_target:
-                            self.rewards = [-1.0, -1.0, 0.0]
+                            self.rewards = [-1.0, -1.0, -1.0]
 
 
                     self.curr_state = uav.state
