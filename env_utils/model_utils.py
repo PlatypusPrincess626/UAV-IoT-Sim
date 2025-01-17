@@ -284,7 +284,7 @@ class get_ddqn_agent():
         #   input_dim: Number of input variables
         #   activation: Rectified Linear Unit (relu) ranges >= 0
         # model.add(tf.keras.layers.Dense(128, activation='relu'))  # Layer 2 -> 3
-        model.add(tf.keras.layers.Dense(256, activation='relu'))  # Layer 2 -> 3
+        model.add(tf.keras.layers.Dense(64, activation='relu'))  # Layer 2 -> 3
         model.add(tf.keras.layers.Dense(self.nA, activation='softmax'))  # Layer 3 -> [output]
         #   Size has to match the output (different actions)
         #   Linear activation on the last layer
