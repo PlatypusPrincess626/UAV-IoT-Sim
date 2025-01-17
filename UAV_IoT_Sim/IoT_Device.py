@@ -393,6 +393,7 @@ class IoT_Device:
 
             self.last_target = self.headSerial
             target = self.tour[0]
+            print("Here")
             print(target.type)
             self.target_time = step
             action = self.headSerial
