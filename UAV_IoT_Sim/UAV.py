@@ -312,7 +312,7 @@ class QuadUAV:
 
         return excess_percent
 
-    def set_dest(self, models, step, _=None):
+    def set_dest(self, model, step, _=None):
         train_model = False
         DCH = 0
         used_model = False
@@ -351,7 +351,7 @@ class QuadUAV:
 
             # True, True, sensor, CHstate, action, action_p
             used_model, changed_transit, dest, state, action, dist, peak, avg = \
-                self.target.get_dest(self.state, self.full_sensor_list, models[self.targetSerial], step,
+                self.target.get_dest(self.state, self.full_sensor_list, model, step,
                                      self.p_count, self.targetType, self.targetSerial)
 
             DCH = self.targetSerial

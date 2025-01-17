@@ -116,7 +116,7 @@ class make_env:
             self._curr_total_data = 0
             return self._env
     
-    def step(self, models):
+    def step(self, model):
         train_model = False
         train_CH = 0
         old_action = 0
@@ -142,7 +142,7 @@ class make_env:
                 for uav in range(self._num_uav):
                     uav = self._env.UAVTable.iat[uav, 0]
                     train_model, DCH, used_model, state, action, comms, move, harvest = \
-                        (uav.set_dest(models, self.curr_step))
+                        (uav.set_dest(model, self.curr_step))
                     uav.navigate_step(self._env)
                     self.uavX = uav.indX
                     self.uavY = uav.indY
@@ -161,8 +161,6 @@ class make_env:
                         self.archived_rewards = np.array([self.rewards[0] - self.accum_rewards[0],
                                                           self.rewards[1] - self.accum_rewards[1],
                                                           self.rewards[2] - self.accum_rewards[2]])
-                        if bad_target:
-                            self.rewards = [0.0, 0.0, 0.0]
 
 
                     self.curr_state = uav.state
@@ -258,11 +256,16 @@ class make_env:
 
         rewardPeak = (1-peakAge/self._aoi_threshold) if (1-peakAge/self._aoi_threshold) > 0 else 0
 
-        rewardAvgAge = (1-avgAge/(0.5 * self._aoi_threshold)) if (1-avgAge/(0.5 * self._aoi_threshold)) > 0 else 0
+        # rewardAvgAge = (1-avgAge/(0.5 * self._aoi_threshold)) if (1-avgAge/(0.5 * self._aoi_threshold)) > 0 else 0
+
+        rewardAvgAge = 1 - avgAge/self.curr_step
+
+        rewardTarget = 0 if bad_target else 1
 
         rewardDataChange = dataChange / 1_498_500
 
-        rewardChange = 0 * rewardDist + 0.5 * rewardPeak + 0.5 * rewardAvgAge + 0 * rewardDataChange
+        rewardChange = (0 * rewardDist + 0.6 * rewardPeak + 0.3 * rewardAvgAge
+                        + 0 * rewardDataChange + 0.1 * rewardTarget)
 
         if self.terminated:
             rewardChange = 0
@@ -281,4 +284,4 @@ class make_env:
         
         self.curr_reward = rewardChange
 
-        self.rewards = [max(rewardPeak, 0), max(rewardAvgAge, 0), dataChange]
+        self.rewards = [max(rewardPeak, 0), max(rewardAvgAge, 0), rewardTarget]
