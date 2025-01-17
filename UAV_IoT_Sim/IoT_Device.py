@@ -389,12 +389,10 @@ class IoT_Device:
 
             # split into two function if too much distance
             self.tour = [self.sens_table.iat[inactive[tour[i+1]-1], 0] for i in range(len(tour)-1)]
-            print(self.tour[0].type)
-            print(self.tour[1].type)
             dist = sum(dists)
 
             self.last_target = self.headSerial
-            target = self.tour[1]
+            target = self.tour[0]
             self.target_time = step
             action = self.headSerial
             model_help = False
