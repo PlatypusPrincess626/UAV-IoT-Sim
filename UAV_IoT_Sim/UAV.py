@@ -425,6 +425,7 @@ class QuadUAV:
                     self.model_transit = True
 
                 if dest.type == 1:
+                    print(len(tour))
                     self.tour = tour
                     self.tour_iter = 1
                     self.target = dest
