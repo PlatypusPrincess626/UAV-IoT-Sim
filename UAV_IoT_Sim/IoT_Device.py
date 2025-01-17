@@ -394,7 +394,8 @@ class IoT_Device:
             self.last_target = self.headSerial
             target = self.tour[0]
             print("Here")
-            print(target.type)
+            print(len(self.tour))
+            print("Gone")
             self.target_time = step
             action = self.headSerial
             model_help = False
