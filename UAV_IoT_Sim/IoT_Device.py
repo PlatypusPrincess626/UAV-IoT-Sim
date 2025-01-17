@@ -319,19 +319,15 @@ class IoT_Device:
         # Must check through list of sensors... Must recieve data on how much each sensor contributes.
         my_contribution = state[self.headSerial + 1][1]
         if my_contribution > self.contribution:
-            self.data_table[self.last_target + 1] = my_contribution     # self.last_target outdated, needs list of targets
-            self.age_table[self.last_target] = self.target_time
+            self.avg_AoI = self.target_time
+            self.max_AoI = self.target_time
+            state[self.headSerial + 1][2] = self.target_time
+            state[self.headSerial + 1][3] = self.target_time
             self.contribution = my_contribution
 
-            self.max_AoI = self.age_table[0]
-            self.avg_AoI = self.age_table[0]
-            for sens in range(len(self.sens_table.index) - 1):
-                self.avg_AoI += self.age_table[sens+1]
-                if self.age_table[sens+1] < self.max_AoI:
-                    self.max_AoI = self.age_table[sens]
-            self.avg_AoI = math.ceil(self.avg_AoI / len(self.age_table))
-            state[self.headSerial + 1][2] = self.max_AoI
-            state[self.headSerial + 1][3] = self.avg_AoI
+            for sens in range(len(age_table)):
+                self.age_table[sens] = self.target_time
+
 
         decision_state = copy.deepcopy(state)
         decision_state[0][2] = state[0][2] + round(p_count * 6_800_000 / (self.charge_rate * 60))
@@ -396,7 +392,7 @@ class IoT_Device:
             dist = sum(dists)
 
             self.last_target = self.headSerial
-            target = self.tour[0]
+            target = self.tour[1]
             self.target_time = step
             action = self.headSerial
             model_help = False
