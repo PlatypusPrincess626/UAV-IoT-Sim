@@ -436,5 +436,5 @@ class IoT_Device:
                 AoI_peak = AoI
         AoI_avg = math.ceil(AoI_avg / len(full_sensor_list))
 
-        return model_help, change_transit, target, decision_state, action, dist, AoI_peak, AoI_avg
+        return model_help, change_transit, target, decision_state, action, dist, AoI_peak, AoI_avg, self.tour
 

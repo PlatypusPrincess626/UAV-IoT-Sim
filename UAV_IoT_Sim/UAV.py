@@ -350,11 +350,10 @@ class QuadUAV:
             ### TargetType > sensor
 
             # True, True, sensor, CHstate, action, action_p
-            used_model, changed_transit, dest, state, action, dist, peak, avg = \
+            used_model, changed_transit, dest, state, action, dist, peak, avg, tour = \
                 self.target.get_dest(self.state, self.full_sensor_list, model, step,
                                      self.p_count, self.targetType, self.targetSerial)
 
-            print(dest.type)
             DCH = self.targetSerial
             self.p_cycle -= 1
             self.action = action
@@ -426,7 +425,7 @@ class QuadUAV:
                     self.model_transit = True
 
                 if dest.type == 1:
-                    self.tour = self.target.tour
+                    self.tour = tour
                     self.tour_iter = 1
                     self.target = dest
                     self.targetX = dest.indX
