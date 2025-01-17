@@ -347,6 +347,7 @@ class IoT_Device:
             For sensor targeting use Christofides
             if target type = 0
             """
+            print(self.active_table)
             inactive = []
             for sens in range(len(self.active_table)):
                 if not sens:
