@@ -409,6 +409,8 @@ def run_experiment(args):
     #     env
     # )
     # DDQN
+    # agents = []
+    # for i in range(env.num_ch):
     agent = model_utils.get_ddqn_agent(
         env,
         ((env.num_ch + 1) * 3),

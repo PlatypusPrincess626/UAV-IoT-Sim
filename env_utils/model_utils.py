@@ -348,30 +348,19 @@ class get_ddqn_agent():
             # Predict from state
             nst_action_predict_target = nst_predict_target[index]
             nst_action_predict_model = nst_predict[index]
-            if (step/720) > 0.5:
-                if np.array(reward).mean() <= 0.0:
-                    target = ((self.lamb * 0) +
-                              (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
-                elif done:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
-                    target = ((self.lamb * (np.array([0.9, 0.1, 0.0]) @ reward)) +
-                              (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
-                else:  # Non terminal, Using Q to get T is Double DQN
-                    target = (self.lamb *
-                              ((np.array([0.9, 0.1, 0.0]) @ reward) +
-                               self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)]) +
-                              (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
-            else:
-                if np.array(reward).mean() <= 0.0:
-                    target = ((self.lamb * 0.0) +
-                              (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
-                elif done:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
-                    target = ((self.lamb * (np.array([0.1, 0.45, 0.45]) @ reward)) +
-                              (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
-                else:  # Non terminal, Using Q to get T is Double DQN
-                    target = (self.lamb *
-                              ((np.array([0.1, 0.45, 0.45]) @ reward) +
-                               self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)]) +
-                              (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
+
+            if np.array(reward).mean() <= 0.0:
+                target = (self.lamb *
+                          (0 + self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)]) +
+                          (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
+            elif done:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
+                target = ((self.lamb * (np.array([0.6, 0.3, 0.1]) @ reward)) +
+                          (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
+            else:  # Non terminal, Using Q to get T is Double DQN
+                target = (self.lamb *
+                          ((np.array([0.6, 0.3, 0.1]) @ reward) +
+                           self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)]) +
+                          (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
 
 
             target_f = st_predict[index]
