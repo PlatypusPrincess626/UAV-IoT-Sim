@@ -417,12 +417,12 @@ class IoT_Device:
             """
             For choosing next CH
             """
-            for CH in range(len(full_sensor_list) - 1):
-                if (step - state[CH + 1][2]) < 1.0:
-                    target = full_sensor_list.iat[CH + 1, 0]
-                    model_help = False
-                    action = CH
-                    target = full_sensor_list.iat[action + 1, 0]
+            # for CH in range(len(full_sensor_list) - 1):
+            #     if (step - state[CH + 1][2]) < 1.0:
+            #         target = full_sensor_list.iat[CH + 1, 0]
+            #         model_help = False
+            #         action = CH
+            #         target = full_sensor_list.iat[action + 1, 0]
 
             if action < 0:
                 action = model.act(decision_state)
