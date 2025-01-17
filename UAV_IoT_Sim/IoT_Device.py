@@ -325,7 +325,7 @@ class IoT_Device:
             state[self.headSerial + 1][3] = self.target_time
             self.contribution = my_contribution
 
-            for sens in range(len(age_table)):
+            for sens in range(len(self.age_table)):
                 self.age_table[sens] = self.target_time
 
 
