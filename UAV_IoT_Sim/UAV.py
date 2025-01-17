@@ -64,7 +64,7 @@ class QuadUAV:
         self.no_hold = True
         self.force_change = False
         self.force_count = 0
-        self.targetType = 1
+        self.targetType = True
 
         self.origin_state = None
         self.origin_action = None
@@ -129,7 +129,7 @@ class QuadUAV:
         self.tour = None
         self.tour_iter = 0
         self.bad_target = False
-        self.targetType = 1
+        self.targetType = True
 
         self.step_move_cost = 0
         self.step_comms_cost = 0
@@ -233,7 +233,7 @@ class QuadUAV:
                 else:
                     # Assess Reward at this point
                     self.target = self.targetHead
-                    self.targetType = 1
+                    self.targetType = True
                     train_model, change_archives = True, True
 
                 self.targetX = self.targetHead.indX
@@ -335,7 +335,7 @@ class QuadUAV:
             self.targetX = minCH.indX
             self.targetY = minCH.indY
             self.targetSerial = self.targetHead.headSerial
-            self.targetType = 0
+            self.targetType = False
             DCH = 0
 
         elif not self.inRange:
@@ -364,7 +364,7 @@ class QuadUAV:
             if self.bad_target:
                 self.bad_target = False
 
-            if self.targetType == 1:
+            if self.targetType:
                 if dest.headSerial == self.targetSerial:
                     self.bad_target = True
                     train_model = True
@@ -436,10 +436,10 @@ class QuadUAV:
 
                 else:
                     if dest.headSerial == self.targetSerial:
-                        self.targetType = 1
+                        self.targetType = True
                         self.bad_target = True
                     else:
-                        self.targetType = 0
+                        self.targetType = False
                         self.bad_target = False
 
                     self.target = dest
