@@ -234,8 +234,8 @@ def evaluate(
 
         # DDQN
         # for agent in agents:
-        if len(agent.memory) > 64:
-            agent.train(64)
+        if len(agent.memory) > 512:
+            agent.train(512)
 
         accum_avgAoI += avgAoI / (eval_env.curr_step + count)
         accum_peakAoI += peakAoI / (eval_env.curr_step + count)
@@ -285,8 +285,8 @@ def train(
 
         if done:
             # for agent in agents:
-            if len(agent.memory) > 64:
-                agent.train(64)
+            if len(agent.memory) > 512:
+                agent.train(512)
         # QL
         # for agent in agents:
         agent.decay_epsilon(timestep / total_steps)
@@ -400,8 +400,8 @@ def prepopulate(agent, prepop_steps, env):
             timestep += 1
 
         # for agent in agents:
-        if len(agent.memory) > 64:
-            agent.train(64)
+        if len(agent.memory) > 512:
+            agent.train(512)
 
 def run_experiment(args):
     env_str = args.env
@@ -435,7 +435,7 @@ def run_experiment(args):
         f"model={args.model}"
     )
 
-    prepopulate(agent, 36000, env)
+    prepopulate(agent, 144_000, env)
     mean_success_rate = RunningAverage(10)
     mean_reward = RunningAverage(10)
     mean_episode_length = RunningAverage(10)
