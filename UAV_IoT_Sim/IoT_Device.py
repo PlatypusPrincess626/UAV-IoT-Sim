@@ -434,7 +434,6 @@ class IoT_Device:
             if action != targetSerial:
                 change_transit = True
 
-
             dist = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
 
         AoI_peak = decision_state[1][2]
