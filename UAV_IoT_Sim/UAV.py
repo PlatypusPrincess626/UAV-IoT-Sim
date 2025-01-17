@@ -227,7 +227,6 @@ class QuadUAV:
                 totalData += dataReturn
 
                 if self.tour_iter < len(self.tour):
-                    print(len(self.tour))
                     self.target = self.tour[self.tour_iter]
                     self.tour_iter += 1
                     train_model, change_archives = False, False
@@ -355,6 +354,7 @@ class QuadUAV:
                 self.target.get_dest(self.state, self.full_sensor_list, model, step,
                                      self.p_count, self.targetType, self.targetSerial)
 
+            print(dest.type)
             DCH = self.targetSerial
             self.p_cycle -= 1
             self.action = action
