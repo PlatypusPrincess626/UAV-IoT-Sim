@@ -422,13 +422,18 @@ class IoT_Device:
                     target = full_sensor_list.iat[CH + 1, 0]
                     model_help = False
                     action = CH
+                    target = full_sensor_list.iat[action + 1, 0]
 
             if action < 0:
                 action = model.act(decision_state)
+                if action < self.headSerial:
+                    target = full_sensor_list.iat[action + 1, 0]
+                else:
+                    target = full_sensor_list.iat[action + 2, 0]
 
             if action != targetSerial:
                 change_transit = True
-            target = full_sensor_list.iat[action + 1, 0]
+
 
             dist = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
 

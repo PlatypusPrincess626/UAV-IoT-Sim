@@ -312,8 +312,9 @@ class QuadUAV:
 
         return excess_percent
 
-    def set_dest(self, model, step, _=None):
+    def set_dest(self, models, step, _=None):
         train_model = False
+        DCH = 0
         used_model = False
 
         if self.targetHead is not None:
@@ -335,6 +336,7 @@ class QuadUAV:
             self.targetY = minCH.indY
             self.targetSerial = self.targetHead.headSerial
             self.targetType = 0
+            DCH = 0
 
         elif not self.inRange:
             self.target = self.target
@@ -349,9 +351,10 @@ class QuadUAV:
 
             # True, True, sensor, CHstate, action, action_p
             used_model, changed_transit, dest, state, action, dist, peak, avg = \
-                self.target.get_dest(self.state, self.full_sensor_list, model, step,
+                self.target.get_dest(self.state, self.full_sensor_list, models[self.targetSerial], step,
                                      self.p_count, self.targetType, self.targetSerial)
 
+            DCH = self.targetSerial
             self.p_cycle -= 1
             self.action = action
 
@@ -400,7 +403,7 @@ class QuadUAV:
                 used_model = False
                 self.is_charging = True
                 self.target = self.target
-                return (train_model, used_model, state, action,
+                return (train_model, DCH, used_model, state, action,
                         self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
             if self.h == 0:
@@ -412,7 +415,7 @@ class QuadUAV:
             elif self.is_charging:
                 used_model = False
                 self.target = self.target
-                return (train_model, used_model, state, action,
+                return (train_model, DCH, used_model, state, action,
                         self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
             else:
@@ -428,7 +431,7 @@ class QuadUAV:
                     self.targetX = dest.indX
                     self.targetY = dest.indY
 
-                    return (train_model, used_model, state, action,
+                    return (train_model, DCH, used_model, state, action,
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
                 else:
@@ -445,9 +448,9 @@ class QuadUAV:
                     self.targetX = dest.indX
                     self.targetY = dest.indY
 
-                    return (train_model, used_model, state, action,
+                    return (train_model, DCH, used_model, state, action,
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
-        return (train_model, used_model, self.state, self.targetHead.headSerial,
+        return (train_model, DCH, used_model, self.state, self.targetHead.headSerial,
                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 

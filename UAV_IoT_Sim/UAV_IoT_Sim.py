@@ -33,6 +33,7 @@ class make_env:
         self.curr_step = 0
         self.last_action = 0
         self.archived_action = 0
+        self.deciding_CH = 0
 
         self.full_reward = 0.0
         self.accum_reward = 0.0
@@ -82,6 +83,7 @@ class make_env:
             self.curr_step = 0
             self.last_action = 0
             self.archived_action = 0
+            self.deciding_CH = 0
 
             self.full_reward = 0.0
             self.accum_reward = 0.0
@@ -114,8 +116,9 @@ class make_env:
             self._curr_total_data = 0
             return self._env
     
-    def step(self, model):
+    def step(self, models):
         train_model = False
+        train_CH = 0
         old_action = 0
         comms, move, harvest = 0, 0, 0
         self.total_average = 0
@@ -138,7 +141,8 @@ class make_env:
 
                 for uav in range(self._num_uav):
                     uav = self._env.UAVTable.iat[uav, 0]
-                    train_model, used_model, state, action, comms, move, harvest = (uav.set_dest(model, self.curr_step))
+                    train_model, DCH, used_model, state, action, comms, move, harvest = \
+                        (uav.set_dest(models, self.curr_step))
                     uav.navigate_step(self._env)
                     self.uavX = uav.indX
                     self.uavY = uav.indY
@@ -152,6 +156,7 @@ class make_env:
                     # train_model = True
                     if train_model or train_model2:
                         train_model = True
+                        train_CH = self.deciding_CH
                         self.full_reward = self.accum_reward / max(self.accum_steps, 1)
                         self.archived_rewards = np.array([self.rewards[0] - self.accum_rewards[0],
                                                           self.rewards[1] - self.accum_rewards[1],
@@ -170,6 +175,7 @@ class make_env:
                     if used_model:
                         self.archived_state = state
                         self.archived_action = action
+                        self.deciding_CH = DCH
                         self.track_reward = True
                         self.accum_rewards = self.rewards
 
@@ -206,7 +212,7 @@ class make_env:
                 "Truncated": self.truncated         # -> Max episode steps reached
             }
 
-        return train_model, old_state, old_action, comms, move, harvest
+        return train_model, train_CH, old_state, old_action, comms, move, harvest
 
     def reward(self, excess_energy, bad_target):
         '''
