@@ -389,6 +389,7 @@ class IoT_Device:
 
             # split into two function if too much distance
             self.tour = [self.sens_table.iat[inactive[tour[i+1]-1], 0] for i in range(len(tour)-1)]
+            print(type(stop) for stop in tour)
             dist = sum(dists)
 
             self.last_target = self.headSerial
