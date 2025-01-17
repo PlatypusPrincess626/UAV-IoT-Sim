@@ -347,6 +347,7 @@ class IoT_Device:
             For sensor targeting use Christofides
             if target type = 0
             """
+            print(self.data_table)
             print(self.active_table)
             inactive = []
             for sens in range(len(self.active_table)):
@@ -394,9 +395,6 @@ class IoT_Device:
 
             self.last_target = self.headSerial
             target = self.tour[0]
-            print("Here")
-            print(len(self.tour))
-            print("Gone")
             self.target_time = step
             action = self.headSerial
             model_help = False
