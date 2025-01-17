@@ -431,8 +431,8 @@ class IoT_Device:
                 else:
                     target = full_sensor_list.iat[action + 2, 0]
 
-            if action != targetSerial:
-                change_transit = True
+            print (action)
+            change_transit = True
 
             dist = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
 
