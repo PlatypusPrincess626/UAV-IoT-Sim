@@ -209,7 +209,7 @@ class IoT_Device:
         )
 
     def ch_download(self, step):
-        print(self.age_table)
+        print(self.active_table)
 
         rotations = math.ceil(len(self.sens_table.index) / 2)
         rotation = step % rotations
