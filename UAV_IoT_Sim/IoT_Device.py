@@ -360,7 +360,7 @@ class IoT_Device:
             inactive = []
             for sens in range(len(self.active_table)):
                 if not self.active_table[sens]:
-                    inactive.append(sens+1)     # Sensors on range 1 to num_sens
+                    inactive.append(sens)     # Sensors on range 1 to num_sens
 
             if len(inactive) > 0:
                 print("Here")
