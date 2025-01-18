@@ -321,8 +321,8 @@ class IoT_Device:
         if my_contribution > self.contribution:
             self.avg_AoI = self.target_time
             self.max_AoI = self.target_time
-            state[self.headSerial + 1][2] = self.target_time
-            state[self.headSerial + 1][3] = self.target_time
+            state[self.headSerial + 1][2] = step - self.target_time
+            state[self.headSerial + 1][3] = step - self.target_time
             self.contribution = my_contribution
 
             for sens in range(len(self.age_table)):
