@@ -360,7 +360,7 @@ class IoT_Device:
                 if not self.active_table[sens]:
                     inactive.append(sens+1)     # Sensors on range 1 to num_sens
 
-            if inactive != []:
+            if len(inactive) > 0:
                 G = nx.Graph()
                 for i in range(len(inactive)+1):
                     for j in range(i+1, len(inactive)+1):
