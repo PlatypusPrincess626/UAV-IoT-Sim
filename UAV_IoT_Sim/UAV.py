@@ -270,6 +270,8 @@ class QuadUAV:
                 self.state[self.targetSerial + 1][2] = step - self.last_AoI
                 self.state[self.targetSerial + 1][3] = step - avg_AoI
                 self.state[self.targetSerial + 1][1] += totalData
+
+                print(self.state[self.targetSerial + 1][2], self.state[self.targetSerial + 1][3])
                 self.state[0][1] += totalData
             else:
                 self.inRange = False
