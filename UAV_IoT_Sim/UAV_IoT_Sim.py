@@ -259,8 +259,6 @@ class make_env:
 
         rewardAvgAge = 1 - avgAge/max(self.curr_step, 1)
 
-        print(peakAge, avgAge)
-
         rewardTarget = 0 if bad_target else 1
 
         rewardDataChange = dataChange / 1_498_500
