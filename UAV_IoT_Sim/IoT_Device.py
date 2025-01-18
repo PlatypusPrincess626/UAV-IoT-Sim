@@ -209,8 +209,6 @@ class IoT_Device:
         )
 
     def ch_download(self, step):
-        print(self.active_table)
-
         rotations = math.ceil(len(self.sens_table.index) / 2)
         rotation = step % rotations
         sensor = rotation * 2
@@ -363,7 +361,6 @@ class IoT_Device:
                     inactive.append(sens)     # Sensors on range 1 to num_sens
 
             if len(inactive) > 0:
-                print("Here")
                 G = nx.Graph()
                 for i in range(len(inactive)+1):
                     for j in range(i+1, len(inactive)+1):
