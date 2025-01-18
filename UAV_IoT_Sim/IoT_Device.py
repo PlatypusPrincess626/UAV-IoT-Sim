@@ -408,7 +408,7 @@ class IoT_Device:
 
 
         # Next CH
-        elif model_help:
+        if model_help:
             """
             For choosing next CH
             """
