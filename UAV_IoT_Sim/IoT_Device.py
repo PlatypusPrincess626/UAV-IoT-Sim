@@ -319,14 +319,22 @@ class IoT_Device:
         # Must check through list of sensors... Must recieve data on how much each sensor contributes.
         my_contribution = state[self.headSerial + 1][1]
         if my_contribution > self.contribution:
-            self.avg_AoI = self.target_time
-            self.max_AoI = self.target_time
-            state[self.headSerial + 1][2] = step - self.target_time
-            state[self.headSerial + 1][3] = step - self.target_time
             self.contribution = my_contribution
 
-            for sens in range(len(self.age_table)):
-                self.age_table[sens] = self.target_time
+            for sens in range(len(self.active_table)):
+                if not self.active_table[sens]:
+                    self.age_table[sens] = self.target_time     # Sensors on range 1 to num_sens
+
+            self.max_AoI = self.age_table[0]
+            self.avg_AoI = self.age_table[0]
+            for sens in range(len(self.sens_table.index) - 1):
+                self.avg_AoI += self.age_table[sens + 1]
+                if self.age_table[sens + 1] < self.max_AoI:
+                    self.max_AoI = self.age_table[sens + 1]
+            self.avg_AoI = math.ceil(self.avg_AoI / len(self.age_table))
+
+            state[self.headSerial + 1][2] = step - self.max_AoI
+            state[self.headSerial + 1][3] = step - self.avg_AoI
 
 
         decision_state = copy.deepcopy(state)
@@ -349,7 +357,7 @@ class IoT_Device:
             """
             inactive = []
             for sens in range(len(self.active_table)):
-                if not sens:
+                if not self.active_table[sens]:
                     inactive.append(sens+1)     # Sensors on range 1 to num_sens
 
             G = nx.Graph()
