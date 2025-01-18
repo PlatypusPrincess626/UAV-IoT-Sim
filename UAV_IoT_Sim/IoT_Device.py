@@ -216,11 +216,11 @@ class IoT_Device:
         sensor = rotation * 2
         activeChannels = []
         sensor1 = self.sens_table.iat[sensor, 0]
-        activeChannels.append(max(0, sensor1.ws_upload_data(self.indX, self.indY)))
+        activeChannels.append(sensor1.ws_upload_data(self.indX, self.indY))
 
         if rotation < (rotations - 1) or len(self.sens_table.index) % 2 == 0:
             sensor2 = self.sens_table.iat[sensor + 1, 0]
-            activeChannels.append(max(0, sensor2.ws_upload_data(self.indX, self.indY)))
+            activeChannels.append(sensor2.ws_upload_data(self.indX, self.indY))
 
         totalChannels = 0
         for channel in range(len(activeChannels)):
