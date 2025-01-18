@@ -365,7 +365,7 @@ class IoT_Device:
             if len(inactive) > 0:
                 print("Here")
                 G = nx.Graph()
-                for i in range(len(inactive)):
+                for i in range(len(inactive)+1):
                     for j in range(i+1, len(inactive)):
                         if i == 0:
                             G.add_edge(
