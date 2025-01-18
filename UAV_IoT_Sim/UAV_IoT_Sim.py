@@ -137,7 +137,6 @@ class make_env:
                 for CH in range(self.num_ch):
                     self._env.CHTable.iat[CH, 0].harvest_energy(alpha, self._env, self.curr_step)
                     self._env.CHTable.iat[CH, 0].ch_download(self.curr_step)
-                    self.total_average += self._env.CHTable.iat[CH, 0].avg_AoI
 
                 for uav in range(self._num_uav):
                     uav = self._env.UAVTable.iat[uav, 0]
@@ -224,15 +223,15 @@ class make_env:
         minAge = self.curr_step
 
         for index in range(len(self.curr_state) - 1):
-            age = self.curr_state[index + 1][2]
-            # if age > self._aoi_threshold:
-            #     age = self._aoi_threshold
-            totalAge += age
-            if age > peakAge:
-                peakAge = age
-            if age < minAge:
-                minAge = age
-        avgAge = float(self.total_average) / float(self.num_ch)
+            peak_age = self.curr_state[index + 1][2]
+            average_age = self.curr_state[index + 1][3]
+
+            totalAge += average_age
+            if peak_age > peakAge:
+                peakAge = peak_age
+            if peak_age < minAge:
+                minAge = peak_age
+        avgAge = float(totalAge) / float(self.num_ch)
        
         dataChange = 0
         maxColl = 0.0
@@ -259,6 +258,8 @@ class make_env:
         # rewardAvgAge = (1-avgAge/(0.5 * self._aoi_threshold)) if (1-avgAge/(0.5 * self._aoi_threshold)) > 0 else 0
 
         rewardAvgAge = 1 - avgAge/max(self.curr_step, 1)
+
+        print(peakAge, avgAge)
 
         rewardTarget = 0 if bad_target else 1
 
