@@ -376,7 +376,7 @@ def step(agent, env):
     return done
 
 
-def prepopulate(agent, prepop_steps, env):
+def prepopulate(agent, prepop_steps, env, eval_frequency):
     timestep = 0
     # QL
     # for agent in agents:
@@ -402,6 +402,12 @@ def prepopulate(agent, prepop_steps, env):
         # for agent in agents:
         if len(agent.memory) > 512:
             agent.train(512)
+
+        if timestep % (2 * eval_frequency) == 0:
+            # DDQN
+            # for agent in agents:
+            agent.update_target_from_model()
+            env.reset()
 
 def run_experiment(args):
     env_str = args.env
@@ -435,7 +441,7 @@ def run_experiment(args):
         f"model={args.model}"
     )
 
-    prepopulate(agent, 144_000, env)
+    prepopulate(agent, 144_000, env, args.eval_frequency)
     mean_success_rate = RunningAverage(10)
     mean_reward = RunningAverage(10)
     mean_episode_length = RunningAverage(10)

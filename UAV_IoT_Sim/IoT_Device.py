@@ -241,6 +241,7 @@ class IoT_Device:
             if self.age_table[sens+1] < self.max_AoI:
                 self.max_AoI = self.age_table[sens+1]
         self.avg_AoI = math.ceil(self.avg_AoI / len(self.age_table))
+        print(self.max_AoI, self.avg_AoI)
         # ADF 1.0
         # self.max_AoI = step
 
