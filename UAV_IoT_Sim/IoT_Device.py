@@ -366,13 +366,20 @@ class IoT_Device:
                 print("Here")
                 G = nx.Graph()
                 for i in range(len(inactive)+1):
-                    for j in range(i+1, len(inactive)):
+                    for j in range(i+1, len(inactive)+1):
                         if i == 0:
                             G.add_edge(
                                 i,
                                 j,
                                 weight = math.sqrt(pow((self.sens_table.iat[inactive[j-1], 0].indX - self.indX), 2)
                                                    + pow((self.sens_table.iat[inactive[j-1], 0].indY - self.indY), 2))
+                            )  # Use Euclidean distance (2-norm) as graph weight
+                        elif j == 0:
+                            G.add_edge(
+                                i,
+                                j,
+                                weight=math.sqrt(pow((self.sens_table.iat[inactive[i - 1], 0].indX - self.indX), 2)
+                                                 + pow((self.sens_table.iat[inactive[i - 1], 0].indY - self.indY), 2))
                             )  # Use Euclidean distance (2-norm) as graph weight
                         else:
                             G.add_edge(
