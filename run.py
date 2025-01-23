@@ -173,7 +173,7 @@ def evaluate(
                 agent.update_mem(old_state, old_action, eval_env.archived_rewards,
                                  eval_env.curr_state, buffer_done, eval_env.curr_step)
 
-            ep_reward += info.get(eval_env.full_reward)
+            ep_reward += eval_env.full_reward
 
             if log_metrics and i == eval_episodes-1:
                 CH_Age.append([CH_Metrics[0][1], CH_Metrics[1][1], CH_Metrics[2][1],
