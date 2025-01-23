@@ -236,8 +236,8 @@ def evaluate(
 
         # DDQN
         # for agent in agents:
-        if len(agent.memory) > 512:
-            agent.train(512)
+        if len(agent.memory) > 2048:
+            agent.train(2048)
 
         accum_avgAoI += avgAoI / (eval_env.curr_step + count)
         accum_peakAoI += peakAoI / (eval_env.curr_step + count)
@@ -282,16 +282,18 @@ def train(
     env.reset()
     sr, ret, length = 0.0, 0.0, 0.0
 
+    agent.decay_epsilon(1)
+
     for timestep in range(total_steps):
         done = step(agent, env)
 
         if done:
             # for agent in agents:
-            if len(agent.memory) > 512:
-                agent.train(512)
+            if len(agent.memory) > 2048:
+                agent.train(2048)
         # QL
         # for agent in agents:
-        agent.decay_epsilon(timestep / total_steps)
+
 
         if timestep % (2 * eval_frequency) == 0:
             # DDQN
@@ -402,8 +404,8 @@ def prepopulate(agent, prepop_steps, env, eval_frequency):
             timestep += 1
 
         # for agent in agents:
-        if len(agent.memory) > 512:
-            agent.train(512)
+        if len(agent.memory) > 2048:
+            agent.train(2048)
 
         if timestep % (2 * eval_frequency) == 0:
             # DDQN
