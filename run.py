@@ -191,7 +191,7 @@ def evaluate(
             for cluster in range(len(eval_env.chX)):
                 CHCoords.append([eval_env.chX[cluster], eval_env.chY[cluster]])
 
-        csv_str = "_2.csv"
+        csv_str = "_long.csv"
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("sens_pts_" + curr_date_time.strftime("%d") + "_" +
@@ -236,8 +236,8 @@ def evaluate(
 
         # DDQN
         # for agent in agents:
-        if len(agent.memory) > 1024:
-            agent.train(1024)
+        if len(agent.memory) > 2048:
+            agent.train(2048)
 
         accum_avgAoI += avgAoI / (eval_env.curr_step + count)
         accum_peakAoI += peakAoI / (eval_env.curr_step + count)
@@ -289,8 +289,8 @@ def train(
 
         if done:
             # for agent in agents:
-            if len(agent.memory) > 1024:
-                agent.train(1024)
+            if len(agent.memory) > 2048:
+                agent.train(2048)
         # QL
         # for agent in agents:
 
@@ -404,8 +404,8 @@ def prepopulate(agent, prepop_steps, env, eval_frequency):
             timestep += 1
 
         # for agent in agents:
-        if len(agent.memory) > 1024:
-            agent.train(1024)
+        if len(agent.memory) > 2048:
+            agent.train(2048)
 
         if timestep % (2 * eval_frequency) == 0:
             # DDQN
@@ -445,7 +445,7 @@ def run_experiment(args):
         f"model={args.model}"
     )
 
-    prepopulate(agent, 288_000, env, args.eval_frequency)
+    prepopulate(agent, 512_000, env, args.eval_frequency)
     mean_success_rate = RunningAverage(10)
     mean_reward = RunningAverage(10)
     mean_episode_length = RunningAverage(10)
