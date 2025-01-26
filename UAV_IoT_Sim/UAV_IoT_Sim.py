@@ -126,6 +126,7 @@ class make_env:
         old_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
 
         if not self.terminated:
+            self.truncated = False
             if self.curr_step < self._max_steps:
                 x = self.curr_step/60 + 2
                 alpha = abs(104 - 65 * x + 47 * pow(x, 2) - 12 * pow(x, 3) + pow(x, 4))
