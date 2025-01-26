@@ -294,13 +294,6 @@ def train(
         # QL
         # for agent in agents:
 
-
-        if timestep % (2 * eval_frequency) == 0:
-            # DDQN
-            # for agent in agents:
-            agent.update_target_from_model()
-            env.reset()
-
         if timestep % eval_frequency == 0:
             hours = (time() - start_time) / 3600
             log_vals = {
@@ -328,6 +321,9 @@ def train(
                     f"{env_str}/TotalCollected": dataColl,
                 }
             )
+
+            agent.update_target_from_model()
+            env.reset()
 
 
         print(
@@ -407,7 +403,7 @@ def prepopulate(agent, prepop_steps, env, eval_frequency):
         if len(agent.memory) > 2048:
             agent.train(2048)
 
-        if timestep % (2 * eval_frequency) == 0:
+        if timestep % eval_frequency == 0:
             # DDQN
             # for agent in agents:
             agent.update_target_from_model()
