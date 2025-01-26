@@ -10,6 +10,8 @@ import pandas as pd
 import copy
 from scipy.interpolate import InterpolatedUnivariateSpline
 
+def split_tour(tour, dists):
+    pass
 
 class IoT_Device:
     def __init__(self, X: int, Y: int, devType: int, long: float, lat: float, clusterheadNum: int = None):
@@ -110,6 +112,9 @@ class IoT_Device:
             self.discharge_rate = 0.755  # s
             self.stored_energy = round(self.max_energy * 1_000)
 
+            self.next_tour = None
+            self.next_dist = 0.0
+
     def reset(self):
         self.last_target = 0
         self.target_time = 0
@@ -122,6 +127,9 @@ class IoT_Device:
         self.stored_energy = round(self.max_energy * 1_000)
         self.contribution = 0
         self.action_p = 0
+
+        self.next_tour = None
+        self.next_dist = 0.0
 
         if self.type == 1:
             self.stored_data = random.randint(0, self.reset_max)
@@ -405,8 +413,26 @@ class IoT_Device:
                                                      self.sens_table.iat[inactive[tour[i]-1], 0].indY), 2)))
 
                 # split into two function if too much distance
-                self.tour = [self.sens_table.iat[inactive[tour[i+1]-1], 0] for i in range(len(tour)-1)]
-                dist = sum(dists)
+                tour_discharge = ((sum(dists) / 15) *
+                                  round(flight * 1_000 * self.max_energy / (self.flight_discharge * 60 * 60)))
+                if (state[0][2] - tour_discharge) <= (0.2 * 6_800 * 1_000):
+                    self.tour = [self.sens_table.iat[inactive[tour[i+1]-1], 0] for i in range(len(tour)-1)]
+                    dist = sum(dists)
+                else:
+                    tour1 = tour[0:len(tour/2)]
+                    tour2 = tour[len(tour/2):]
+                    dists1= (sum(dists[0:len(tour/2)]) +
+                             math.sqrt(pow((self.sens_table.iat[inactive[tour1[-1] - 1], 0].indX - self.indX), 2)
+                                       + pow((self.sens_table.iat[inactive[tour1[-1] - 1], 0].indY - self.indY), 2))
+                             )
+                    dists2= (sum(dists[len(tour/2):]) +
+                             math.sqrt(pow((self.sens_table.iat[inactive[tour2[0] - 1], 0].indX - self.indX), 2)
+                                       + pow((self.sens_table.iat[inactive[tour2[0] - 1], 0].indY - self.indY), 2))
+                             )
+                    self.tour = tour1
+                    dist = dists1
+                    self.next_tour = tour2
+                    self.next_dist = dists2
 
                 self.last_target = self.headSerial
                 target = self.tour[0]
@@ -414,6 +440,16 @@ class IoT_Device:
                 action = self.headSerial
                 model_help = False
 
+        elif self.next_tour is not None:
+            self.tour = self.next_tour
+            dist = self.next_dist
+            target = self.tour[0]
+            self.target_time = step
+            action = self.headSerial
+            model_help = False
+
+            self.next_tour = None
+            self.next_dist = 0.0
 
         # Next CH
         if model_help:
@@ -438,8 +474,10 @@ class IoT_Device:
             action = model.act(decision_state)
             target = full_sensor_list.iat[action + 1, 0]
 
-            if action != targetSerial:
-                change_transit = True
+            # Force the change in the sensor
+            while action == targetSerial:
+                action = random.randint(0,len(full_sensor_list-1))
+            change_transit = True
 
             dist = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
 
