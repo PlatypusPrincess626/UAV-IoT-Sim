@@ -429,9 +429,9 @@ class IoT_Device:
                              math.sqrt(pow((self.sens_table.iat[inactive[tour2[0] - 1], 0].indX - self.indX), 2)
                                        + pow((self.sens_table.iat[inactive[tour2[0] - 1], 0].indY - self.indY), 2))
                              )
-                    self.tour = tour1
+                    self.tour = [self.sens_table.iat[inactive[tour1[i+1]-1], 0] for i in range(len(tour)-1)]
                     dist = dists1
-                    self.next_tour = tour2
+                    self.next_tour = [self.sens_table.iat[inactive[tour2[i+1]-1], 0] for i in range(len(tour)-1)]
                     self.next_dist = dists2
 
                 self.last_target = self.headSerial
@@ -476,7 +476,7 @@ class IoT_Device:
 
             # Force the change in the sensor
             while action == targetSerial:
-                action = random.randint(0,len(full_sensor_list-1))
+                action = random.randint(0,len(full_sensor_list)-1)
             change_transit = True
 
             dist = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
