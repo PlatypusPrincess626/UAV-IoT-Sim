@@ -398,6 +398,7 @@ class IoT_Device:
                             )
 
                 tour = nx.algorithms.approximation.christofides(G)
+                print(type(tour))
                 dists = []
                 for i in range(len(tour)-1):
                     if i == 0:
