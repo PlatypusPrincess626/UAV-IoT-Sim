@@ -350,7 +350,7 @@ class QuadUAV:
             ### TargetType > sensor
 
             # True, True, sensor, CHstate, action, action_p
-            used_model, changed_transit, dest, state, action, dist, peak, avg, tour = \
+            used_model, changed_transit, dest, state, action, dist, peak, avg, tour, self.targetType = \
                 self.target.get_dest(self.state, self.full_sensor_list, model, step,
                                      self.p_count, self.targetType, self.targetSerial)
 
