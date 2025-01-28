@@ -369,7 +369,6 @@ class IoT_Device:
                     inactive.append(sens)     # Sensors on range 1 to num_sens
 
             if len(inactive) > 0:
-                print("Here")
                 G = nx.Graph()
                 for i in range(len(inactive)+1):
                     for j in range(i+1, len(inactive)+1):
