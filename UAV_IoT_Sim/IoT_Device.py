@@ -418,13 +418,13 @@ class IoT_Device:
                     self.tour = [self.sens_table.iat[inactive[tour[i+1]-1], 0] for i in range(len(tour)-1)]
                     dist = sum(dists)
                 else:
-                    tour1 = tour[0:len(tour/2)]
-                    tour2 = tour[len(tour/2):]
-                    dists1= (sum(dists[0:len(tour/2)]) +
+                    tour1 = tour[0:(len(tour)/2)]
+                    tour2 = tour[(len(tour)/2):]
+                    dists1= (sum(dists[0:(len(tour)/2)]) +
                              math.sqrt(pow((self.sens_table.iat[inactive[tour1[-1] - 1], 0].indX - self.indX), 2)
                                        + pow((self.sens_table.iat[inactive[tour1[-1] - 1], 0].indY - self.indY), 2))
                              )
-                    dists2= (sum(dists[len(tour/2):]) +
+                    dists2= (sum(dists[(len(tour)/2):]) +
                              math.sqrt(pow((self.sens_table.iat[inactive[tour2[0] - 1], 0].indX - self.indX), 2)
                                        + pow((self.sens_table.iat[inactive[tour2[0] - 1], 0].indY - self.indY), 2))
                              )
