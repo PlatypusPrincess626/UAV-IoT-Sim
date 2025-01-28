@@ -191,7 +191,7 @@ def evaluate(
             for cluster in range(len(eval_env.chX)):
                 CHCoords.append([eval_env.chX[cluster], eval_env.chY[cluster]])
 
-        csv_str = "_long.csv"
+        csv_str = "_forced.csv"
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("sens_pts_" + curr_date_time.strftime("%d") + "_" +
@@ -441,7 +441,7 @@ def run_experiment(args):
         f"model={args.model}"
     )
 
-    prepopulate(agent, 144_000, env, args.eval_frequency)
+    prepopulate(agent, 72_000, env, args.eval_frequency)
     mean_success_rate = RunningAverage(10)
     mean_reward = RunningAverage(10)
     mean_episode_length = RunningAverage(10)
