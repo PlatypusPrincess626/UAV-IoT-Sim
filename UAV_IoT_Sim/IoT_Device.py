@@ -397,7 +397,6 @@ class IoT_Device:
                             )
 
                 tour = nx.algorithms.approximation.christofides(G)
-                print(type(tour))
                 dists = []
                 for i in range(len(tour)-1):
                     if i == 0:
@@ -418,19 +417,19 @@ class IoT_Device:
                     self.tour = [self.sens_table.iat[inactive[tour[i+1]-1], 0] for i in range(len(tour)-1)]
                     dist = sum(dists)
                 else:
-                    tour1 = tour[0:(len(tour)/2)]
-                    tour2 = tour[(len(tour)/2):]
-                    dists1= (sum(dists[0:(len(tour)/2)]) +
+                    tour1 = tour[0:round(len(tour)/2)]
+                    tour2 = tour[round(len(tour)/2):]
+                    dists1= (sum(dists[0:round(len(tour)/2)]) +
                              math.sqrt(pow((self.sens_table.iat[inactive[tour1[-1] - 1], 0].indX - self.indX), 2)
                                        + pow((self.sens_table.iat[inactive[tour1[-1] - 1], 0].indY - self.indY), 2))
                              )
-                    dists2= (sum(dists[(len(tour)/2):]) +
+                    dists2= (sum(dists[round(len(tour)/2):]) +
                              math.sqrt(pow((self.sens_table.iat[inactive[tour2[0] - 1], 0].indX - self.indX), 2)
                                        + pow((self.sens_table.iat[inactive[tour2[0] - 1], 0].indY - self.indY), 2))
                              )
-                    self.tour = [self.sens_table.iat[inactive[tour1[i+1]-1], 0] for i in range(len(tour)-1)]
+                    self.tour = [self.sens_table.iat[inactive[tour1[i+1]-1], 0] for i in range(len(tour1)-1)]
                     dist = dists1
-                    self.next_tour = [self.sens_table.iat[inactive[tour2[i+1]-1], 0] for i in range(len(tour)-1)]
+                    self.next_tour = [self.sens_table.iat[inactive[tour2[i+1]-1], 0] for i in range(len(tour2)-1)]
                     self.next_dist = dists2
 
                 self.last_target = self.headSerial
