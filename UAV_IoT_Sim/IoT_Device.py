@@ -494,10 +494,10 @@ class IoT_Device:
                                            range(len(tour22) - 1)]
                         self.next2_dist = dists22
 
-                self.last_target = self.headSerial
-                self.target_time = step
-                action = self.headSerial
-                model_help = False
+            self.last_target = self.headSerial
+            self.target_time = step
+            action = self.headSerial
+            model_help = False
 
         elif len(self.next_tour) > 0:
             self.tour = self.next_tour
@@ -563,7 +563,6 @@ class IoT_Device:
 
             target = full_sensor_list.iat[action + 1, 0]
             change_transit = True
-            print("Here")
 
             dist = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
 
