@@ -501,7 +501,6 @@ class IoT_Device:
 
         elif len(self.next_tour) > 0:
             self.tour = self.next_tour
-            print(len(self.tour))
             dist = self.next_dist
             target = self.tour[0]
             self.target_time = step
@@ -514,7 +513,6 @@ class IoT_Device:
 
         elif len(self.next1_tour) > 0:
             self.tour = self.next1_tour
-            print(len(self.tour))
             dist = self.next1_dist
             target = self.tour[0]
             self.target_time = step
@@ -527,7 +525,6 @@ class IoT_Device:
 
         elif len(self.next2_tour) > 0:
             self.tour = self.next2_tour
-            print(len(self.tour))
             dist = self.next2_dist
             target = self.tour[0]
             self.target_time = step
