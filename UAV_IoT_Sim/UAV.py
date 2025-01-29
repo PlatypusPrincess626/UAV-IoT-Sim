@@ -381,21 +381,21 @@ class QuadUAV:
                 2) If tour would result in emergency situation
                 """
                 if self.state[0][2] < 0.2 * self.max_energy * 1_000:
-                    self.p_count = min(10,
+                    self.p_count = min(20,
                                        round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
 
                 elif ((self.state[0][2] -
                       1.5 * (dist / self.maxSpd) * (1_000 * self.max_energy / (self.flight_discharge * 60))) <=
                       0.2 * self.max_energy * 1_000):
-                    self.p_count = min(10,
+                    self.p_count = min(20,
                                        round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
 
                 else:
                     if peak <= 240:
-                        self.p_count = min(10,
+                        self.p_count = min(20,
                                            round(0.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
                     elif avg <= 120:
-                        self.p_count = min(10,
+                        self.p_count = min(20,
                                            round(0.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
                     else:
                         self.p_count = 0
