@@ -424,8 +424,9 @@ class QuadUAV:
                 if used_model:
                     self.model_transit = True
 
+                print("Here")
+
                 if dest.type == 1:
-                    print("Here")
                     self.tour = tour
                     self.tour_iter = 1
                     self.target = dest
