@@ -415,11 +415,11 @@ class IoT_Device:
 
                 tour = nx.algorithms.approximation.christofides(G)
                 dists = []
-                for i in range(len(tour)-1):
+                for i in range(len(tour)):
                     if i == 0:
                         dists.append(math.sqrt(pow((self.sens_table.iat[inactive[tour[i+1]-1], 0].indX - self.indX), 2)
                                               + pow((self.sens_table.iat[inactive[tour[i+1]-1], 0].indY - self.indY), 2)))
-                    elif i+1 == 0:
+                    elif i+1 == len(tour):
                         dists.append(math.sqrt(pow((self.sens_table.iat[inactive[tour[i]-1], 0].indX - self.indX), 2)
                                               + pow((self.sens_table.iat[inactive[tour[i]-1], 0].indY - self.indY), 2)))
                     else:
