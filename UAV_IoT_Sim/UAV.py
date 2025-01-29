@@ -374,7 +374,6 @@ class QuadUAV:
 
             # self.state[0][2] <= 0.8 * self.max_energy * 1_000
             if self.p_cycle < 1.0:
-                print("Here")
                 self.p_cycle = 30
                 """
                 Dynamic determination of charging time.
@@ -420,6 +419,7 @@ class QuadUAV:
                         self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
             else:
+                print('here')
                 self.no_hold = True
                 self.is_charging = False
                 if used_model:
