@@ -443,6 +443,9 @@ class QuadUAV:
                         self.targetType = False
                         self.bad_target = False
 
+                    if changed_transit:
+                        train_model = True
+
                     self.target = dest
                     self.targetHead = dest
                     self.targetSerial = self.targetHead.headSerial
