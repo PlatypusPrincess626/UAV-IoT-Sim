@@ -560,7 +560,7 @@ class IoT_Device:
 
             # Force the change in the sensor
             while action == targetSerial:
-                action = random.randint(0,len(full_sensor_list)-2)
+                action = random.randint(0,len(full_sensor_list)-1)
             change_transit = True
 
             dist = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
