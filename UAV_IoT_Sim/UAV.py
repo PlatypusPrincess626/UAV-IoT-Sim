@@ -234,6 +234,7 @@ class QuadUAV:
                     # Assess Reward at this point
                     self.target = self.targetHead
                     self.targetType = True
+                    self.p_cycle = 0
                     train_model, change_archives = False, False
 
                 self.targetX = self.target.indX
@@ -355,7 +356,6 @@ class QuadUAV:
                                      self.p_count, self.targetType, self.targetSerial)
 
             DCH = self.targetSerial
-            self.p_cycle -= 1
             self.action = action
 
             if changed_transit and self.p_count < 1.0:
