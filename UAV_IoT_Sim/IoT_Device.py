@@ -112,11 +112,11 @@ class IoT_Device:
             self.discharge_rate = 0.755  # s
             self.stored_energy = round(self.max_energy * 1_000)
 
-            self.next_tour = None
+            self.next_tour = []
             self.next_dist = 0.0
-            self.next1_tour = None
+            self.next1_tour = []
             self.next1_dist = 0.0
-            self.next2_tour = None
+            self.next2_tour = []
             self.next2_dist = 0.0
 
     def reset(self):
@@ -132,11 +132,11 @@ class IoT_Device:
         self.contribution = 0
         self.action_p = 0
 
-        self.next_tour = None
+        self.next_tour = []
         self.next_dist = 0.0
-        self.next1_tour = None
+        self.next1_tour = []
         self.next1_dist = 0.0
-        self.next2_tour = None
+        self.next2_tour = []
         self.next2_dist = 0.0
 
         if self.type == 1:
@@ -499,7 +499,7 @@ class IoT_Device:
                 action = self.headSerial
                 model_help = False
 
-        elif self.next_tour is not None:
+        elif len(self.next_tour) > 0:
             self.tour = self.next_tour
             print(len(self.tour))
             dist = self.next_dist
@@ -509,10 +509,10 @@ class IoT_Device:
             model_help = False
             targetType = False
 
-            self.next_tour = None
+            self.next_tour = []
             self.next_dist = 0.0
 
-        elif self.next1_tour is not None:
+        elif len(self.next1_tour) > 0:
             self.tour = self.next1_tour
             print(len(self.tour))
             dist = self.next1_dist
@@ -522,10 +522,10 @@ class IoT_Device:
             model_help = False
             targetType = False
 
-            self.next1_tour = None
+            self.next1_tour = []
             self.next1_dist = 0.0
 
-        elif self.next2_tour is not None:
+        elif len(self.next2_tour) > 0:
             self.tour = self.next2_tour
             print(len(self.tour))
             dist = self.next2_dist
@@ -535,7 +535,7 @@ class IoT_Device:
             model_help = False
             targetType = False
 
-            self.next2_tour = None
+            self.next2_tour = []
             self.next2_dist = 0.0
 
         # Next CH
