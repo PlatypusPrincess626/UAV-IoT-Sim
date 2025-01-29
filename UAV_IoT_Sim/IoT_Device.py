@@ -428,8 +428,8 @@ class IoT_Device:
                     tour1 = tour[0:round(len(tour)/2)+1]
                     len(tour)
                     len(tour1)
-                    len(tour2)
                     tour2 = tour[round(len(tour)/2)+1:]
+                    len(tour2)
                     dists1= (sum(dists[0:round(len(tour)/2)+1]) +
                              math.sqrt(pow((self.sens_table.iat[inactive[tour1[-1] - 1], 0].indX - self.indX), 2)
                                        + pow((self.sens_table.iat[inactive[tour1[-1] - 1], 0].indY - self.indY), 2))
