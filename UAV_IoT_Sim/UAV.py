@@ -361,13 +361,11 @@ class QuadUAV:
             if self.bad_target:
                 self.bad_target = False
 
-            if self.targetType:
-                if dest.headSerial == self.targetSerial:
-                    self.bad_target = True
-                    train_model = True
-
             if self.model_transit and changed_transit:
                 self.model_transit = False
+
+            if self.h == 0:
+                self.p_count -= 1
 
             # self.state[0][2] <= 0.8 * self.max_energy * 1_000
             if self.p_cycle < 1.0:
@@ -398,22 +396,26 @@ class QuadUAV:
                         self.p_count = 0
 
                 print(self.p_count)
-                used_model = False
-                self.is_charging = True
-                self.target = self.target
-                return (train_model, DCH, used_model, state, action,
-                        self.step_comms_cost, self.step_move_cost, self.energy_harvested)
+                if self.p_count > 0:
+                    used_model = False
+                    self.is_charging = True
+                    self.target = self.target
+                    return (train_model, DCH, used_model, state, action,
+                            self.step_comms_cost, self.step_move_cost, self.energy_harvested)
+                else:
+                    self.is_charging = False
+
 
             if changed_transit and self.p_count < 1.0:
                 self.p_cycle = 0
 
-            if self.h == 0:
-                self.p_count -= 1
-
-            if self.is_charging and (self.p_count < 1.0 or self.state[0][2] == self.max_energy * 1_000):
+            elif self.is_charging and (self.p_count < 1.0 or self.state[0][2] == self.max_energy * 1_000):
+                self.p_count = 0
                 self.is_charging = False
 
-            elif self.is_charging:
+
+
+            if self.is_charging:
                 used_model = False
                 self.target = self.target
                 return (train_model, DCH, used_model, state, action,
