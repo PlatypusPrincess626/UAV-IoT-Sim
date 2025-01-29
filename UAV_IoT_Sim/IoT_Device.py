@@ -462,7 +462,7 @@ class IoT_Device:
                         self.next1_dist = dists21
 
                     tour2_discharge = round((dists2 / 15) * 1_000 * self.max_energy / (1 * 60 * 60))
-                    if (state[0][2] - tour1_discharge) <= (0.2 * 6_800 * 1_000):
+                    if (state[0][2] - tour2_discharge) <= (0.2 * 6_800 * 1_000):
                         self.next_tour = [self.sens_table.iat[inactive[tour2[i + 1] - 1], 0] for i in
                                           range(len(tour2) - 1)]
                         self.next_dist = dists2
