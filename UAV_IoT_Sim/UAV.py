@@ -375,7 +375,6 @@ class QuadUAV:
             # self.state[0][2] <= 0.8 * self.max_energy * 1_000
             if self.p_cycle < 1.0:
                 self.p_cycle = 30
-                print("Charging")
                 """
                 Dynamic determination of charging time.
                 1) Emergency Charge when below threshold to 1.5 * needed
@@ -401,6 +400,7 @@ class QuadUAV:
                     else:
                         self.p_count = 0
 
+                print("p_count")
                 used_model = False
                 self.is_charging = True
                 self.target = self.target
@@ -410,7 +410,7 @@ class QuadUAV:
             if self.h == 0:
                 self.p_count -= 1
 
-            if self.is_charging and (self.p_count < 1.0 or self.state[0][2] >= 0.8 * self.max_energy * 1_000):
+            if self.is_charging and (self.p_count < 1.0 or self.state[0][2] == self.max_energy * 1_000):
                 self.is_charging = False
 
             elif self.is_charging:
@@ -420,7 +420,7 @@ class QuadUAV:
                         self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
             else:
-                print("Targeting")
+                print(self.targetSerial)
                 self.no_hold = True
                 self.is_charging = False
                 if used_model:
