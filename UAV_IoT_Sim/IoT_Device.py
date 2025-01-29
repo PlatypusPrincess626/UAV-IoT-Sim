@@ -361,7 +361,7 @@ class IoT_Device:
 
         action = -1
         out_state = copy.deepcopy(state)
-        target = None
+        target = self
         model_help = True
         change_transit = False
         dist = 0
@@ -369,7 +369,7 @@ class IoT_Device:
         if not targetType:
             """
             For sensor targeting use Christofides
-            if target type = 0
+            if target type = False
             """
             inactive = []
             for sens in range(len(self.active_table)):
@@ -379,10 +379,12 @@ class IoT_Device:
             if len(inactive) == 1:
                 target = self.sens_table.iat[inactive[0], 0]
                 dist = 2 * math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
+
                 self.last_target = self.headSerial
                 self.target_time = step
                 action = self.headSerial
                 model_help = False
+
             elif len(inactive) > 1:
                 G = nx.Graph()
                 for i in range(len(inactive)+1):
@@ -502,6 +504,10 @@ class IoT_Device:
                 self.target_time = step
                 action = self.headSerial
                 model_help = False
+
+            else:
+                targetType = True
+                model_help = True
 
         elif len(self.next_tour) > 0:
             self.tour = self.next_tour
