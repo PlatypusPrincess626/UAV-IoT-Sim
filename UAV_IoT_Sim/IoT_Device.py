@@ -423,6 +423,7 @@ class IoT_Device:
                 tour_discharge = round((sum(dists) / 15) * 1_000 * self.max_energy / (1 * 60 * 60))
                 if (state[0][2] - tour_discharge) >= (0.2 * 6_800 * 1_000):
                     self.tour = [self.sens_table.iat[inactive[tour[i+1]-1], 0] for i in range(len(tour)-1)]
+                    print("Here")
                     dist = sum(dists)
                 elif len(tour) > 1:
                     tour1 = tour[0:math.ceil(len(tour)/2)]
@@ -439,6 +440,7 @@ class IoT_Device:
                     tour1_discharge = round((dists1 / 15) * 1_000 * self.max_energy / (1 * 60 * 60))
                     if (state[0][2] - tour1_discharge) >= (0.2 * 6_800 * 1_000):
                         self.tour = [self.sens_table.iat[inactive[tour1[i + 1] - 1], 0] for i in range(len(tour1) - 1)]
+                        print("No Here")
                         dist = dists1
                     elif len(tour1) > 1:
                         distsA = dists[0:math.ceil(len(tour)/2)]
