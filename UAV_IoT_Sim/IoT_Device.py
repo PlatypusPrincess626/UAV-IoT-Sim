@@ -527,8 +527,8 @@ class IoT_Device:
             model_help = False
             targetType = False
 
-            self.next1_tour = None
-            self.next1_dist = 0.0
+            self.next2_tour = None
+            self.next2_dist = 0.0
 
         # Next CH
         if model_help:
