@@ -422,9 +422,10 @@ class IoT_Device:
 
                 # split into two function if too much distance\
                 tour_discharge = round((sum(dists) / 15) * 1_000 * self.max_energy / (1 * 60 * 60))
-                print((state[0][2] - tour_discharge) >= (0.2 * 6_800 * 1_000))
                 if (state[0][2] - tour_discharge) >= (0.2 * 6_800 * 1_000):
                     self.tour = [self.sens_table.iat[inactive[tour[i+1]-1], 0] for i in range(len(tour)-1)]
+                    print(len(tour))
+                    print(len(self.tour))
                     dist = sum(dists)
                 elif len(tour) > 1:
                     tour1 = tour[0:math.ceil(len(tour)/2)]
