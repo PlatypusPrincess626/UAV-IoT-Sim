@@ -560,6 +560,7 @@ class IoT_Device:
             #     print(action)
 
             action = model.act(decision_state)
+            print("Here")
 
             # Force the change in the sensor
             while action == targetSerial:
