@@ -419,7 +419,6 @@ class QuadUAV:
                         self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
             else:
-                print('here')
                 self.no_hold = True
                 self.is_charging = False
                 if used_model:
