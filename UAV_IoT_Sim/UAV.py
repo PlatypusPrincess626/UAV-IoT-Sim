@@ -400,7 +400,7 @@ class QuadUAV:
                     else:
                         self.p_count = 0
 
-                print("p_count")
+                print(self.p_count)
                 used_model = False
                 self.is_charging = True
                 self.target = self.target
