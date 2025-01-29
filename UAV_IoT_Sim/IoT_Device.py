@@ -452,7 +452,7 @@ class IoT_Device:
                         dist = dists1
                         target = self.tour[0]
                     elif len(tour1) > 1:
-                        distsA = dists[0:math.ceil(len(tour)/2)]
+                        distsA = dists[0:math.ceil(len(dists)/2)]
                         tour11 = tour[0:math.ceil(len(tour1) / 2)]
                         tour21 = tour[math.ceil(len(tour1) / 2):]
                         dists11 = (sum(distsA[0:math.ceil(len(distsA) / 2)]) +
@@ -481,7 +481,7 @@ class IoT_Device:
                                           range(len(tour2) - 1)]
                         self.next_dist = dists2
                     elif len(tour2) > 1:
-                        distsB = dists[math.ceil(len(tour)/2):]
+                        distsB = dists[math.ceil(len(dists)/2):]
                         tour12 = tour[0:math.ceil(len(tour2) / 2)]
                         tour22 = tour[math.ceil(len(tour2) / 2):]
                         dists12 = (sum(distsB[0:math.ceil(len(distsB) / 2)]) +
