@@ -234,7 +234,7 @@ class QuadUAV:
                     # Assess Reward at this point
                     self.target = self.targetHead
                     self.targetType = True
-                    train_model, change_archives = True, True
+                    train_model, change_archives = False, False
 
                 self.targetX = self.target.indX
                 self.targetY = self.target.indY
