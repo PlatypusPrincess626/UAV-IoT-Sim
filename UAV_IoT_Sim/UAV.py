@@ -373,7 +373,7 @@ class QuadUAV:
                 self.model_transit = False
 
             # self.state[0][2] <= 0.8 * self.max_energy * 1_000
-            if self.p_cycle < 1.0 and self.p_count < 1.0:
+            if self.p_cycle < 1.0 :
                 self.p_cycle = 30
                 """
                 Dynamic determination of charging time.
