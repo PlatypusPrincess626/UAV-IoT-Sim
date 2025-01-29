@@ -467,15 +467,15 @@ class IoT_Device:
                                           range(len(tour2) - 1)]
                         self.next_dist = dists2
                     elif len(tour2) > 1:
-                        distsB = dists[math.ceil(len(tour)/2)+1:]
-                        tour12 = tour[0:math.ceil(len(tour2) / 2)+1]
-                        tour22 = tour[math.ceil(len(tour2) / 2)+1:]
-                        dists12 = (sum(distsB[0:math.ceil(len(tour2) / 2)+1]) +
+                        distsB = dists[math.ceil(len(tour)/2):]
+                        tour12 = tour[0:math.ceil(len(tour2) / 2)]
+                        tour22 = tour[math.ceil(len(tour2) / 2):]
+                        dists12 = (sum(distsB[0:math.ceil(len(tour2) / 2)]) +
                                    math.sqrt(pow((self.sens_table.iat[inactive[tour12[-1] - 1], 0].indX - self.indX), 2)
                                              + pow((self.sens_table.iat[inactive[tour12[-1] - 1], 0].indY - self.indY),
                                                    2))
                                    )
-                        dists22 = (sum(distsB[math.ceil(len(tour2) / 2)+1:]) +
+                        dists22 = (sum(distsB[math.ceil(len(tour2) / 2):]) +
                                    math.sqrt(pow((self.sens_table.iat[inactive[tour22[0] - 1], 0].indX - self.indX), 2)
                                              + pow((self.sens_table.iat[inactive[tour22[0] - 1], 0].indY - self.indY),
                                                    2))
