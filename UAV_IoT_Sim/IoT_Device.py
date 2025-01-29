@@ -114,6 +114,10 @@ class IoT_Device:
 
             self.next_tour = None
             self.next_dist = 0.0
+            self.next1_tour = None
+            self.next1_dist = 0.0
+            self.next2_tour = None
+            self.next2_dist = 0.0
 
     def reset(self):
         self.last_target = 0
@@ -130,6 +134,10 @@ class IoT_Device:
 
         self.next_tour = None
         self.next_dist = 0.0
+        self.next1_tour = None
+        self.next1_dist = 0.0
+        self.next2_tour = None
+        self.next2_dist = 0.0
 
         if self.type == 1:
             self.stored_data = random.randint(0, self.reset_max)
@@ -427,10 +435,55 @@ class IoT_Device:
                              math.sqrt(pow((self.sens_table.iat[inactive[tour2[0] - 1], 0].indX - self.indX), 2)
                                        + pow((self.sens_table.iat[inactive[tour2[0] - 1], 0].indY - self.indY), 2))
                              )
-                    self.tour = [self.sens_table.iat[inactive[tour1[i+1]-1], 0] for i in range(len(tour1)-1)]
-                    dist = dists1
-                    self.next_tour = [self.sens_table.iat[inactive[tour2[i+1]-1], 0] for i in range(len(tour2)-1)]
-                    self.next_dist = dists2
+
+                    tour1_discharge = round((sum(dists1) / 15) * 1_000 * self.max_energy / (1 * 60 * 60))
+                    if (state[0][2] - tour1_discharge) <= (0.2 * 6_800 * 1_000):
+                        self.tour = [self.sens_table.iat[inactive[tour1[i + 1] - 1], 0] for i in range(len(tour1) - 1)]
+                        dist = dists1
+                    else:
+                        tour11 = tour[0:round(len(tour1) / 2)]
+                        tour21 = tour[round(len(tour1) / 2):]
+                        dists11 = (sum(dists[0:round(len(tour1) / 2)]) +
+                                  math.sqrt(pow((self.sens_table.iat[inactive[tour11[-1] - 1], 0].indX - self.indX), 2)
+                                            + pow((self.sens_table.iat[inactive[tour11[-1] - 1], 0].indY - self.indY),
+                                                  2))
+                                  )
+                        dists21 = (sum(dists[round(len(tour1) / 2):]) +
+                                  math.sqrt(pow((self.sens_table.iat[inactive[tour21[0] - 1], 0].indX - self.indX), 2)
+                                            + pow((self.sens_table.iat[inactive[tour21[0] - 1], 0].indY - self.indY), 2))
+                                  )
+
+                        self.tour = [self.sens_table.iat[inactive[tour11[i + 1] - 1], 0] for i in range(len(tour11) - 1)]
+                        dist = dists11
+                        self.next1_tour = [self.sens_table.iat[inactive[tour21[i + 1] - 1], 0] for i in
+                                          range(len(tour21) - 1)]
+                        self.next1_dist = dists21
+
+                    tour2_discharge = round((sum(dists2) / 15) * 1_000 * self.max_energy / (1 * 60 * 60))
+                    if (state[0][2] - tour1_discharge) <= (0.2 * 6_800 * 1_000):
+                        self.next_tour = [self.sens_table.iat[inactive[tour2[i + 1] - 1], 0] for i in
+                                          range(len(tour2) - 1)]
+                        self.next_dist = dists2
+                    else:
+                        tour12 = tour[0:round(len(tour2) / 2)]
+                        tour22 = tour[round(len(tour2) / 2):]
+                        dists12 = (sum(dists[0:round(len(tour2) / 2)]) +
+                                   math.sqrt(pow((self.sens_table.iat[inactive[tour12[-1] - 1], 0].indX - self.indX), 2)
+                                             + pow((self.sens_table.iat[inactive[tour12[-1] - 1], 0].indY - self.indY),
+                                                   2))
+                                   )
+                        dists22 = (sum(dists[round(len(tour2) / 2):]) +
+                                   math.sqrt(pow((self.sens_table.iat[inactive[tour22[0] - 1], 0].indX - self.indX), 2)
+                                             + pow((self.sens_table.iat[inactive[tour22[0] - 1], 0].indY - self.indY),
+                                                   2))
+                                   )
+
+                        self.next_tour = [self.sens_table.iat[inactive[tour12[i + 1] - 1], 0] for i in
+                                     range(len(tour12) - 1)]
+                        self.next_dist = dists12
+                        self.next2_tour = [self.sens_table.iat[inactive[tour22[i + 1] - 1], 0] for i in
+                                           range(len(tour22) - 1)]
+                        self.next2_dist = dists22
 
                 self.last_target = self.headSerial
                 target = self.tour[0]
@@ -449,6 +502,30 @@ class IoT_Device:
 
             self.next_tour = None
             self.next_dist = 0.0
+
+        elif self.next1_tour is not None:
+            self.tour = self.next1_tour
+            dist = self.next1_dist
+            target = self.tour[0]
+            self.target_time = step
+            action = self.headSerial
+            model_help = False
+            targetType = False
+
+            self.next1_tour = None
+            self.next1_dist = 0.0
+
+        elif self.next2_tour is not None:
+            self.tour = self.next2_tour
+            dist = self.next2_dist
+            target = self.tour[0]
+            self.target_time = step
+            action = self.headSerial
+            model_help = False
+            targetType = False
+
+            self.next1_tour = None
+            self.next1_dist = 0.0
 
         # Next CH
         if model_help:
