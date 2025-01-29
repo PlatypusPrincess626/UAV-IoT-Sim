@@ -358,9 +358,6 @@ class QuadUAV:
             DCH = self.targetSerial
             self.action = action
 
-            if changed_transit and self.p_count < 1.0:
-                self.p_cycle = 0
-
             if self.bad_target:
                 self.bad_target = False
 
@@ -406,6 +403,9 @@ class QuadUAV:
                 self.target = self.target
                 return (train_model, DCH, used_model, state, action,
                         self.step_comms_cost, self.step_move_cost, self.energy_harvested)
+
+            if changed_transit and self.p_count < 1.0:
+                self.p_cycle = 0
 
             if self.h == 0:
                 self.p_count -= 1
