@@ -267,6 +267,10 @@ class make_env:
         rewardChange = (0 * rewardDist + 0.6 * rewardPeak + 0.3 * rewardAvgAge
                         + 0 * rewardDataChange + 0.1 * rewardTarget)
 
+        print(rewardChange)
+        print(avgAge)
+        print(peakAge)
+
         if self.terminated:
             rewardChange = 0
         

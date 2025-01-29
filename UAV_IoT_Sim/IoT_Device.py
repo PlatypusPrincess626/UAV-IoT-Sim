@@ -425,16 +425,13 @@ class IoT_Device:
                     self.tour = [self.sens_table.iat[inactive[tour[i+1]-1], 0] for i in range(len(tour)-1)]
                     dist = sum(dists)
                 elif len(tour) > 1:
-                    tour1 = tour[0:round(len(tour)/2)+1]
-                    print(len(tour))
-                    print(len(tour1))
-                    tour2 = tour[round(len(tour)/2)+1:]
-                    print(len(tour2))
-                    dists1= (sum(dists[0:round(len(tour)/2)+1]) +
+                    tour1 = tour[0:round(len(tour)/2)]
+                    tour2 = tour[round(len(tour)/2):]
+                    dists1= (sum(dists[0:round(len(tour)/2)]) +
                              math.sqrt(pow((self.sens_table.iat[inactive[tour1[-1] - 1], 0].indX - self.indX), 2)
                                        + pow((self.sens_table.iat[inactive[tour1[-1] - 1], 0].indY - self.indY), 2))
                              )
-                    dists2= (sum(dists[round(len(tour)/2)+1:]) +
+                    dists2= (sum(dists[round(len(tour)/2):]) +
                              math.sqrt(pow((self.sens_table.iat[inactive[tour2[0] - 1], 0].indX - self.indX), 2)
                                        + pow((self.sens_table.iat[inactive[tour2[0] - 1], 0].indY - self.indY), 2))
                              )
@@ -444,15 +441,15 @@ class IoT_Device:
                         self.tour = [self.sens_table.iat[inactive[tour1[i + 1] - 1], 0] for i in range(len(tour1) - 1)]
                         dist = dists1
                     elif len(tour1) > 1:
-                        distsA = dists[0:round(len(tour)/2)+1]
-                        tour11 = tour[0:round(len(tour1) / 2)+1]
-                        tour21 = tour[round(len(tour1) / 2)+1:]
-                        dists11 = (sum(distsA[0:round(len(tour1) / 2)+1]) +
+                        distsA = dists[0:round(len(tour)/2)]
+                        tour11 = tour[0:round(len(tour1) / 2)]
+                        tour21 = tour[round(len(tour1) / 2):]
+                        dists11 = (sum(distsA[0:round(len(tour1) / 2)]) +
                                   math.sqrt(pow((self.sens_table.iat[inactive[tour11[-1] - 1], 0].indX - self.indX), 2)
                                             + pow((self.sens_table.iat[inactive[tour11[-1] - 1], 0].indY - self.indY),
                                                   2))
                                   )
-                        dists21 = (sum(distsA[round(len(tour1) / 2)+1:]) +
+                        dists21 = (sum(distsA[round(len(tour1) / 2):]) +
                                   math.sqrt(pow((self.sens_table.iat[inactive[tour21[0] - 1], 0].indX - self.indX), 2)
                                             + pow((self.sens_table.iat[inactive[tour21[0] - 1], 0].indY - self.indY), 2))
                                   )
