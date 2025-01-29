@@ -563,6 +563,7 @@ class IoT_Device:
 
             target = full_sensor_list.iat[action + 1, 0]
             change_transit = True
+            print("Here")
 
             dist = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
 
