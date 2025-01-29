@@ -268,6 +268,7 @@ class make_env:
                         + 0 * rewardDataChange + 0.1 * rewardTarget)
 
         if self.terminated:
+            print("Died")
             rewardChange = 0
         
         self.curr_info = {
