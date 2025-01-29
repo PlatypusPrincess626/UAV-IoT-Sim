@@ -225,6 +225,7 @@ class QuadUAV:
                     self._comms.get("AmBC_Max_Distance_m"):
 
                 totalData += dataReturn
+                print("Here")
 
                 if self.tour_iter < len(self.tour):
                     self.target = self.tour[self.tour_iter]
@@ -424,7 +425,6 @@ class QuadUAV:
                 if used_model:
                     self.model_transit = True
 
-                print("Here")
 
                 if dest.type == 1:
                     self.tour = tour
