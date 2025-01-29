@@ -377,7 +377,6 @@ class IoT_Device:
                     inactive.append(sens)     # Sensors on range 1 to num_sens
 
             if len(inactive) > 0:
-                print(len(inactive))
                 G = nx.Graph()
                 for i in range(len(inactive)+1):
                     for j in range(i+1, len(inactive)+1):
@@ -424,8 +423,6 @@ class IoT_Device:
                 tour_discharge = round((sum(dists) / 15) * 1_000 * self.max_energy / (1 * 60 * 60))
                 if (state[0][2] - tour_discharge) >= (0.2 * 6_800 * 1_000):
                     self.tour = [self.sens_table.iat[inactive[tour[i+1]-1], 0] for i in range(len(tour)-1)]
-                    print(len(tour))
-                    print(len(self.tour))
                     dist = sum(dists)
                 elif len(tour) > 1:
                     tour1 = tour[0:math.ceil(len(tour)/2)]
