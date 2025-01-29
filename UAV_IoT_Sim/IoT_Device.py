@@ -424,7 +424,7 @@ class IoT_Device:
                 if (state[0][2] - tour_discharge) <= (0.2 * 6_800 * 1_000):
                     self.tour = [self.sens_table.iat[inactive[tour[i+1]-1], 0] for i in range(len(tour)-1)]
                     dist = sum(dists)
-                else:
+                elif len(tour) > 1:
                     tour1 = tour[0:round(len(tour)/2)+1]
                     tour2 = tour[round(len(tour)/2)+1:]
                     dists1= (sum(dists[0:round(len(tour)/2)+1]) +
@@ -440,7 +440,7 @@ class IoT_Device:
                     if (state[0][2] - tour1_discharge) <= (0.2 * 6_800 * 1_000):
                         self.tour = [self.sens_table.iat[inactive[tour1[i + 1] - 1], 0] for i in range(len(tour1) - 1)]
                         dist = dists1
-                    else:
+                    elif len(tour1) > 1:
                         distsA = dists[0:round(len(tour)/2)+1]
                         tour11 = tour[0:round(len(tour1) / 2)+1]
                         tour21 = tour[round(len(tour1) / 2)+1:]
@@ -466,7 +466,7 @@ class IoT_Device:
                         self.next_tour = [self.sens_table.iat[inactive[tour2[i + 1] - 1], 0] for i in
                                           range(len(tour2) - 1)]
                         self.next_dist = dists2
-                    else:
+                    elif len(tour2) > 1:
                         distsB = dists[round(len(tour)/2)+1:]
                         tour12 = tour[0:round(len(tour2) / 2)+1]
                         tour22 = tour[round(len(tour2) / 2)+1:]
