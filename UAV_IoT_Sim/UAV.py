@@ -238,8 +238,8 @@ class QuadUAV:
                     self.targetType = True
                     train_model, change_archives = True, True
 
-                self.targetX = self.targetHead.indX
-                self.targetY = self.targetHead.indY
+                self.targetX = self.target.indX
+                self.targetY = self.target.indY
                 self.inRange = True
 
 
