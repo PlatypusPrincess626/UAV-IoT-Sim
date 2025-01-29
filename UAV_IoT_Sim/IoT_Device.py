@@ -560,13 +560,13 @@ class IoT_Device:
             #     print(action)
 
             action = model.act(decision_state)
-            print("Here")
 
             # Force the change in the sensor
             while action == targetSerial:
                 action = random.randint(0,len(full_sensor_list)-2)
 
             target = full_sensor_list.iat[action + 1, 0]
+            print(action, targetSerial)
             change_transit = True
 
             dist = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
