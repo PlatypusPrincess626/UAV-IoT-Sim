@@ -376,7 +376,10 @@ class IoT_Device:
                 if not self.active_table[sens]:
                     inactive.append(sens)     # Sensors on range 1 to num_sens
 
-            if len(inactive) > 0:
+            if len(inactive) == 1:
+                target = self.sens_table.iat[inactive[0], 0]
+                dist = 2 * math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
+            elif len(inactive) > 1:
                 G = nx.Graph()
                 for i in range(len(inactive)+1):
                     for j in range(i+1, len(inactive)+1):
@@ -423,8 +426,8 @@ class IoT_Device:
                 tour_discharge = round((sum(dists) / 15) * 1_000 * self.max_energy / (1 * 60 * 60))
                 if (state[0][2] - tour_discharge) >= (0.2 * 6_800 * 1_000):
                     self.tour = [self.sens_table.iat[inactive[tour[i+1]-1], 0] for i in range(len(tour)-1)]
-                    print("Here")
                     dist = sum(dists)
+                    target = self.tour[0]
                 elif len(tour) > 1:
                     tour1 = tour[0:math.ceil(len(tour)/2)]
                     tour2 = tour[math.ceil(len(tour)/2):]
@@ -440,8 +443,8 @@ class IoT_Device:
                     tour1_discharge = round((dists1 / 15) * 1_000 * self.max_energy / (1 * 60 * 60))
                     if (state[0][2] - tour1_discharge) >= (0.2 * 6_800 * 1_000):
                         self.tour = [self.sens_table.iat[inactive[tour1[i + 1] - 1], 0] for i in range(len(tour1) - 1)]
-                        print("No Here")
                         dist = dists1
+                        target = self.tour[0]
                     elif len(tour1) > 1:
                         distsA = dists[0:math.ceil(len(tour)/2)]
                         tour11 = tour[0:math.ceil(len(tour1) / 2)]
@@ -462,6 +465,7 @@ class IoT_Device:
                         self.next1_tour = [self.sens_table.iat[inactive[tour21[i + 1] - 1], 0] for i in
                                           range(len(tour21) - 1)]
                         self.next1_dist = dists21
+                        target = self.tour[0]
 
                     tour2_discharge = round((dists2 / 15) * 1_000 * self.max_energy / (1 * 60 * 60))
                     if (state[0][2] - tour2_discharge) >= (0.2 * 6_800 * 1_000):
@@ -490,8 +494,9 @@ class IoT_Device:
                                            range(len(tour22) - 1)]
                         self.next2_dist = dists22
 
+
+
                 self.last_target = self.headSerial
-                target = self.tour[0]
                 self.target_time = step
                 action = self.headSerial
                 model_help = False
