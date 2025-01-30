@@ -395,6 +395,7 @@ class QuadUAV:
                         self.p_count = min(20,
                                            round(0.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
                     else:
+                        print("False")
                         self.p_count = 0
 
                 print(self.p_count)
