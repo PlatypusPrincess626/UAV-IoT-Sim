@@ -457,6 +457,9 @@ class QuadUAV:
                     self.targetX = dest.indX
                     self.targetY = dest.indY
 
+                    print("Final")
+                    print(self.targetSerial)
+
                     return (train_model, DCH, used_model, state, action,
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
