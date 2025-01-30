@@ -397,7 +397,6 @@ class QuadUAV:
                     else:
                         self.p_count = 0
 
-                print(self.p_count)
                 if self.p_count > 0:
                     used_model = False
                     self.is_charging = True
