@@ -376,15 +376,14 @@ class QuadUAV:
                 2) If tour would result in emergency situation
                 """
                 if self.state[0][2] < 0.2 * self.max_energy * 1_000:
-                    print("True 1")
                     self.p_count = min(20,
                                        round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
 
                 elif ((self.state[0][2] -
-                      1.25 * (dist / self.maxSpd) * (1_000 * self.max_energy / (self.flight_discharge * 60))) <=
+                      1.25 * (dist / self.maxSpd) * (1_000 * self.max_energy / (self.flight_discharge * 60 * 60))) <=
                       0.2 * self.max_energy * 1_000):
                     print(state[0][2])
-                    print((dist / self.maxSpd) * (1_000 * self.max_energy / (self.flight_discharge * 60)))
+                    print((dist / self.maxSpd) * (1_000 * self.max_energy / (self.flight_discharge * 60 * 60)))
                     self.p_count = min(20,
                                        round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
 
@@ -396,7 +395,6 @@ class QuadUAV:
                         self.p_count = min(20,
                                            round(0.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
                     else:
-                        print("False")
                         self.p_count = 0
 
                 print(self.p_count)

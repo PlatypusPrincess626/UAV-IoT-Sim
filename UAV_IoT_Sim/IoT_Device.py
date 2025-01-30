@@ -429,7 +429,7 @@ class IoT_Device:
                                                      self.sens_table.iat[inactive[tour[i]-1], 0].indY), 2)))
 
                 # split into two function if too much distance\
-                tour_discharge = round((sum(dists) / 15) * 1_000 * self.max_energy / (1 * 60))
+                tour_discharge = round((sum(dists) / 15) * 1_000 * 6_800 / (1 * 60 * 60))
                 if (state[0][2] - tour_discharge) >= (0.2 * 6_800 * 1_000):
                     self.tour = [self.sens_table.iat[inactive[tour[i]-1], 0] for i in range(len(tour))]
                     dist = sum(dists)
@@ -446,7 +446,7 @@ class IoT_Device:
                                        + pow((self.sens_table.iat[inactive[tour2[0] - 1], 0].indY - self.indY), 2))
                              )
 
-                    tour1_discharge = round((dists1 / 15) * 1_000 * self.max_energy / (1 * 60))
+                    tour1_discharge = round((dists1 / 15) * 1_000 * 6_800 / (1 * 60 * 60))
                     if (state[0][2] - tour1_discharge) >= (0.2 * 6_800 * 1_000):
                         self.tour = [self.sens_table.iat[inactive[tour1[i] - 1], 0] for i in range(len(tour1))]
                         dist = dists1
@@ -475,7 +475,7 @@ class IoT_Device:
                         self.next1_dist = dists21
                         target = self.tour[0]
 
-                    tour2_discharge = round((dists2 / 15) * 1_000 * self.max_energy / (1 * 60 * 60))
+                    tour2_discharge = round((dists2 / 15) * 1_000 * 6_800 / (1 * 60 * 60))
                     if (state[0][2] - tour2_discharge) >= (0.2 * 6_800 * 1_000):
                         self.next_tour = [self.sens_table.iat[inactive[tour2[i] - 1], 0] for i in
                                           range(len(tour2))]
