@@ -382,8 +382,6 @@ class QuadUAV:
                 elif ((self.state[0][2] -
                       1.25 * (dist / self.maxSpd) * (1_000 * self.max_energy / (self.flight_discharge * 60 * 60))) <=
                       0.2 * self.max_energy * 1_000):
-                    print(state[0][2])
-                    print((dist / self.maxSpd) * (1_000 * self.max_energy / (self.flight_discharge * 60 * 60)))
                     self.p_count = min(20,
                                        round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
 
