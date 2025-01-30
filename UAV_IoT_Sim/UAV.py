@@ -357,6 +357,7 @@ class QuadUAV:
 
             DCH = self.targetSerial
             self.action = action
+            print(action)
 
             if self.bad_target:
                 self.bad_target = False
