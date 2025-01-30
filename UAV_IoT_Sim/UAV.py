@@ -357,7 +357,6 @@ class QuadUAV:
 
             DCH = self.targetSerial
             self.action = action
-            print(action)
 
             if self.bad_target:
                 self.bad_target = False
@@ -456,9 +455,6 @@ class QuadUAV:
                     self.targetSerial = self.targetHead.headSerial
                     self.targetX = dest.indX
                     self.targetY = dest.indY
-
-                    print("Final")
-                    print(self.targetSerial)
 
                     return (train_model, DCH, used_model, state, action,
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
