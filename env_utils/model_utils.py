@@ -32,7 +32,7 @@ def modify_state(state):
     return refined_state
 
 class get_ql_agent:
-    def __init__(self, env,
+    def __init__(self, env, nS, nA,
                  epsilon_i=1.0,
                  epsilon_f=0.0,
                  n_epsilon=0.1,
@@ -56,8 +56,8 @@ class get_ql_agent:
         self.n_epsilon = n_epsilon
 
         # ADF 2.0
-        self.num_actions = env.num_ch + 5
-        self.num_states = 6800 + (env._num_uav + env.num_ch + 5) * (25 * env._max_steps) * (2 * env._max_steps)
+        self.num_actions = nA
+        self.num_states = nS
         # ADF 1.0
         # self.num_actions = env.num_ch
         # self.num_states = 6800 + (env._num_uav + env.num_ch) * (25 * env._max_steps) * (env._max_steps)

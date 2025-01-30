@@ -429,7 +429,7 @@ def run_experiment(args):
     # for i in range(env.num_ch):
     agent = model_utils.get_ql_agent(
         env,
-        ((env.num_ch + 1) * 3),
+        6800 + (env._num_uav + env.num_ch) * (25 * env._max_steps) * (2 * env._max_steps),
         env.num_ch
     )
     # agents.append(agent)
