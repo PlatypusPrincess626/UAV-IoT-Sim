@@ -57,7 +57,7 @@ class get_ql_agent:
 
         # ADF 2.0
         self.num_actions = env.num_ch + 5
-        self.num_states = 6800 + (env._num_uav + env.num_ch + 5) * (25 * env._max_steps) * (env._max_steps)
+        self.num_states = 6800 + (env._num_uav + env.num_ch + 5) * (25 * env._max_steps) * (2 * env._max_steps)
         # ADF 1.0
         # self.num_actions = env.num_ch
         # self.num_states = 6800 + (env._num_uav + env.num_ch) * (25 * env._max_steps) * (env._max_steps)
@@ -67,14 +67,6 @@ class get_ql_agent:
         self.gamma = gamma
         self.Q = np.zeros((self.num_states, self.num_actions))
 
-        self.td_errors = RunningAverage(100)
-        self.grad_norms = RunningAverage(100)
-        self.qvalue_max = RunningAverage(100)
-        self.target_max = RunningAverage(100)
-        self.qvalue_mean = RunningAverage(100)
-        self.target_mean = RunningAverage(100)
-        self.qvalue_min = RunningAverage(100)
-        self.target_min = RunningAverage(100)
 
     def encode_state(self, state):
         if self.encoder.size == 0:
@@ -108,7 +100,7 @@ class get_ql_agent:
         s_t = self.encode_state(s_t_raw)
         return np.argmax(self.Q[s_t])
 
-    def update(self, s_t_raw, a_t, r_t, s_t_next_raw, d_t):
+    def update(self, s_t_raw, a_t, r_t, s_t_next_raw, d_t, step):
         """
         Uses the q-learning update rule to update the get_ddqn_agent's predictions
         for Q(s_t, a_t).
@@ -119,18 +111,10 @@ class get_ql_agent:
 
         Q_next = np.max(self.Q[s_t_next])
 
-        targets = r_t + (1 - d_t) * self.gamma * Q_next
+        targets = (np.array([0.6, 0.3, 0.1]) @ r_t) + (1 - d_t) * self.gamma * Q_next
 
-        self.qvalue_max.add(self.Q[s_t].max().item())
-        self.qvalue_mean.add(self.Q[s_t].mean().item())
-        self.qvalue_min.add(self.Q[s_t].min().item())
-
-        self.target_max.add(targets.max().item())
-        self.target_mean.add(targets.mean().item())
-        self.target_min.add(targets.min().item())
 
         loss = (np.square(self.Q[s_t].max()-targets)).mean()
-        self.td_errors.add(loss.item())
 
         self.Q[s_t, a_t] = self.Q[s_t, a_t] + self.alpha * (r_t + (1 - d_t) * self.gamma * Q_next - self.Q[s_t, a_t])
 

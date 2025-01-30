@@ -168,10 +168,11 @@ def evaluate(
                 CH_Metrics[ch][1] = eval_env.curr_state[ch + 1][2]
 
             if (train_model or eval_env.truncated) and not buffer_done:
-                # agent.update(old_state, old_action, eval_env.curr_reward, eval_env.curr_state, buffer_done)
+                agent.update(old_state, old_action, eval_env.archived_rewards,
+                             eval_env.curr_state, buffer_done, eval_env.curr_step)
                 # DDQN
-                agent.update_mem(old_state, old_action, eval_env.archived_rewards,
-                                 eval_env.curr_state, buffer_done, eval_env.curr_step)
+                # agent.update_mem(old_state, old_action, eval_env.archived_rewards,
+                #                  eval_env.curr_state, buffer_done, eval_env.curr_step)
 
             ep_reward += eval_env.full_reward
 
@@ -191,7 +192,7 @@ def evaluate(
             for cluster in range(len(eval_env.chX)):
                 CHCoords.append([eval_env.chX[cluster], eval_env.chY[cluster]])
 
-        csv_str = "_forced.csv"
+        csv_str = "_QL.csv"
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("sens_pts_" + curr_date_time.strftime("%d") + "_" +
@@ -236,8 +237,8 @@ def evaluate(
 
         # DDQN
         # for agent in agents:
-        if len(agent.memory) > 2048:
-            agent.train(2048)
+        # if len(agent.memory) > 2048:
+        #     agent.train(2048)
 
         accum_avgAoI += avgAoI / (eval_env.curr_step + count)
         accum_peakAoI += peakAoI / (eval_env.curr_step + count)
@@ -287,12 +288,10 @@ def train(
     for timestep in range(total_steps):
         done = step(agent, env)
 
-        if done:
-            # for agent in agents:
-            if len(agent.memory) > 2048:
-                agent.train(2048)
-        # QL
-        # for agent in agents:
+        # if done:
+        #     # for agent in agents:
+        #     if len(agent.memory) > 2048:
+        #         agent.train(2048)
 
         if timestep % eval_frequency == 0:
             hours = (time() - start_time) / 3600
@@ -322,7 +321,7 @@ def train(
                 }
             )
 
-            agent.update_target_from_model()
+            # agent.update_target_from_model()
             env.reset()
 
 
@@ -368,18 +367,18 @@ def step(agent, env):
 
     if (train_model or env.truncated) and not buffer_done:
         print(f"Training")
-        #QL
-        # agent.update(old_state, old_action, env.curr_reward, env.curr_state, buffer_done)
+        #QL/GANN
+        agent.update(old_state, old_action, env.archived_rewards,
+                     env.curr_state, buffer_done, env.curr_step)
         # DDQN
-        agent.update_mem(old_state, old_action, env.archived_rewards,
-                         env.curr_state, buffer_done, env.curr_step)
+        # agent.update_mem(old_state, old_action, env.archived_rewards,
+        #                  env.curr_state, buffer_done, env.curr_step)
     return done
 
 
 def prepopulate(agent, prepop_steps, env, eval_frequency):
     timestep = 0
     # QL
-    # for agent in agents:
     agent.decay_epsilon(0)
 
     while timestep < prepop_steps:
@@ -395,19 +394,22 @@ def prepopulate(agent, prepop_steps, env, eval_frequency):
                 done = True
 
             if (train_model or env.truncated) and not buffer_done:
-                agent.update_mem(old_state, old_action, env.archived_rewards,
+                # agent.update_mem(old_state, old_action, env.archived_rewards,
+                #                  env.curr_state, buffer_done, env.curr_step)
+
+                # QL/GANN Agents
+                agent.update(old_state, old_action, env.archived_rewards,
                                  env.curr_state, buffer_done, env.curr_step)
             timestep += 1
 
-        # for agent in agents:
-        if len(agent.memory) > 2048:
-            agent.train(2048)
+        # if len(agent.memory) > 2048:
+        #     agent.train(2048)
 
-        if timestep % eval_frequency == 0:
-            # DDQN
-            # for agent in agents:
-            agent.update_target_from_model()
-            env.reset()
+        # if timestep % eval_frequency == 0:
+        #     # DDQN
+        #     # for agent in agents:
+        #     agent.update_target_from_model()
+        #     env.reset()
 
 def run_experiment(args):
     env_str = args.env
@@ -425,7 +427,7 @@ def run_experiment(args):
     # DDQN
     # agents = []
     # for i in range(env.num_ch):
-    agent = model_utils.get_ddqn_agent(
+    agent = model_utils.get_ql_agent(
         env,
         ((env.num_ch + 1) * 3),
         env.num_ch
