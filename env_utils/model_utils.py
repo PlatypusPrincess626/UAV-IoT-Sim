@@ -116,7 +116,8 @@ class get_ql_agent:
 
         loss = (np.square(self.Q[s_t].max()-targets)).mean()
 
-        self.Q[s_t, a_t] = self.Q[s_t, a_t] + self.alpha * (r_t + (1 - d_t) * self.gamma * Q_next - self.Q[s_t, a_t])
+        self.Q[s_t, a_t] = (self.Q[s_t, a_t] + self.alpha *
+                            ((np.array([0.6, 0.3, 0.1]) @ r_t) + (1 - d_t) * self.gamma * Q_next - self.Q[s_t, a_t]))
 
 class get_gann_agent:
     def __init__(self,
