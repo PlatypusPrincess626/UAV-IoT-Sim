@@ -67,6 +67,15 @@ class get_ql_agent:
         self.gamma = gamma
         self.Q = np.zeros((self.num_states, self.num_actions))
 
+        self.td_errors = RunningAverage(100)
+        self.grad_norms = RunningAverage(100)
+        self.qvalue_max = RunningAverage(100)
+        self.target_max = RunningAverage(100)
+        self.qvalue_mean = RunningAverage(100)
+        self.target_mean = RunningAverage(100)
+        self.qvalue_min = RunningAverage(100)
+        self.target_min = RunningAverage(100)
+
 
     def encode_state(self, state):
         if self.encoder.size == 0:
