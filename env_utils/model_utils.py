@@ -121,11 +121,11 @@ class get_ql_agent:
 
 class get_gann_agent:
     def __init__(self,
-                 env
+                 env, nS, nA,
                  ):
         # ADF 2.0
-        self._num_inputs = 2 * (env.num_ch + 6)
-        self._num_output = env.num_ch + 5
+        self._num_inputs = nS
+        self._num_output = nA
         # ADF 1.0
         # self._num_inputs = 2 * (env.num_ch + 1)
         # self._num_output = env.num_ch
@@ -180,7 +180,7 @@ class get_gann_agent:
         self.last_inputs = np.expand_dims(np.array(r_s_t).flatten(), axis=0)
         self.data_inputs = np.expand_dims(np.array(r_s_t_next).flatten(), axis=0)
         self.d_t = d_t
-        self.r_t = r_t
+        self.r_t = (np.array([0.6, 0.3, 0.1]) @ r_t)
         self.a_t = a_t
 
         population_vectors = pygad.gann.population_as_vectors(population_networks=self.GANN_instance.population_networks)
