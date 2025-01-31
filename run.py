@@ -129,7 +129,7 @@ def evaluate(
 
     # QL
     # for agent in agents:
-    agent.decay_epsilon(1)
+    # agent.decay_epsilon(1)
 
     for i in range(eval_episodes):
         eval_env.reset()
@@ -192,7 +192,7 @@ def evaluate(
             for cluster in range(len(eval_env.chX)):
                 CHCoords.append([eval_env.chX[cluster], eval_env.chY[cluster]])
 
-        csv_str = "_GA.csv"
+        csv_str = "_GA1K.csv"
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("sens_pts_" + curr_date_time.strftime("%d") + "_" +
@@ -283,7 +283,7 @@ def train(
     env.reset()
     sr, ret, length = 0.0, 0.0, 0.0
 
-    agent.decay_epsilon(1)
+    # agent.decay_epsilon(1)
 
     for timestep in range(total_steps):
         done = step(agent, env)
@@ -379,7 +379,7 @@ def step(agent, env):
 def prepopulate(agent, prepop_steps, env, eval_frequency):
     timestep = 0
     # QL
-    agent.decay_epsilon(0)
+    # agent.decay_epsilon(0)
 
     while timestep < prepop_steps:
         env.reset()
