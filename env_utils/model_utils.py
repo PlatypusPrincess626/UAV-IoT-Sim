@@ -191,7 +191,7 @@ class get_gann_agent:
 
         self.last_fitness = ga_instance.best_solution()[1].copy()
 
-    def update(self, s_t, a_t, r_t, s_t_next, d_t):
+    def update(self, s_t, a_t, r_t, s_t_next, d_t, step):
         r_s_t = modify_state(s_t)
         r_s_t_next = modify_state(s_t_next)
         self.last_inputs = np.expand_dims(np.array(r_s_t).flatten(), axis=0)
