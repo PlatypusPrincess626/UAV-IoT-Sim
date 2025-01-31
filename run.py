@@ -192,7 +192,7 @@ def evaluate(
             for cluster in range(len(eval_env.chX)):
                 CHCoords.append([eval_env.chX[cluster], eval_env.chY[cluster]])
 
-        csv_str = "_QL.csv"
+        csv_str = "_GA.csv"
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("sens_pts_" + curr_date_time.strftime("%d") + "_" +
@@ -427,9 +427,9 @@ def run_experiment(args):
     # DDQN
     # agents = []
     # for i in range(env.num_ch):
-    agent = model_utils.get_ql_agent(
+    agent = model_utils.get_gann_agent(
         env,
-        6800 + (env._num_uav + env.num_ch) * (25 * env._max_steps) * (2 * env._max_steps),
+        ((env.num_ch + 1) * 3),
         env.num_ch
     )
     # agents.append(agent)
