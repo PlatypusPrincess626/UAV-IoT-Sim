@@ -288,7 +288,7 @@ def train(
     for timestep in range(total_steps):
         done = step(agent, env)
 
-        # if done:
+        if done:
         #     # for agent in agents:
             if len(agent.memory) > 2048:
                 agent.train(2048)
