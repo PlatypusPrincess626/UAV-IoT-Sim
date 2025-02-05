@@ -122,16 +122,16 @@ class get_ql_agent:
 
         targets = (np.array([0.6, 0.3, 0.1]) @ r_t) + (1 - d_t) * self.gamma * Q_next
 
-        self.qvalue_max.add(max(a_t))
-        self.qvalue_mean.add(stats.mean(a_t))
-        self.qvalue_min.add(min(a_t))
+        # self.qvalue_max.add(max(a_t))
+        # self.qvalue_mean.add(stats.mean(a_t))
+        # self.qvalue_min.add(min(a_t))
+        #
+        # self.target_max.add(max(targets))
+        # self.target_mean.add(stats.mean(targets))
+        # self.target_min.add(min(targets))
 
-        self.target_max.add(max(targets))
-        self.target_mean.add(stats.mean(targets))
-        self.target_min.add(min(targets))
-
-        loss = (np.square(self.Q[s_t].max()-targets)).mean()
-        self.td_errors.add(loss)
+        # loss = (np.square(self.Q[s_t].max()-targets)).mean()
+        # self.td_errors.add(loss)
 
         self.Q[s_t, a_t] = (self.Q[s_t, a_t] + self.alpha *
                             ((np.array([0.6, 0.3, 0.1]) @ r_t) + (1 - d_t) * self.gamma * Q_next - self.Q[s_t, a_t]))
