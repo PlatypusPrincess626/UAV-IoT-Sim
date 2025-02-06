@@ -102,7 +102,7 @@ class QuadUAV:
         """
         Old state used first 3 and not last.
         """
-        self.state = [[0, 0, 0, 0] for _ in range(len(CHList) + 1)]
+        self.state = [[0, 0, 0, 0] for _ in range(len(CHList) + 2)]
 
         self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy * 1_000
         count = 0
