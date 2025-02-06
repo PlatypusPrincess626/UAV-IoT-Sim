@@ -313,7 +313,7 @@ class IoT_Device:
         else:
             return 0
 
-    def get_dest(self, state, full_sensor_list, model, step, p_count, targetType, targetSerial, _=None):
+    def get_dest(self, state, full_sensor_list, model, step, p_count, targetType, targetSerial, force_out,  _=None):
         """
         Returns next destination for the UAV.
 
@@ -333,6 +333,9 @@ class IoT_Device:
         """
 
         # Must check through list of sensors... Must recieve data on how much each sensor contributes.
+        """
+        Old Contribution: DATE
+        """
         my_contribution = state[self.headSerial + 1][1]
         if my_contribution > self.contribution:
             self.contribution = my_contribution
@@ -351,233 +354,93 @@ class IoT_Device:
 
             state[self.headSerial + 1][2] = step - self.max_AoI
             state[self.headSerial + 1][3] = step - self.avg_AoI
+        """
+        New Contribution
+        """
+        # my_contribution = state[self.headSerial + 1][1]
+        # if my_contribution > self.contribution:
+        #     self.contribution = my_contribution
+        #
+        #     for sens in range(len(self.active_table)):
+        #         if not self.active_table[sens]:
+        #             self.age_table[sens] = self.target_time     # Sensors on range 1 to num_sens
+        #
+        #     self.max_AoI = self.age_table[0]
+        #     self.avg_AoI = self.age_table[0]
+        #     for sens in range(len(self.sens_table.index) - 1):
+        #         self.avg_AoI += self.age_table[sens + 1]
+        #         if self.age_table[sens + 1] < self.max_AoI:
+        #             self.max_AoI = self.age_table[sens + 1]
+        #     self.avg_AoI = math.ceil(self.avg_AoI / len(self.age_table))
+        #
+        #     state[self.headSerial + 1][2] = step - self.max_AoI
+        #     state[self.headSerial + 1][3] = step - self.avg_AoI
+        """
+        End
+        """
 
 
+        """
+        Old Decision State: Just State
+        """
         decision_state = copy.deepcopy(state)
-        decision_state[0][2] = state[0][2] + round(p_count * 6_800_000 / (self.charge_rate * 60))
-        for CH in range(len(state) - 1):
-            decision_state[CH+1][2] = state[CH+1][2] + p_count
-            decision_state[CH+1][3] = state[CH+1][3] + p_count
+
+        """
+        New Decision State
+        """
+        # decision_state = copy.deepcopy(state)
+        # decision_state[0][2] = state[0][2] + round(p_count * 6_800_000 / (self.charge_rate * 60))
+        # for CH in range(len(state) - 1):
+        #     decision_state[CH+1][2] = state[CH+1][2] + p_count
+        #     decision_state[CH+1][3] = state[CH+1][3] + p_count
+        """
+        End
+        """
 
         action = -1
-        out_state = copy.deepcopy(state)
         target = self
         model_help = True
         change_transit = False
         dist = 0
 
-        if not targetType:
-            """
-            For sensor targeting use Christofides
-            if target type = False
-            """
-            inactive = []
-            for sens in range(len(self.active_table)):
-                if not self.active_table[sens]:
-                    inactive.append(sens)     # Sensors on range 1 to num_sens
+        """
+        Old Targeting
+        """
+        max_idx = -1
+        max_age = 720.0
+        max_sens = None
+        for sens in range(len(self.active_table)):
+            if not self.active_table[sens]:
+                if self.age_table[sens] < max_age:
+                    max_idx = sens
+                    max_age = self.age_table[sens]
+                    max_sens = self.sens_table.iat[sens, 0]
 
-            if len(inactive) == 1:
-                target = self.sens_table.iat[inactive[0], 0]
-                dist = 2 * math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
+        decision_state[-1][1] = self.data_table[max_idx]
+        decision_state[-1][2] = self.age_table[max_idx]
+        decision_state[-1][1] = self.age_table[max_idx]
 
-                self.last_target = self.headSerial
-                self.target_time = step
-                action = self.headSerial
-                model_help = False
+        action = model.act(decision_state)
 
-            elif len(inactive) > 1:
-                G = nx.Graph()
-                for i in range(len(inactive)+1):
-                    for j in range(i+1, len(inactive)+1):
-                        if i == 0:
-                            G.add_edge(
-                                i,
-                                j,
-                                weight = math.sqrt(pow((self.sens_table.iat[inactive[j-1], 0].indX - self.indX), 2)
-                                                   + pow((self.sens_table.iat[inactive[j-1], 0].indY - self.indY), 2))
-                            )  # Use Euclidean distance (2-norm) as graph weight
-                        elif j == 0:
-                            G.add_edge(
-                                i,
-                                j,
-                                weight=math.sqrt(pow((self.sens_table.iat[inactive[i-1], 0].indX - self.indX), 2)
-                                                 + pow((self.sens_table.iat[inactive[i-1], 0].indY - self.indY), 2))
-                            )  # Use Euclidean distance (2-norm) as graph weight
-                        else:
-                            G.add_edge(
-                                i,
-                                j,
-                                weight = math.sqrt(pow((self.sens_table.iat[inactive[j-1], 0].indX
-                                                        - self.sens_table.iat[inactive[i-1], 0].indX), 2)
-                                                   + pow((self.sens_table.iat[inactive[j-1], 0].indY
-                                                          - self.sens_table.iat[inactive[i-1], 0].indY), 2))
-                            )
-
-                tour = nx.algorithms.approximation.christofides(G)
-                dists = []
-                for i in range(len(tour)):
-                    if i == 0:
-                        dists.append(math.sqrt(pow((self.sens_table.iat[inactive[tour[i+1]-1], 0].indX - self.indX), 2)
-                                              + pow((self.sens_table.iat[inactive[tour[i+1]-1], 0].indY - self.indY), 2)))
-                    elif i+1 == len(tour):
-                        dists.append(math.sqrt(pow((self.sens_table.iat[inactive[tour[i]-1], 0].indX - self.indX), 2)
-                                              + pow((self.sens_table.iat[inactive[tour[i]-1], 0].indY - self.indY), 2)))
-                    else:
-                        dists.append(math.sqrt(pow((self.sens_table.iat[inactive[tour[i+1]-1], 0].indX -
-                                                   self.sens_table.iat[inactive[tour[i]-1], 0].indX), 2)
-                                              + pow((self.sens_table.iat[inactive[tour[i+1]-1], 0].indY -
-                                                     self.sens_table.iat[inactive[tour[i]-1], 0].indY), 2)))
-
-                # split into two function if too much distance\
-                tour_discharge = round((sum(dists) / 15) * 1_000 * 6_800 / (1 * 60 * 60))
-                if (state[0][2] - tour_discharge) >= (0.2 * 6_800 * 1_000):
-                    self.tour = [self.sens_table.iat[inactive[tour[i]-1], 0] for i in range(len(tour))]
-                    dist = sum(dists)
-                    target = self.tour[0]
-                elif len(tour) > 1:
-                    tour1 = tour[0:math.ceil(len(tour)/2)]
-                    tour2 = tour[math.ceil(len(tour)/2):]
-                    dists1= (sum(dists[0:math.ceil(len(dists)/2)]) +
-                             math.sqrt(pow((self.sens_table.iat[inactive[tour1[-1] - 1], 0].indX - self.indX), 2)
-                                       + pow((self.sens_table.iat[inactive[tour1[-1] - 1], 0].indY - self.indY), 2))
-                             )
-                    dists2= (sum(dists[math.ceil(len(dists)/2):]) +
-                             math.sqrt(pow((self.sens_table.iat[inactive[tour2[0] - 1], 0].indX - self.indX), 2)
-                                       + pow((self.sens_table.iat[inactive[tour2[0] - 1], 0].indY - self.indY), 2))
-                             )
-
-                    tour1_discharge = round((dists1 / 15) * 1_000 * 6_800 / (1 * 60 * 60))
-                    if (state[0][2] - tour1_discharge) >= (0.2 * 6_800 * 1_000):
-                        self.tour = [self.sens_table.iat[inactive[tour1[i] - 1], 0] for i in range(len(tour1))]
-                        dist = dists1
-                        target = self.tour[0]
-                    elif len(tour1) > 1:
-                        distsA = dists[0:math.ceil(len(dists)/2)]
-                        tour11 = tour[0:math.ceil(len(tour1) / 2)]
-                        tour21 = tour[math.ceil(len(tour1) / 2):]
-                        dists11 = (sum(distsA[0:math.ceil(len(distsA) / 2)]) +
-                                  math.sqrt(pow((self.sens_table.iat[inactive[tour11[-1] - 1], 0].indX - self.indX), 2)
-                                            + pow((self.sens_table.iat[inactive[tour11[-1] - 1], 0].indY - self.indY),
-                                                  2))
-                                  )
-                        dists21 = (sum(distsA[math.ceil(len(distsA) / 2):]) +
-                                  math.sqrt(pow((self.sens_table.iat[inactive[tour21[0] - 1], 0].indX - self.indX), 2)
-                                            + pow((self.sens_table.iat[inactive[tour21[0] - 1], 0].indY - self.indY), 2))
-                                  + math.sqrt(pow((self.sens_table.iat[inactive[tour21[-1] - 1], 0].indX - self.indX), 2)
-                                            + pow((self.sens_table.iat[inactive[tour21[-1] - 1], 0].indY - self.indY), 2))
-                                  )
-
-                        self.tour = [self.sens_table.iat[inactive[tour11[i] - 1], 0] for i in
-                                     range(len(tour11))]
-                        dist = dists11
-                        self.next1_tour = [self.sens_table.iat[inactive[tour21[i] - 1], 0] for i in
-                                          range(len(tour21))]
-                        self.next1_dist = dists21
-                        target = self.tour[0]
-
-                    tour2_discharge = round((dists2 / 15) * 1_000 * 6_800 / (1 * 60 * 60))
-                    if (state[0][2] - tour2_discharge) >= (0.2 * 6_800 * 1_000):
-                        self.next_tour = [self.sens_table.iat[inactive[tour2[i] - 1], 0] for i in
-                                          range(len(tour2))]
-                        self.next_dist = dists2
-                    elif len(tour2) > 1:
-                        distsB = dists[math.ceil(len(dists)/2):]
-                        tour12 = tour[0:math.ceil(len(tour2) / 2)]
-                        tour22 = tour[math.ceil(len(tour2) / 2):]
-                        dists12 = (sum(distsB[0:math.ceil(len(distsB) / 2)]) +
-                                   math.sqrt(pow((self.sens_table.iat[inactive[tour12[-1] - 1], 0].indX - self.indX), 2)
-                                             + pow((self.sens_table.iat[inactive[tour12[-1] - 1], 0].indY - self.indY),2))
-                                   + math.sqrt(pow((self.sens_table.iat[inactive[tour12[0] - 1], 0].indX - self.indX), 2)
-                                             + pow((self.sens_table.iat[inactive[tour12[0] - 1], 0].indY - self.indY),2))
-                                   )
-                        dists22 = (sum(distsB[math.ceil(len(distsB) / 2):]) +
-                                   math.sqrt(pow((self.sens_table.iat[inactive[tour22[0] - 1], 0].indX - self.indX), 2)
-                                             + pow((self.sens_table.iat[inactive[tour22[0] - 1], 0].indY - self.indY),
-                                                   2))
-                                   )
-
-                        self.next_tour = [self.sens_table.iat[inactive[tour12[i] - 1], 0] for i in
-                                     range(len(tour12))]
-                        self.next_dist = dists12
-                        self.next2_tour = [self.sens_table.iat[inactive[tour22[i] - 1], 0] for i in
-                                           range(len(tour22))]
-                        self.next2_dist = dists22
-
-                self.last_target = self.headSerial
-                self.target_time = step
-                action = self.headSerial
-                model_help = False
-
-            else:
-                targetType = True
-                model_help = True
-
-        elif len(self.next_tour) > 0:
-            self.tour = self.next_tour
-            dist = self.next_dist
-            target = self.tour[0]
+        if action == 5:
+            target = max_sens
+            self.last_target = max_idx
             self.target_time = step
-            action = self.headSerial
-            model_help = False
+            model_help = True
             targetType = False
-
-            self.next_tour = []
-            self.next_dist = 0.0
-
-        elif len(self.next1_tour) > 0:
-            self.tour = self.next1_tour
-            dist = self.next1_dist
-            target = self.tour[0]
-            self.target_time = step
-            action = self.headSerial
-            model_help = False
-            targetType = False
-
-            self.next1_tour = []
-            self.next1_dist = 0.0
-
-        elif len(self.next2_tour) > 0:
-            self.tour = self.next2_tour
-            dist = self.next2_dist
-            target = self.tour[0]
-            self.target_time = step
-            action = self.headSerial
-            model_help = False
-            targetType = False
-
-            self.next2_tour = []
-            self.next2_dist = 0.0
-
-        # Next CH
-        if model_help:
-            """
-            For choosing next CH
-            """
-            # for CH in range(len(full_sensor_list) - 1):
-            #     if (step - state[CH + 1][2]) < 1.0:
-            #         target = full_sensor_list.iat[CH + 1, 0]
-            #         model_help = False
-            #         action = CH
-            #         target = full_sensor_list.iat[action + 1, 0]
-
-            # if action < 0:
-            #     action = model.act(decision_state)
-            #     if action < self.headSerial:
-            #         target = full_sensor_list.iat[action + 1, 0]
-            #     else:
-            #         target = full_sensor_list.iat[action + 2, 0]
-            #     print(action)
-
-            action = model.act(decision_state)
-
-            # Force the change in the sensor
-            while action == targetSerial:
-                action = random.randint(0,len(full_sensor_list)-2)
+        else:
+            while force_out and action == self.headSerial:
+                action = random.randint(0, len(full_sensor_list) - 2)
 
             target = full_sensor_list.iat[action + 1, 0]
-            change_transit = True
+            self.last_target = target.headSerial
+            self.target_time = step
+            model_help = True
+            targetType = True
 
-            dist = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
+        change_transit = True
+        dist = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
+        self.tour = []
 
         AoI_peak = decision_state[1][2]
         AoI_avg = decision_state[1][3]
@@ -590,4 +453,218 @@ class IoT_Device:
 
         return (model_help, change_transit, target, decision_state, action,
                 dist, AoI_peak, AoI_avg, self.tour, targetType)
+
+        """
+        New Sensor Targeting: Christofides' Tour
+        """
+        # if not targetType:
+        #     """
+        #     For sensor targeting use Christofides
+        #     if target type = False
+        #     """
+        #     inactive = []
+        #     for sens in range(len(self.active_table)):
+        #         if not self.active_table[sens]:
+        #             inactive.append(sens)     # Sensors on range 1 to num_sens
+        #
+        #     if len(inactive) == 1:
+        #         target = self.sens_table.iat[inactive[0], 0]
+        #         dist = 2 * math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
+        #
+        #         self.last_target = self.headSerial
+        #         self.target_time = step
+        #         action = self.headSerial
+        #         model_help = False
+        #
+        #     elif len(inactive) > 1:
+        #         G = nx.Graph()
+        #         for i in range(len(inactive)+1):
+        #             for j in range(i+1, len(inactive)+1):
+        #                 if i == 0:
+        #                     G.add_edge(
+        #                         i,
+        #                         j,
+        #                         weight = math.sqrt(pow((self.sens_table.iat[inactive[j-1], 0].indX - self.indX), 2)
+        #                                            + pow((self.sens_table.iat[inactive[j-1], 0].indY - self.indY), 2))
+        #                     )  # Use Euclidean distance (2-norm) as graph weight
+        #                 elif j == 0:
+        #                     G.add_edge(
+        #                         i,
+        #                         j,
+        #                         weight=math.sqrt(pow((self.sens_table.iat[inactive[i-1], 0].indX - self.indX), 2)
+        #                                          + pow((self.sens_table.iat[inactive[i-1], 0].indY - self.indY), 2))
+        #                     )  # Use Euclidean distance (2-norm) as graph weight
+        #                 else:
+        #                     G.add_edge(
+        #                         i,
+        #                         j,
+        #                         weight = math.sqrt(pow((self.sens_table.iat[inactive[j-1], 0].indX
+        #                                                 - self.sens_table.iat[inactive[i-1], 0].indX), 2)
+        #                                            + pow((self.sens_table.iat[inactive[j-1], 0].indY
+        #                                                   - self.sens_table.iat[inactive[i-1], 0].indY), 2))
+        #                     )
+        #
+        #         tour = nx.algorithms.approximation.christofides(G)
+        #         dists = []
+        #         for i in range(len(tour)):
+        #             if i == 0:
+        #                 dists.append(math.sqrt(pow((self.sens_table.iat[inactive[tour[i+1]-1], 0].indX - self.indX), 2)
+        #                                       + pow((self.sens_table.iat[inactive[tour[i+1]-1], 0].indY - self.indY), 2)))
+        #             elif i+1 == len(tour):
+        #                 dists.append(math.sqrt(pow((self.sens_table.iat[inactive[tour[i]-1], 0].indX - self.indX), 2)
+        #                                       + pow((self.sens_table.iat[inactive[tour[i]-1], 0].indY - self.indY), 2)))
+        #             else:
+        #                 dists.append(math.sqrt(pow((self.sens_table.iat[inactive[tour[i+1]-1], 0].indX -
+        #                                            self.sens_table.iat[inactive[tour[i]-1], 0].indX), 2)
+        #                                       + pow((self.sens_table.iat[inactive[tour[i+1]-1], 0].indY -
+        #                                              self.sens_table.iat[inactive[tour[i]-1], 0].indY), 2)))
+        #
+        #         # split into two function if too much distance\
+        #         tour_discharge = round((sum(dists) / 15) * 1_000 * 6_800 / (1 * 60 * 60))
+        #         if (state[0][2] - tour_discharge) >= (0.2 * 6_800 * 1_000):
+        #             self.tour = [self.sens_table.iat[inactive[tour[i]-1], 0] for i in range(len(tour))]
+        #             dist = sum(dists)
+        #             target = self.tour[0]
+        #         elif len(tour) > 1:
+        #             tour1 = tour[0:math.ceil(len(tour)/2)]
+        #             tour2 = tour[math.ceil(len(tour)/2):]
+        #             dists1= (sum(dists[0:math.ceil(len(dists)/2)]) +
+        #                      math.sqrt(pow((self.sens_table.iat[inactive[tour1[-1] - 1], 0].indX - self.indX), 2)
+        #                                + pow((self.sens_table.iat[inactive[tour1[-1] - 1], 0].indY - self.indY), 2))
+        #                      )
+        #             dists2= (sum(dists[math.ceil(len(dists)/2):]) +
+        #                      math.sqrt(pow((self.sens_table.iat[inactive[tour2[0] - 1], 0].indX - self.indX), 2)
+        #                                + pow((self.sens_table.iat[inactive[tour2[0] - 1], 0].indY - self.indY), 2))
+        #                      )
+        #
+        #             tour1_discharge = round((dists1 / 15) * 1_000 * 6_800 / (1 * 60 * 60))
+        #             if (state[0][2] - tour1_discharge) >= (0.2 * 6_800 * 1_000):
+        #                 self.tour = [self.sens_table.iat[inactive[tour1[i] - 1], 0] for i in range(len(tour1))]
+        #                 dist = dists1
+        #                 target = self.tour[0]
+        #             elif len(tour1) > 1:
+        #                 distsA = dists[0:math.ceil(len(dists)/2)]
+        #                 tour11 = tour[0:math.ceil(len(tour1) / 2)]
+        #                 tour21 = tour[math.ceil(len(tour1) / 2):]
+        #                 dists11 = (sum(distsA[0:math.ceil(len(distsA) / 2)]) +
+        #                           math.sqrt(pow((self.sens_table.iat[inactive[tour11[-1] - 1], 0].indX - self.indX), 2)
+        #                                     + pow((self.sens_table.iat[inactive[tour11[-1] - 1], 0].indY - self.indY),
+        #                                           2))
+        #                           )
+        #                 dists21 = (sum(distsA[math.ceil(len(distsA) / 2):]) +
+        #                           math.sqrt(pow((self.sens_table.iat[inactive[tour21[0] - 1], 0].indX - self.indX), 2)
+        #                                     + pow((self.sens_table.iat[inactive[tour21[0] - 1], 0].indY - self.indY), 2))
+        #                           + math.sqrt(pow((self.sens_table.iat[inactive[tour21[-1] - 1], 0].indX - self.indX), 2)
+        #                                     + pow((self.sens_table.iat[inactive[tour21[-1] - 1], 0].indY - self.indY), 2))
+        #                           )
+        #
+        #                 self.tour = [self.sens_table.iat[inactive[tour11[i] - 1], 0] for i in
+        #                              range(len(tour11))]
+        #                 dist = dists11
+        #                 self.next1_tour = [self.sens_table.iat[inactive[tour21[i] - 1], 0] for i in
+        #                                   range(len(tour21))]
+        #                 self.next1_dist = dists21
+        #                 target = self.tour[0]
+        #
+        #             tour2_discharge = round((dists2 / 15) * 1_000 * 6_800 / (1 * 60 * 60))
+        #             if (state[0][2] - tour2_discharge) >= (0.2 * 6_800 * 1_000):
+        #                 self.next_tour = [self.sens_table.iat[inactive[tour2[i] - 1], 0] for i in
+        #                                   range(len(tour2))]
+        #                 self.next_dist = dists2
+        #             elif len(tour2) > 1:
+        #                 distsB = dists[math.ceil(len(dists)/2):]
+        #                 tour12 = tour[0:math.ceil(len(tour2) / 2)]
+        #                 tour22 = tour[math.ceil(len(tour2) / 2):]
+        #                 dists12 = (sum(distsB[0:math.ceil(len(distsB) / 2)]) +
+        #                            math.sqrt(pow((self.sens_table.iat[inactive[tour12[-1] - 1], 0].indX - self.indX), 2)
+        #                                      + pow((self.sens_table.iat[inactive[tour12[-1] - 1], 0].indY - self.indY),2))
+        #                            + math.sqrt(pow((self.sens_table.iat[inactive[tour12[0] - 1], 0].indX - self.indX), 2)
+        #                                      + pow((self.sens_table.iat[inactive[tour12[0] - 1], 0].indY - self.indY),2))
+        #                            )
+        #                 dists22 = (sum(distsB[math.ceil(len(distsB) / 2):]) +
+        #                            math.sqrt(pow((self.sens_table.iat[inactive[tour22[0] - 1], 0].indX - self.indX), 2)
+        #                                      + pow((self.sens_table.iat[inactive[tour22[0] - 1], 0].indY - self.indY),
+        #                                            2))
+        #                            )
+        #
+        #                 self.next_tour = [self.sens_table.iat[inactive[tour12[i] - 1], 0] for i in
+        #                              range(len(tour12))]
+        #                 self.next_dist = dists12
+        #                 self.next2_tour = [self.sens_table.iat[inactive[tour22[i] - 1], 0] for i in
+        #                                    range(len(tour22))]
+        #                 self.next2_dist = dists22
+        #
+        #         self.last_target = self.headSerial
+        #         self.target_time = step
+        #         action = self.headSerial
+        #         model_help = False
+        #
+        #     else:
+        #         targetType = True
+        #         model_help = True
+        #
+        # elif len(self.next_tour) > 0:
+        #     self.tour = self.next_tour
+        #     dist = self.next_dist
+        #     target = self.tour[0]
+        #     self.target_time = step
+        #     action = self.headSerial
+        #     model_help = False
+        #     targetType = False
+        #
+        #     self.next_tour = []
+        #     self.next_dist = 0.0
+        #
+        # elif len(self.next1_tour) > 0:
+        #     self.tour = self.next1_tour
+        #     dist = self.next1_dist
+        #     target = self.tour[0]
+        #     self.target_time = step
+        #     action = self.headSerial
+        #     model_help = False
+        #     targetType = False
+        #
+        #     self.next1_tour = []
+        #     self.next1_dist = 0.0
+        #
+        # elif len(self.next2_tour) > 0:
+        #     self.tour = self.next2_tour
+        #     dist = self.next2_dist
+        #     target = self.tour[0]
+        #     self.target_time = step
+        #     action = self.headSerial
+        #     model_help = False
+        #     targetType = False
+        #
+        #     self.next2_tour = []
+        #     self.next2_dist = 0.0
+        #
+        # # Next CH
+        # if model_help:
+        #     """
+        #     For choosing next CH
+        #     """
+        #
+        #     action = model.act(decision_state)
+        #
+        #     # Force the change in the sensor
+        #     while action == targetSerial:
+        #         action = random.randint(0,len(full_sensor_list)-2)
+        #
+        #     target = full_sensor_list.iat[action + 1, 0]
+        #     change_transit = True
+        #
+        #     dist = math.sqrt(pow((target.indX - self.indX), 2) + pow((target.indY - self.indY), 2))
+
+        # AoI_peak = decision_state[1][2]
+        # AoI_avg = decision_state[1][3]
+        # for entry in range(len(full_sensor_list) - 2):
+        #     AoI_avg += decision_state[entry + 2][3]
+        #     AoI = decision_state[entry + 2][2]
+        #     if AoI > AoI_peak:
+        #         AoI_peak = AoI
+        # AoI_avg = math.ceil(AoI_avg / len(full_sensor_list))
+
+        # return (model_help, change_transit, target, decision_state, action,
+        #         dist, AoI_peak, AoI_avg, self.tour, targetType)
 

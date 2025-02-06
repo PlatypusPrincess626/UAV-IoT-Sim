@@ -99,6 +99,9 @@ class QuadUAV:
         self.launch_cost = 18.889 # mA
 
         # State used for model
+        """
+        Old state used first 3 and not last.
+        """
         self.state = [[0, 0, 0, 0] for _ in range(len(CHList) + 1)]
 
         self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy * 1_000
@@ -342,18 +345,29 @@ class QuadUAV:
         elif not self.inRange:
             self.target = self.target
             self.p_cycle -= 1
+            self.force_count += 1
 
         elif self.target.type == 1:
             self.target = self.target
             self.p_cycle -= 1
+            self.force_count += 1
 
         else:
             ### TargetType > sensor
+            self.force_change = True if self.force_count > 30 else False
 
             # True, True, sensor, CHstate, action, action_p
-            used_model, changed_transit, dest, state, action, dist, peak, avg, tour, self.targetType = \
-                self.target.get_dest(self.state, self.full_sensor_list, model, step,
+            used_model, changed_transit, dest, state, action, dist, peak, avg, tour, self.targetType, self.force_change\
+                = self.target.get_dest(self.state, self.full_sensor_list, model, step,
                                      self.p_count, self.targetType, self.targetSerial)
+
+            if self.targetType:
+                if dest.headSerial == self.targetSerial:
+                    self.force_count += 1
+                else:
+                    self.force_count = 1
+            else:
+                self.force_count += 1
 
             DCH = self.targetSerial
             self.action = action
@@ -367,50 +381,67 @@ class QuadUAV:
             if self.h == 0:
                 self.p_count -= 1
 
-            # self.state[0][2] <= 0.8 * self.max_energy * 1_000
-            if self.p_cycle < 1.0:
-                self.p_cycle = 30
-                """
-                Dynamic determination of charging time.
-                1) Emergency Charge when below threshold to 1.5 * needed
-                2) If tour would result in emergency situation
-                """
-                if self.state[0][2] < 0.2 * self.max_energy * 1_000:
-                    self.p_count = min(20,
-                                       round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
 
-                elif ((self.state[0][2] -
-                      1.25 * (dist / self.maxSpd) * (1_000 * self.max_energy / (self.flight_discharge * 60 * 60))) <=
-                      0.2 * self.max_energy * 1_000):
-                    self.p_count = min(20,
-                                       round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
+            """
+            Old Charging: Static Charging
+            """
+            if self.state[0][2] < 0.2 * self.max_energy * 1_000:
+                used_model = False
+                self.is_charging = True
+                self.target = self.target
+                return (train_model, DCH, used_model, state, action,
+                        self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
-                else:
-                    if peak <= 240:
-                        self.p_count = min(20,
-                                           round(0.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
-                    elif avg <= 120:
-                        self.p_count = min(20,
-                                           round(0.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
-                    else:
-                        self.p_count = 0
-
-                if self.p_count > 0:
-                    used_model = False
-                    self.is_charging = True
-                    self.target = self.target
-                    return (train_model, DCH, used_model, state, action,
-                            self.step_comms_cost, self.step_move_cost, self.energy_harvested)
-                else:
-                    self.is_charging = False
-
-
-            if changed_transit and self.p_count < 1.0:
-                self.p_cycle = 0
-
-            elif self.is_charging and (self.p_count < 1.0 or self.state[0][2] == self.max_energy * 1_000):
-                self.p_count = 0
+            elif self.is_charging and self.state[0][2] == self.max_energy * 1_000:
                 self.is_charging = False
+
+
+            """
+            New Charging: Dynamic Charging
+            """
+            # if self.p_cycle < 1.0:
+            #     self.p_cycle = 30
+            #     """
+            #     Dynamic determination of charging time.
+            #     1) Emergency Charge when below threshold to 1.5 * needed
+            #     2) If tour would result in emergency situation
+            #     """
+            #     if self.state[0][2] < 0.2 * self.max_energy * 1_000:
+            #         self.p_count = min(20,
+            #                            round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
+            #
+            #     elif ((self.state[0][2] -
+            #           1.25 * (dist / self.maxSpd) * (1_000 * self.max_energy / (self.flight_discharge * 60 * 60))) <=
+            #           0.2 * self.max_energy * 1_000):
+            #         self.p_count = min(20,
+            #                            round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
+            #
+            #     else:
+            #         if peak <= 240:
+            #             self.p_count = min(20,
+            #                                round(0.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
+            #         elif avg <= 120:
+            #             self.p_count = min(20,
+            #                                round(0.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
+            #         else:
+            #             self.p_count = 0
+            #
+            #     if self.p_count > 0:
+            #         used_model = False
+            #         self.is_charging = True
+            #         self.target = self.target
+            #         return (train_model, DCH, used_model, state, action,
+            #                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
+            #     else:
+            #         self.is_charging = False
+            #
+            #
+            # if changed_transit and self.p_count < 1.0:
+            #     self.p_cycle = 0
+            #
+            # elif self.is_charging and (self.p_count < 1.0 or self.state[0][2] == self.max_energy * 1_000):
+            #     self.p_count = 0
+            #     self.is_charging = False
 
 
 
@@ -428,8 +459,17 @@ class QuadUAV:
 
 
                 if dest.type == 1:
-                    self.tour = tour
+                    """
+                    Old targeting
+                    """
+                    self.tour = []
                     self.tour_iter = 1
+                    """
+                    New targeting
+                    """
+                    # self.tour = tour
+                    # self.tour_iter = 1
+
                     self.target = dest
                     self.targetX = dest.indX
                     self.targetY = dest.indY
