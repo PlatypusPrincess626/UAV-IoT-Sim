@@ -357,9 +357,9 @@ class QuadUAV:
             self.force_change = True if self.force_count > 30 else False
 
             # True, True, sensor, CHstate, action, action_p
-            used_model, changed_transit, dest, state, action, dist, peak, avg, tour, self.targetType, self.force_change\
-                = self.target.get_dest(self.state, self.full_sensor_list, model, step,
-                                     self.p_count, self.targetType, self.targetSerial)
+            used_model, changed_transit, dest, state, action, dist, peak, avg, tour, self.targetType =\
+                self.target.get_dest(self.state, self.full_sensor_list, model, step, self.p_count,
+                                     self.targetType, self.targetSerial, self.force_change)
 
             if self.targetType:
                 if dest.headSerial == self.targetSerial:
