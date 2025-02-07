@@ -103,7 +103,7 @@ class sim_env:
             self.tau500 = 0.75                # Aerosol Turbidity 500nm
             self.ozone = 0.23                 # Ozone in atm-cm
             self.albedo = 0.2                 # Bare Ground and Grassy
-            self.dim = 3000                  # Map dimension n x n
+            self.dim = 10_000                  # Map dimension n x n
             self.numObst = 500                # Number of obstacles decided
             self.stepSize = 'min'               # Frequency of time steps
             self.times = pd.date_range('2021-01-01 8:00', freq=self.stepSize, periods=max_num_steps, tz="MST")
