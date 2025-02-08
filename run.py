@@ -429,7 +429,7 @@ def run_experiment(args):
     # for i in range(env.num_ch):
     agent = model_utils.get_ddqn_agent(
         env,
-        ((env.num_ch + 2) * 3),
+        ((env.num_ch + 1) * 3),
         env.num_ch
     )
     # agents.append(agent)
