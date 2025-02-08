@@ -340,9 +340,7 @@ class IoT_Device:
         if my_contribution > self.contribution:
             self.contribution = my_contribution
 
-            for sens in range(len(self.active_table)):
-                if not self.active_table[sens]:
-                    self.age_table[sens] = self.target_time     # Sensors on range 1 to num_sens
+            self.age_table[self.last_target] = self.target_time     # Sensors on range 1 to num_sens
 
             self.max_AoI = self.age_table[0]
             self.avg_AoI = self.age_table[0]
