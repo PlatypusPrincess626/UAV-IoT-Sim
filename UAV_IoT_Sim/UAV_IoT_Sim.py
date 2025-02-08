@@ -123,7 +123,7 @@ class make_env:
         comms, move, harvest = 0, 0, 0
         self.total_average = 0
 
-        old_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 2)]
+        old_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
 
         if not self.terminated:
             self.truncated = False
