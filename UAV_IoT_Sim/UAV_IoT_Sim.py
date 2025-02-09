@@ -41,8 +41,8 @@ class make_env:
         self.track_reward = False
         self.total_average = 0
 
-        self.curr_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
-        self.archived_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
+        self.curr_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 2)]
+        self.archived_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 2)]
         self.rewards = [0.0, 0.0, 0.0]
         self.accum_rewards = [0.0, 0.0, 0.0]
         self.archived_rewards = [0.0, 0.0, 0.0]
@@ -91,8 +91,8 @@ class make_env:
             self.track_reward = False
             self.total_average = 0
 
-            self.curr_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
-            self.archived_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
+            self.curr_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 2)]
+            self.archived_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 2)]
             self.rewards = [0.0, 0.0, 0.0]
             self.accum_rewards = [0.0, 0.0, 0.0]
             self.archived_rewards = [0.0, 0.0, 0.0]
@@ -123,7 +123,7 @@ class make_env:
         comms, move, harvest = 0, 0, 0
         self.total_average = 0
 
-        old_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
+        old_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 2)]
 
         if not self.terminated:
             self.truncated = False
