@@ -102,7 +102,7 @@ class QuadUAV:
         """
         Old state +1, Date +2, New +1
         """
-        self.state = [[0, 0, 0, 0] for _ in range(len(CHList) + 2)]
+        self.state = [[0, 0, 0, 0] for _ in range(len(CHList) + 1)]
 
         self.state[0][0], self.state[0][1], self.state[0][2] = -1, 0, self.max_energy * 1_000
         count = 0
@@ -385,63 +385,56 @@ class QuadUAV:
             """
             Old Charging: Static Charging
             """
-            if self.state[0][2] < 0.2 * self.max_energy * 1_000:
-                used_model = False
-                self.is_charging = True
-                self.target = self.target
-                return (train_model, DCH, used_model, state, action,
-                        self.step_comms_cost, self.step_move_cost, self.energy_harvested)
-
-            elif self.is_charging and self.state[0][2] == self.max_energy * 1_000:
-                self.is_charging = False
+            # if self.state[0][2] < 0.2 * self.max_energy * 1_000:
+            #     used_model = False
+            #     self.is_charging = True
+            #     self.target = self.target
+            #     return (train_model, DCH, used_model, state, action,
+            #             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
+            #
+            # elif self.is_charging and self.state[0][2] == self.max_energy * 1_000:
+            #     self.is_charging = False
 
 
             """
             New Charging: Dynamic Charging
             """
-            # if self.p_cycle < 1.0:
-            #     self.p_cycle = 30
-            #     """
-            #     Dynamic determination of charging time.
-            #     1) Emergency Charge when below threshold to 1.5 * needed
-            #     2) If tour would result in emergency situation
-            #     """
-            #     if self.state[0][2] < 0.2 * self.max_energy * 1_000:
-            #         self.p_count = min(20,
-            #                            round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
-            #
-            #     elif ((self.state[0][2] -
-            #           1.25 * (dist / self.maxSpd) * (1_000 * self.max_energy / (self.flight_discharge * 60 * 60))) <=
-            #           0.2 * self.max_energy * 1_000):
-            #         self.p_count = min(20,
-            #                            round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
-            #
-            #     else:
-            #         if peak <= 240:
-            #             self.p_count = min(20,
-            #                                round(0.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
-            #         elif avg <= 120:
-            #             self.p_count = min(20,
-            #                                round(0.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
-            #         else:
-            #             self.p_count = 0
-            #
-            #     if self.p_count > 0:
-            #         used_model = False
-            #         self.is_charging = True
-            #         self.target = self.target
-            #         return (train_model, DCH, used_model, state, action,
-            #                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
-            #     else:
-            #         self.is_charging = False
-            #
-            #
-            # if changed_transit and self.p_count < 1.0:
-            #     self.p_cycle = 0
-            #
-            # elif self.is_charging and (self.p_count < 1.0 or self.state[0][2] == self.max_energy * 1_000):
-            #     self.p_count = 0
-            #     self.is_charging = False
+            if self.p_cycle < 1.0:
+                self.p_cycle = 30
+                """
+                Dynamic determination of charging time.
+                1) Emergency Charge when below threshold to 1.5 * needed
+                2) If tour would result in emergency situation
+                """
+                if self.state[0][2] < 0.2 * self.max_energy * 1_000:
+                    self.p_count = min(20,
+                                       round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
+
+                elif ((self.state[0][2] -
+                      1.25 * (dist / self.maxSpd) * (1_000 * self.max_energy / (self.flight_discharge * 60 * 60))) <=
+                      0.2 * self.max_energy * 1_000):
+                    self.p_count = min(20,
+                                       round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
+
+                else:
+                    if peak <= 240 and self.state[0][2] < 0.8 * self.max_energy * 1_000:
+                        self.p_count = min(20,
+                                           round(0.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
+                    else:
+                        self.p_count = 0
+
+                if self.p_count > 0:
+                    self.is_charging = True
+                else:
+                    self.is_charging = False
+
+
+            if changed_transit and self.p_count < 1.0:
+                self.p_cycle = 0
+
+            elif self.is_charging and (self.p_count < 1.0 or self.state[0][2] > 0.8 * self.max_energy * 1_000):
+                self.p_count = 0
+                self.is_charging = False
 
 
 
@@ -462,13 +455,13 @@ class QuadUAV:
                     """
                     Old targeting
                     """
-                    self.tour = []
-                    self.tour_iter = 1
+                    # self.tour = []
+                    # self.tour_iter = 1
                     """
                     New targeting
                     """
-                    # self.tour = tour
-                    # self.tour_iter = 1
+                    self.tour = tour
+                    self.tour_iter = 1
 
                     self.target = dest
                     self.targetX = dest.indX
