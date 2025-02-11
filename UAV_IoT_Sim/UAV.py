@@ -39,7 +39,7 @@ class QuadUAV:
         self.targetHead = None
         self.last_Head = None
         self.targetSerial = 0
-        self.tour = None
+        self.tour = []
         self.tour_iter = 0
 
         self.targetX = int(X)
@@ -129,7 +129,7 @@ class QuadUAV:
         self.target = None
         self.targetHead = None
         self.last_Head = None
-        self.tour = None
+        self.tour = []
         self.tour_iter = 0
         self.bad_target = False
         self.targetType = True

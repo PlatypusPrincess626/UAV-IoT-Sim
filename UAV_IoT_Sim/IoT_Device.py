@@ -87,9 +87,9 @@ class IoT_Device:
             self.num_sensors = 0
             self.headSerial = clusterheadNum
             self.last_target = 0
-            self.tour = None
-            self.tourA = None
-            self.tourB = None
+            self.tour = []
+            self.tourA = []
+            self.tourB = []
             self.target_time = 0
             self.typeStr = "Clusterhead"
 
@@ -122,9 +122,9 @@ class IoT_Device:
     def reset(self):
         self.last_target = 0
         self.target_time = 0
-        self.tour = None
-        self.tourA = None
-        self.tourB = None
+        self.tour = []
+        self.tourA = []
+        self.tourB = []
 
         self.max_AoI = 0
         self.avg_AoI = 0
