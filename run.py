@@ -154,7 +154,7 @@ def evaluate(
             """Multiple DRL"""
             train_model, train_p, old_state, old_action, action_p, old_pstate, comms, move, harvest = (
                 eval_env.step(agent, agent_p))
-            print(eval_env.accum_reward_p / max(eval_env.accum_steps_p, 1))
+            print(eval_env.full_reward)
             """END"""
 
             buffer_done = eval_env.terminated
