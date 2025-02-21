@@ -539,7 +539,7 @@ def run_experiment(args):
         f"model={args.model}"
     )
 
-    prepopulate(agent, agent_p, 72_000, env, args.eval_frequency)
+    prepopulate(agent, agent_p, 0, env, args.eval_frequency)
     mean_success_rate = RunningAverage(10)
     mean_reward = RunningAverage(10)
     mean_episode_length = RunningAverage(10)
