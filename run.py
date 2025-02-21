@@ -98,6 +98,7 @@ def get_args():
 
 def evaluate(
         agent,
+        agent_p,    # Used for Dual Model/ Pass None for single model
         eval_env,
         eval_episodes,
         log_metrics=False,
@@ -130,6 +131,9 @@ def evaluate(
     # QL
     # for agent in agents:
     agent.decay_epsilon(1)
+    """Dual Agent Systems"""
+    agent_p.decay_epsilon(1)
+    """END"""
 
     for i in range(eval_episodes):
         eval_env.reset()
@@ -144,15 +148,21 @@ def evaluate(
         CH_Metrics = [[0, 0] for _ in range(eval_env.num_ch)]
 
         while not done:
-            train_model, train_CH, old_state, old_action, comms, move, harvest = eval_env.step(agent)
+            """Single DRL"""
+            # train_model, train_CH, old_state, old_action, comms, move, harvest = eval_env.step(agent)
+            # print(eval_env.full_reward)
+            """Multiple DRL"""
+            train_model, train_p, old_state, old_action, action_p, old_pstate, comms, move, harvest = (
+                eval_env.step(agent, agent_p))
+            print(eval_env.accum_reward_p / max(eval_env.accum_steps_p, 1))
+            """END"""
+
             buffer_done = eval_env.terminated
             info = eval_env.curr_info
             crashed = eval_env.terminated
 
             if buffer_done or eval_env.truncated:
                 done = True
-
-            print(eval_env.full_reward)
 
             avgAoI += info.get("Avg_Age", 0.0)
             peakAoI += info.get("Peak_Age", 0.0)
@@ -173,6 +183,12 @@ def evaluate(
                 # DDQN
                 agent.update_mem(old_state, old_action, eval_env.archived_rewards,
                                  eval_env.curr_state, buffer_done, eval_env.curr_step)
+
+            """Dual Model Training Addition"""
+            if train_p or done:
+                agent_p.update_mem(old_pstate, int(action_p), eval_env.archived_rewardsp,
+                                   eval_env.curr_pstate, buffer_done)
+            """END"""
 
             ep_reward += eval_env.full_reward
 
@@ -239,6 +255,10 @@ def evaluate(
         # for agent in agents:
         if len(agent.memory) > 2048:
             agent.train(2048)
+        """Dual Agent Systems"""
+        if len(agent_p.memory) > 2048:
+            agent_p.train(2048)
+        """END"""
 
         accum_avgAoI += avgAoI / (eval_env.curr_step + count)
         accum_peakAoI += peakAoI / (eval_env.curr_step + count)
@@ -268,6 +288,7 @@ def evaluate(
 
 def train(
         agent,
+        agent_p,    # Pass None if using Single Agent
         env: object,
         env_str: str,
         total_steps: int,
@@ -284,14 +305,21 @@ def train(
     sr, ret, length = 0.0, 0.0, 0.0
 
     agent.decay_epsilon(1)
+    """Dual Agent Systems"""
+    agent_p.decay_epsilon(1)
+    """END"""
 
     for timestep in range(total_steps):
-        done = step(agent, env)
+        done = step(agent, agent_p, env)
 
         if done:
         #     # for agent in agents:
             if len(agent.memory) > 2048:
                 agent.train(2048)
+            """Dual Agent Systems"""
+            if len(agent_p.memory) > 2048:
+                agent_p.train(2048)
+            """END"""
 
         if timestep % eval_frequency == 0:
             hours = (time() - start_time) / 3600
@@ -306,8 +334,13 @@ def train(
                 "losses/Min_Target_Value": agent.target_min.mean(),
                 "losses/hours": hours,
             }
+            """Single Model Call"""
+            # sr, ret, length, avgAoI, peakAoI, dataDist, dataColl, CH_Metrics, \
+            #     comms, move, harvest = evaluate(agent, env, eval_episodes)
+            """Dual Model Call"""
             sr, ret, length, avgAoI, peakAoI, dataDist, dataColl, CH_Metrics, \
-                comms, move, harvest = evaluate(agent, env, eval_episodes)
+                comms, move, harvest = evaluate(agent, agent_p, env, eval_episodes)
+            """END"""
 
             log_vals.update(
                 {
@@ -322,6 +355,10 @@ def train(
             )
 
             agent.update_target_from_model()
+            """Dual Model"""
+            agent_p.update_target_from_model()
+            """END"""
+
             env.reset()
 
 
@@ -341,8 +378,13 @@ def train(
         "losses/Min_Target_Value": agent.target_min.mean(),
         "losses/hours": hours,
     }
+    """Single Model Call"""
+    # sr, ret, length, avgAoI, peakAoI, dataDist, dataColl, CH_Metrics, \
+    #     comms, move, harvest = evaluate(agent, env, eval_episodes, True, env_str, start_time)
+    """Dual Model Call"""
     sr, ret, length, avgAoI, peakAoI, dataDist, dataColl, CH_Metrics, \
-        comms, move, harvest = evaluate(agent, env, eval_episodes, True, env_str, start_time)
+        comms, move, harvest = evaluate(agent, agent_p, env, eval_episodes, True, env_str, start_time)
+    """END"""
 
     log_vals.update(
         {
@@ -357,8 +399,13 @@ def train(
     )
 
 
-def step(agent, env):
-    train_model, train_CH, old_state, old_action, comms, move, harvest = env.step(agent)
+def step(agent, agent_p, env):
+    """Single Model"""
+    # train_model, train_CH, old_state, old_action, comms, move, harvest = env.step(agent)
+    """Dual Model Call"""
+    train_model, train_p, old_state, old_action, action_p, old_pstate, comms, move, harvest = env.step(agent, agent_p)
+    """End"""
+
     buffer_done = env.terminated
     done = False
 
@@ -373,21 +420,60 @@ def step(agent, env):
         # DDQN
         agent.update_mem(old_state, old_action, env.archived_rewards,
                          env.curr_state, buffer_done, env.curr_step)
+
+    """Dual Model Power Agent"""
+    if train_p or done:
+        agent_p.update_mem(old_pstate, int(action_p), env.archived_rewardsp, env.curr_pstate, buffer_done)
+    """END"""
+
     return done
 
 
-def prepopulate(agent, prepop_steps, env, eval_frequency):
+def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency):
     timestep = 0
     # QL
     agent.decay_epsilon(0)
 
+    """Single Model"""
+    # while timestep < prepop_steps:
+    #     env.reset()
+    #     done = False
+    #
+    #     while not done:
+    #         print(f"Prepop Step: {timestep}, Reward: {env.full_reward}")
+    #         train_model, train_CH, old_state, old_action, comms, move, harvest = env.step(agent)
+    #         buffer_done = env.terminated
+    #
+    #         if buffer_done or env.truncated:
+    #             done = True
+    #
+    #         if (train_model or env.truncated) and not buffer_done:
+    #             agent.update_mem(old_state, old_action, env.archived_rewards,
+    #                              env.curr_state, buffer_done, env.curr_step)
+    #
+    #             # QL/GANN Agents
+    #             # agent.update(old_state, old_action, env.archived_rewards,
+    #             #                  env.curr_state, buffer_done, env.curr_step)
+    #         timestep += 1
+    #
+    #     if len(agent.memory) > 2048:
+    #         agent.train(2048)
+    #
+    #     if timestep % eval_frequency == 0:
+    #         # DDQN
+    #         # for agent in agents:
+    #         agent.update_target_from_model()
+    #         env.reset()
+
+    """Dual Model"""
     while timestep < prepop_steps:
         env.reset()
         done = False
 
         while not done:
             print(f"Prepop Step: {timestep}, Reward: {env.full_reward}")
-            train_model, train_CH, old_state, old_action, comms, move, harvest = env.step(agent)
+            train_model, train_p, old_state, old_action, action_p, old_pstate, comms, move, harvest = (
+                env.step(agent, agent_p))
             buffer_done = env.terminated
 
             if buffer_done or env.truncated:
@@ -395,20 +481,23 @@ def prepopulate(agent, prepop_steps, env, eval_frequency):
 
             if (train_model or env.truncated) and not buffer_done:
                 agent.update_mem(old_state, old_action, env.archived_rewards,
-                                 env.curr_state, buffer_done, env.curr_step)
+                                             env.curr_state, buffer_done, env.curr_step)
 
-                # QL/GANN Agents
-                # agent.update(old_state, old_action, env.archived_rewards,
-                #                  env.curr_state, buffer_done, env.curr_step)
+            if train_p or done:
+                agent_p.update_mem(old_pstate, int(action_p), env.archived_rewardsp, env.curr_pstate, buffer_done)
+
             timestep += 1
 
         if len(agent.memory) > 2048:
             agent.train(2048)
+        if len(agent_p.memory) > 2048:
+            agent_p.train(2048)
 
         if timestep % eval_frequency == 0:
             # DDQN
             # for agent in agents:
             agent.update_target_from_model()
+            agent_p.update_target_From_model()
             env.reset()
 
 def run_experiment(args):
@@ -434,6 +523,13 @@ def run_experiment(args):
     )
     # agents.append(agent)
 
+    # Power Determination
+    agent_p = model_utils.get_ddqn_agentp(
+        env,
+        4,
+        10
+    )
+
     policy_save_dir = os.path.join(
         os.getcwd(), "policies", args.project_name
     )
@@ -443,7 +539,7 @@ def run_experiment(args):
         f"model={args.model}"
     )
 
-    prepopulate(agent, 50_000, env, args.eval_frequency)
+    prepopulate(agent, agent_p, 72_000, env, args.eval_frequency)
     mean_success_rate = RunningAverage(10)
     mean_reward = RunningAverage(10)
     mean_episode_length = RunningAverage(10)
@@ -451,6 +547,7 @@ def run_experiment(args):
     print("Beginning Training")
     train(
         agent,
+        agent_p,
         env,
         args.env,
         args.steps,

@@ -129,8 +129,10 @@ class QuadUAV:
         self.target = None
         self.targetHead = None
         self.last_Head = None
+
         self.tour = []
         self.tour_iter = 0
+
         self.bad_target = False
         self.targetType = True
 
@@ -316,10 +318,13 @@ class QuadUAV:
 
         return excess_percent
 
-    def set_dest(self, model, step, _=None):
+    def set_dest(self, model, model_p, step, _=None):
         train_model = False
         DCH = 0
         used_model = False
+        train_p = False
+        action_p = 0
+        p_state = [0, 0, 0, 0]
 
         if self.targetHead is not None:
             self.last_Head = self.targetHead.headSerial
@@ -357,9 +362,12 @@ class QuadUAV:
             self.force_change = True if self.force_count > 30 else False
 
             # True, True, sensor, CHstate, action, action_p
-            used_model, changed_transit, dest, state, action, dist, peak, avg, tour, self.targetType =\
-                self.target.get_dest(self.state, self.full_sensor_list, model, step, self.p_count,
-                                     self.targetType, self.targetSerial, self.force_change)
+            (used_model, changed_transit, dest, state, action, action_p, p_state,
+             dist, peak, avg, tour, self.targetType) =\
+                self.target.get_dest(self.state, self.full_sensor_list, model, model_p,
+                                     step, self.p_count, self.targetType, self.targetSerial, self.force_change)
+
+            self.p_cycle -= 1
 
             if self.targetType:
                 if dest.headSerial == self.targetSerial:
@@ -394,8 +402,6 @@ class QuadUAV:
             #
             # elif self.is_charging and self.state[0][2] == self.max_energy * 1_000:
             #     self.is_charging = False
-
-
             """
             New Charging: Dynamic Charging
             """
@@ -427,7 +433,26 @@ class QuadUAV:
                     self.is_charging = True
                 else:
                     self.is_charging = False
+            """
+            Model Charging
+            """
+            if action_p < self.p_count:
+                self.p_count = math.ceil((self.p_count + action_p) / 2)
 
+            if self.p_cycle < 1.0:
+                self.p_cycle = 30
+                self.p_count = action_p
+
+                train_p = True
+                self.is_charging = True
+
+                if self.p_count > 0:
+                    self.is_charging = True
+                else:
+                    self.is_charging = False
+            """
+            END
+            """
 
             if changed_transit and self.p_count < 1.0:
                 self.p_cycle = 0
@@ -441,7 +466,7 @@ class QuadUAV:
             if self.is_charging:
                 used_model = False
                 self.target = self.target
-                return (train_model, DCH, used_model, state, action,
+                return (train_model, DCH, used_model, train_p, state, action, action_p, p_state,
                         self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
             else:
@@ -467,7 +492,7 @@ class QuadUAV:
                     self.targetX = dest.indX
                     self.targetY = dest.indY
 
-                    return (train_model, DCH, used_model, state, action,
+                    return (train_model, DCH, used_model, train_p, state, action, action_p, p_state,
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
                 else:
@@ -487,9 +512,9 @@ class QuadUAV:
                     self.targetX = dest.indX
                     self.targetY = dest.indY
 
-                    return (train_model, DCH, used_model, state, action,
+                    return (train_model, DCH, used_model, train_p, state, action, action_p, p_state,
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
-        return (train_model, DCH, used_model, self.state, self.targetHead.headSerial,
+        return (train_model, DCH, used_model, train_p, self.state, self.targetHead.headSerial, action_p, p_state,
                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 

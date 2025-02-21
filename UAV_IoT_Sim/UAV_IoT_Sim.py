@@ -33,6 +33,7 @@ class make_env:
         self.curr_step = 0
         self.last_action = 0
         self.archived_action = 0
+        self.archived_paction = 0
         self.deciding_CH = 0
 
         self.full_reward = 0.0
@@ -47,11 +48,22 @@ class make_env:
         self.accum_rewards = [0.0, 0.0, 0.0]
         self.archived_rewards = [0.0, 0.0, 0.0]
 
+        self.full_reward2 = 0.0
+        self.accum_reward_p = 0.0
+        self.accum_steps_p = 0.0
+        self.track_reward_p = False
+
+        self.curr_pstate = [0, 0, 0, 0]
+        self.archived_pstate = [0, 0, 0, 0]
+        self.accum_rewardsp = [0.0, 0.0, 0.0]
+        self.archived_rewardsp = [0.0, 0.0, 0.0]
+
         self.ch_sensors = [0 for _ in range(self.num_ch)]
         for CH in range(self.num_ch):
             self.ch_sensors[CH] = self._env.CHTable.iat[CH, 0].num_sensors
 
         self.curr_reward = 0
+        self.reward2 = 0
 
         self.curr_info = {
             "Last_Action": None,
@@ -83,6 +95,7 @@ class make_env:
             self.curr_step = 0
             self.last_action = 0
             self.archived_action = 0
+            self.archived_paction = 0
             self.deciding_CH = 0
 
             self.full_reward = 0.0
@@ -97,7 +110,18 @@ class make_env:
             self.accum_rewards = [0.0, 0.0, 0.0]
             self.archived_rewards = [0.0, 0.0, 0.0]
 
+            self.full_reward2 = 0.0
+            self.accum_reward_p = 0.0
+            self.accum_steps_p = 0.0
+            self.track_reward_p = False
+
+            self.curr_pstate = [0, 0, 0, 0]
+            self.archived_pstate = [0, 0, 0, 0]
+            self.accum_rewardsp = [0.0, 0.0, 0.0]
+            self.archived_rewardsp = [0.0, 0.0, 0.0]
+
             self.curr_reward = 0
+            self.reward2 = 0
 
             self.curr_info = {
                 "Last_Action": None,
@@ -116,12 +140,18 @@ class make_env:
             self._curr_total_data = 0
             return self._env
     
-    def step(self, model):
+    def step(self, model, model_p):
         train_model = False
         train_CH = 0
         old_action = 0
         comms, move, harvest = 0, 0, 0
         self.total_average = 0
+
+        train_p = False
+        old_paction = 0
+        old_pstate = [0, 0, 0, 0]
+        self.reward2 = 0
+        bad_target = False
 
         old_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
 
@@ -141,8 +171,8 @@ class make_env:
 
                 for uav in range(self._num_uav):
                     uav = self._env.UAVTable.iat[uav, 0]
-                    train_model, DCH, used_model, state, action, comms, move, harvest = \
-                        (uav.set_dest(model, self.curr_step))
+                    train_model, DCH, used_model, train_p, state, action, action_p, p_state, comms, move, harvest = \
+                        (uav.set_dest(model, model_p, self.curr_step))
                     uav.navigate_step(self._env)
                     self.uavX = uav.indX
                     self.uavY = uav.indY
@@ -166,9 +196,12 @@ class make_env:
                     self.curr_state = uav.state
                     self.last_action = action
                     self.terminated = uav.crash
+                    self.curr_pstate = p_state
 
                     old_state = self.archived_state
                     old_action = self.archived_action
+                    old_pstate = self.archived_pstate
+                    old_paction = self.archived_paction
 
                     if used_model:
                         self.archived_state = state
@@ -177,9 +210,32 @@ class make_env:
                         self.track_reward = True
                         self.accum_rewards = self.rewards
 
+                    """Train Dual Model"""
+                    if train_p:
+                        if self.curr_step < 15:
+                            train_p = False
+                        else:
+                            self.full_reward2 = np.array(self.accum_reward_p / max(self.accum_steps_p, 1))
+                            self.archived_rewardsp = np.array([self.rewards[0] - self.accum_rewardsp[0],
+                                                               self.rewards[1] - self.accum_rewardsp[1],
+                                                               self.rewards[2] - self.accum_rewardsp[2]])
+                            if self.terminated:
+                                self.archived_rewardsp = [-1, -1, -1]
+                        self.archived_pstate = p_state
+                        self.archived_paction = action_p
+                        self.track_reward_p = True
+                        self.accum_rewardsp = self.rewards
+
                 if self.track_reward:
                     self.accum_steps += 1
                     self.accum_reward += self.curr_reward
+
+                if self.track_reward_p:
+                    if self.terminated:
+                        self.accum_reward_p = 0
+                    else:
+                        self.accum_steps_p += 1
+                        self.accum_reward_p += self.reward2
 
                 self.curr_step += 1
 
@@ -210,7 +266,7 @@ class make_env:
                 "Truncated": self.truncated         # -> Max episode steps reached
             }
 
-        return train_model, train_CH, old_state, old_action, comms, move, harvest
+        return train_model, train_p, old_state, old_action, old_paction, old_pstate, comms, move, harvest
 
     def reward(self, excess_energy, bad_target):
         '''
@@ -264,8 +320,11 @@ class make_env:
 
         rewardDataChange = dataChange / 1_498_500
 
-        rewardChange = (0 * rewardDist + 0.6 * rewardPeak + 0.3 * rewardAvgAge
-                        + 0 * rewardDataChange + 0.1 * rewardTarget)
+        rewardChange = (0 * rewardDist + 0.7 * rewardPeak + 0.3 * rewardAvgAge
+                        + 0 * rewardDataChange + 0 * rewardTarget)
+
+        reward_energy = max(excess_energy, 0)
+        reward2Change = 0.25 * rewardPeak + 0.25 * rewardAvgAge + 0 * rewardDataChange + 0.5 * reward_energy
 
         if self.terminated:
             print("Died")
@@ -284,5 +343,6 @@ class make_env:
         }
         
         self.curr_reward = rewardChange
+        self.reward2 = reward2Change
 
-        self.rewards = [max(rewardPeak, 0), max(rewardAvgAge, 0), rewardTarget]
+        self.rewards = [max(rewardPeak, 0), max(rewardAvgAge, 0), max(reward_energy, 0)]

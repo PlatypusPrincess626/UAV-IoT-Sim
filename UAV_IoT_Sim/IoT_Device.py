@@ -10,9 +10,6 @@ import pandas as pd
 import copy
 from scipy.interpolate import InterpolatedUnivariateSpline
 
-def split_tour(tour, dists):
-    pass
-
 class IoT_Device:
     def __init__(self, X: int, Y: int, devType: int, long: float, lat: float, clusterheadNum: int = None):
         self.indX = X
@@ -87,9 +84,11 @@ class IoT_Device:
             self.num_sensors = 0
             self.headSerial = clusterheadNum
             self.last_target = 0
+
             self.tour = []
             self.tourA = []
             self.tourB = []
+
             self.target_time = 0
             self.typeStr = "Clusterhead"
 
@@ -313,7 +312,8 @@ class IoT_Device:
         else:
             return 0
 
-    def get_dest(self, state, full_sensor_list, model, step, p_count, targetType, targetSerial, force_out,  _=None):
+    def get_dest(self, state, full_sensor_list, model, model_p,
+                 step, p_count, targetType, targetSerial, force_out,  _=None):
         """
         Returns next destination for the UAV.
 
@@ -333,9 +333,7 @@ class IoT_Device:
         """
 
         # Must check through list of sensors... Must recieve data on how much each sensor contributes.
-        """
-        Old Contribution: DATE
-        """
+        """Old Contribution: DATE"""
         # my_contribution = state[self.headSerial + 1][1]
         # if my_contribution > self.contribution:
         #     self.contribution = my_contribution
@@ -352,9 +350,7 @@ class IoT_Device:
         #
         #     state[self.headSerial + 1][2] = step - self.max_AoI
         #     state[self.headSerial + 1][3] = step - self.avg_AoI
-        """
-        New Contribution
-        """
+        """New Contribution"""
         my_contribution = state[self.headSerial + 1][1]
         if my_contribution > self.contribution:
             self.contribution = my_contribution
@@ -373,27 +369,19 @@ class IoT_Device:
 
             state[self.headSerial + 1][2] = step - self.max_AoI
             state[self.headSerial + 1][3] = step - self.avg_AoI
-        """
-        End
-        """
+        """END"""
 
 
-        """
-        Old Decision State: Just State
-        """
+        """Old Decision State: Just State"""
         # decision_state = copy.deepcopy(state)
 
-        """
-        New Decision State
-        """
+        """New Decision State"""
         decision_state = copy.deepcopy(state)
         decision_state[0][2] = state[0][2] + round(p_count * 6_800_000 / (self.charge_rate * 60))
         for CH in range(len(state) - 1):
             decision_state[CH+1][2] = state[CH+1][2] + p_count
             decision_state[CH+1][3] = state[CH+1][3] + p_count
-        """
-        End
-        """
+        """END"""
 
         action = -1
         target = self
@@ -401,9 +389,7 @@ class IoT_Device:
         change_transit = False
         dist = 0
 
-        """
-        Old Targeting
-        """
+        """Old Targeting"""
         # max_idx = -1
         # max_age = 720.0
         # max_sens = None
@@ -452,9 +438,7 @@ class IoT_Device:
         # return (model_help, change_transit, target, decision_state, action,
         #         dist, AoI_peak, AoI_avg, self.tour, targetType)
 
-        """
-        New Sensor Targeting: Christofides' Tour
-        """
+        """New Sensor Targeting: Christofides' Tour"""
         if not targetType:
             """
             For sensor targeting use Christofides
@@ -663,6 +647,17 @@ class IoT_Device:
                 AoI_peak = AoI
         AoI_avg = math.ceil(AoI_avg / len(full_sensor_list))
 
-        return (model_help, change_transit, target, decision_state, action,
-                dist, AoI_peak, AoI_avg, self.tour, targetType)
+        """Dual Model Addition"""
+        p_state = [dist, state[0][2] + round(p_count * 6_800_000 / (self.charge_rate * 60)),
+                   AoI_peak + p_count, AoI_avg + p_count]
+        # Value from 0 to 30
+        self.action_p = model_p.act(p_state)
+        """END"""
 
+        """Single Model"""
+        # return (model_help, change_transit, target, decision_state, action,
+        #         dist, AoI_peak, AoI_avg, self.tour, targetType)
+        """Dual Model"""
+        return (model_help, change_transit, target, decision_state, action, self.action_p, p_state,
+                dist, AoI_peak, AoI_avg, self.tour, targetType)
+        """END"""
