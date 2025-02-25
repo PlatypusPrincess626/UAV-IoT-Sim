@@ -466,6 +466,7 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency):
     #         env.reset()
 
     """Dual Model"""
+    agent_p.decay_epsilon(0)
     while timestep < prepop_steps:
         env.reset()
         done = False
