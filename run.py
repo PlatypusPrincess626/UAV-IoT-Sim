@@ -253,11 +253,11 @@ def evaluate(
 
         # DDQN
         # for agent in agents:
-        if len(agent.memory) > 2048:
-            agent.train(2048)
+        if len(agent.memory) > 8192:
+            agent.train(8192)
         """Dual Agent Systems"""
-        if len(agent_p.memory) > 2048:
-            agent_p.train(2048)
+        if len(agent_p.memory) > 8192:
+            agent_p.train(8192)
         """END"""
 
         accum_avgAoI += avgAoI / (eval_env.curr_step + count)
@@ -314,11 +314,11 @@ def train(
 
         if done:
         #     # for agent in agents:
-            if len(agent.memory) > 2048:
-                agent.train(2048)
+            if len(agent.memory) > 8192:
+                agent.train(8192)
             """Dual Agent Systems"""
-            if len(agent_p.memory) > 2048:
-                agent_p.train(2048)
+            if len(agent_p.memory) > 8192:
+                agent_p.train(8192)
             """END"""
 
         if timestep % eval_frequency == 0:
@@ -489,10 +489,10 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency):
 
             timestep += 1
 
-        if len(agent.memory) > 2048:
-            agent.train(2048)
-        if len(agent_p.memory) > 2048:
-            agent_p.train(2048)
+        if len(agent.memory) > 8192:
+            agent.train(8192)
+        if len(agent_p.memory) > 8192:
+            agent_p.train(8192)
 
         if timestep % eval_frequency == 0:
             # DDQN

@@ -146,12 +146,14 @@ class make_env:
         old_action = 0
         comms, move, harvest = 0, 0, 0
         self.total_average = 0
+        last_CH = None
+        curr_CH = None
 
         train_p = False
         old_paction = 0
         old_pstate = [0, 0, 0, 0]
         self.reward2 = 0
-        bad_target = False
+        bad_target = int(False)
 
         old_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
 
@@ -171,16 +173,19 @@ class make_env:
 
                 for uav in range(self._num_uav):
                     uav = self._env.UAVTable.iat[uav, 0]
+                    last_CH = uav.targetHead
                     train_model, DCH, used_model, train_p, state, action, action_p, p_state, comms, move, harvest = \
                         (uav.set_dest(model, model_p, self.curr_step))
                     uav.navigate_step(self._env)
+                    curr_CH = uav.targetHead
                     self.uavX = uav.indX
                     self.uavY = uav.indY
 
                     train_model2, change_archives = uav.receive_data(self.curr_step)
                     excess_energy = uav.receive_energy()
-                    bad_target = uav.bad_target
+                    # bad_target = uav.bad_target
 
+                    bad_target = int(last_CH == curr_CH)
                     self.reward(excess_energy, bad_target)
 
                     # train_model = True
@@ -188,9 +193,9 @@ class make_env:
                         train_model = True
                         train_CH = self.deciding_CH
                         self.full_reward = self.accum_reward / max(self.accum_steps, 1)
-                        self.archived_rewards = np.array([self.rewards[0] - self.accum_rewards[0],
-                                                          self.rewards[1] - self.accum_rewards[1],
-                                                          self.rewards[2] - self.accum_rewards[2]])
+                        self.archived_rewards = np.array([bad_target * (self.rewards[0] - self.accum_rewards[0]),
+                                                          bad_target * (self.rewards[1] - self.accum_rewards[1]),
+                                                          bad_target * (self.rewards[2] - self.accum_rewards[2])])
 
 
                     self.curr_state = uav.state
