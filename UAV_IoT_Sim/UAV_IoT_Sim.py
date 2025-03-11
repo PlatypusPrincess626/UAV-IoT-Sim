@@ -77,7 +77,7 @@ class make_env:
             "Truncated": False
         }
 
-        self._aoi_threshold = 240
+        self._aoi_threshold = 120
         self.truncated = False
         self.terminated = False
         self._curr_total_data = 0
