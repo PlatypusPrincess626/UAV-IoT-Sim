@@ -281,7 +281,7 @@ class get_ddqn_agent():
         model = tf.keras.Sequential()  # linear stack of layers https://keras.io/models/sequential/
         model.add(tf.keras.layers.Input(shape=(self.nS, )))
         model.add(tf.keras.layers.SimpleRNN(256, activation='relu'), dropout=0.2)  # [Input] -> Layer 1
-        model.add(tf.keras.layers.Dense(126, activation='relu'), dropout=0.2)  # Layer 1 -> 2
+        model.add(tf.keras.layers.Dense(126, activation='relu'))  # Layer 1 -> 2
         model.add(tf.keras.layers.Dropout(0.2))
         model.add(tf.keras.layers.Dense(self.nA, activation='softmax'))  # Layer 2 -> [output]
         model.compile(loss='mean_squared_error',  # Loss function: Mean Squared Error
