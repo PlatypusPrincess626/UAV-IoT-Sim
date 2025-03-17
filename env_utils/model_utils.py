@@ -375,14 +375,11 @@ class get_ddqn_agent():
         # Reshape for Keras Fit
         x_reshape = np.array(x).reshape(batch_size, self.nS)
         y_reshape = np.array(y)
-        epoch_count = 1000
-        hist = self.model.train_on_batch(x_reshape, y_reshape)
-        # Graph Losses
-        for i in range(epoch_count):
-            self.loss.append(hist.history['loss'][i])
-        # Decay Epsilon
-        # if self.epsilon > self.epsilon_min:
-        #     self.epsilon *= self.epsilon_decay
+
+        loss = self.model.train_on_batch(x_reshape, y_reshape)
+
+        return loss
+
 
 class get_ddqn_agentp():
     def __init__(self, env, nS, nA, epsilon_i=1.0, epsilon_f=0.0, n_epsilon=0.1,
