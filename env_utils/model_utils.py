@@ -375,8 +375,8 @@ class get_ddqn_agent():
         # Reshape for Keras Fit
         x_reshape = np.array(x).reshape(batch_size, self.nS)
         y_reshape = np.array(y)
-        epoch_count = 10
-        hist = self.model.fit(x_reshape, y_reshape, epochs=epoch_count, verbose=0)
+        epoch_count = 1000
+        hist = self.model.train_on_batch(x_reshape, y_reshape)
         # Graph Losses
         for i in range(epoch_count):
             self.loss.append(hist.history['loss'][i])
@@ -525,8 +525,8 @@ class get_ddqn_agentp():
         # Reshape for Keras Fit
         x_reshape = np.array(x).reshape(batch_size, self.nS)
         y_reshape = np.array(y)
-        epoch_count = 10
-        hist = self.model.fit(x_reshape, y_reshape, epochs=epoch_count, verbose=0)
+        epoch_count = 1000
+        hist = self.model.train_on_batch(x_reshape, y_reshape)
         # Graph Losses
         for i in range(epoch_count):
             self.loss.append(hist.history['loss'][i])
