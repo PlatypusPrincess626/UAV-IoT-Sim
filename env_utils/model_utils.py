@@ -357,8 +357,7 @@ class get_ddqn_agent():
                 target = ((self.lamb * (np.array([0.7, 0.3, 0]) @ reward)) +
                           (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
             else:  # Non terminal, Using Q to get T is Double DQN
-                target = (self.lamb *
-                          ((np.array([0.7, 0.3, 0]) @ reward) +
+                target = (self.lamb * ((np.array([0.7, 0.3, 0]) @ reward) +
                            self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)]) +
                           (1 - self.lamb) * nst_action_predict_model[np.argmax(nst_action_predict_model)])
 
