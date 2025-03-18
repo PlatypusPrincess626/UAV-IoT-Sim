@@ -281,16 +281,12 @@ class get_ddqn_agent():
         model = tf.keras.Sequential()  # linear stack of layers https://keras.io/models/sequential/
         model.add(tf.keras.layers.Input(shape=(self.nS, )))
         model.add(tf.keras.layers.Dense(256, activation='relu'))  # [Input] -> Layer 1
+        model.add(tf.keras.layers.BatchNormalization())
         model.add(tf.keras.layers.Dropout(0.2))
-        #   Dense: Densely connected layer https://keras.io/layers/core/
-        #   24: Number of neurons
-        #   input_dim: Number of input variables
-        #   activation: Rectified Linear Unit (relu) ranges >= 0
         model.add(tf.keras.layers.Dense(126, activation='relu'))  # Layer 1 -> 2
+        model.add(tf.keras.layers.BatchNormalization())
         model.add(tf.keras.layers.Dropout(0.2))
         model.add(tf.keras.layers.Dense(self.nA, activation='softmax'))  # Layer 2 -> [output]
-        #   Size has to match the output (different actions)
-        #   Linear activation on the last layer
         model.compile(loss='mean_squared_error',  # Loss function: Mean Squared Error
                       optimizer=tf.keras.optimizers.Adam(
                           learning_rate=self.alpha))  # Optimaizer: Adam (Feel free to check other options)
@@ -346,6 +342,7 @@ class get_ddqn_agent():
         nst_predict = self.model.predict(nst)
         nst_predict_target = self.model_target.predict(nst)  # Predict from the TARGET
         index = 0
+
         for state, action, reward, nstate, done, step in minibatch:
             x.append(np.expand_dims(np.array(state).flatten(), axis=0))
             # Predict from state
