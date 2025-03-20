@@ -193,9 +193,9 @@ class make_env:
                         train_model = True
                         train_CH = self.deciding_CH
                         self.full_reward = self.accum_reward / max(self.accum_steps, 1)
-                        self.archived_rewards = np.array([bad_target * (self.rewards[0] - self.accum_rewards[0]),
-                                                          bad_target * (self.rewards[1] - self.accum_rewards[1]),
-                                                          bad_target * (self.rewards[2] - self.accum_rewards[2])])
+                        self.archived_rewards = np.array([bad_target * self.rewards[0],
+                                                          bad_target * self.rewards[1],
+                                                          bad_target * self.rewards[2]])
 
 
                     self.curr_state = uav.state
@@ -221,9 +221,9 @@ class make_env:
                             train_p = False
                         else:
                             self.full_reward2 = np.array(self.accum_reward_p / max(self.accum_steps_p, 1))
-                            self.archived_rewardsp = np.array([self.rewards[0] - self.accum_rewardsp[0],
-                                                               self.rewards[1] - self.accum_rewardsp[1],
-                                                               self.rewards[2] - self.accum_rewardsp[2]])
+                            self.archived_rewardsp = np.array([self.rewards[0],
+                                                               self.rewards[1],
+                                                               self.rewards[2]])
                             if self.terminated:
                                 self.archived_rewardsp = [-1, -1, -1]
                         self.archived_pstate = p_state
