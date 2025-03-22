@@ -208,7 +208,7 @@ def evaluate(
             for cluster in range(len(eval_env.chX)):
                 CHCoords.append([eval_env.chX[cluster], eval_env.chY[cluster]])
 
-        csv_str = ("_Dual_NForced_500K_3K_2.csv")
+        csv_str = ("_Dual_NForced_500K_3K.csv")
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("sens_pts_" + curr_date_time.strftime("%d") + "_" +
@@ -253,11 +253,11 @@ def evaluate(
 
         # DDQN
         # for agent in agents:
-        if len(agent.memory) > 8192:
-            agent.train(8192)
+        if len(agent.memory) > 16382:
+            agent.train(16382)
         """Dual Agent Systems"""
-        if len(agent_p.memory) > 8192:
-            agent_p.train(8192)
+        if len(agent_p.memory) > 16382:
+            agent_p.train(16382)
         """END"""
 
         accum_avgAoI += avgAoI / (eval_env.curr_step + count)
@@ -314,11 +314,11 @@ def train(
 
         if done:
         #     # for agent in agents:
-            if len(agent.memory) > 8192:
-                agent.train(8192)
+            if len(agent.memory) > 16382:
+                agent.train(16382)
             """Dual Agent Systems"""
-            if len(agent_p.memory) > 8192:
-                agent_p.train(8192)
+            if len(agent_p.memory) > 16382:
+                agent_p.train(16382)
             """END"""
 
         if timestep % eval_frequency == 0:
@@ -489,10 +489,10 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency):
 
             timestep += 1
 
-        if len(agent.memory) > 8192:
-            agent.train(8192)
-        if len(agent_p.memory) > 8192:
-            agent_p.train(8192)
+        if len(agent.memory) > 16382:
+            agent.train(16382)
+        if len(agent_p.memory) > 16382:
+            agent_p.train(16382)
 
         if timestep % eval_frequency == 0:
             # DDQN
