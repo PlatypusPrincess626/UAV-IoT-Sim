@@ -290,7 +290,14 @@ class get_ddqn_agent():
         model.compile(loss='mean_squared_error',  # Loss function: Mean Squared Error
                       optimizer=tf.keras.optimizers.Adam(
                           learning_rate=self.alpha))  # Optimaizer: Adam (Feel free to check other options)
+
+        '''
+        lr = 1/sqrt(d_model) * min (1 / step num , step_num * 1 / 
+        '''
         return model
+
+    def update_lr(self, new_lr):
+        tf.keras.backend.set_value(self.optimizer.learning_rate, new_lr)
 
     def decay_epsilon(self, n):
         """

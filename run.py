@@ -1,6 +1,7 @@
 import math
 import os
 import argparse
+from asyncio import new_event_loop
 from time import time, sleep
 from typing import Optional, Tuple
 import csv
@@ -15,6 +16,8 @@ from env_utils.logger_utils import RunningAverage, get_logger
 
 import os
 import tensorflow as tf
+
+
 #os.environ["LD_LIBRARY_PATH"] = "/UAV-IoT-Sim/uav-iot-env/lib/python3.10/site-packages/nvidia/cudnn/lib/libcudnn.so.9"
 #env LD_LIBRARY_PATH=/UAV-IoT-Sim/uav-iot-env/lib/python3.10/site-packages/nvidia/cudnn/lib/libcudnn.so.9 python run.py --project-name DQNN042024 --steps 50_000 --eval-frequency 1_000
 
@@ -98,7 +101,7 @@ def get_args():
 
 def evaluate(
         agent,
-        agent_p,    # Used for Dual Model/ Pass None for single model
+        agent_p,  # Used for Dual Model/ Pass None for single model
         eval_env,
         eval_episodes,
         log_metrics=False,
@@ -192,13 +195,12 @@ def evaluate(
 
             ep_reward += eval_env.full_reward
 
-            if log_metrics and i == eval_episodes-1:
+            if log_metrics and i == eval_episodes - 1:
                 CH_Age.append([CH_Metrics[0][1], CH_Metrics[1][1], CH_Metrics[2][1],
                                CH_Metrics[3][1], CH_Metrics[4][1]])
                 CH_Data.append([eval_env.curr_state[0][1], CH_Metrics[0][0], CH_Metrics[1][0], CH_Metrics[2][0],
-                               CH_Metrics[3][0], CH_Metrics[4][0]])
+                                CH_Metrics[3][0], CH_Metrics[4][0]])
                 UAV_Metrics.append([eval_env.uavX, eval_env.uavY, eval_env.curr_state[0][2], comms, move, harvest])
-
 
         curr_date_time = datetime.datetime.now()
 
@@ -275,20 +277,18 @@ def evaluate(
 
         if crashed:
             num_crashes += 1
-        total_reward += ep_reward / (eval_env.curr_step+count)
+        total_reward += ep_reward / (eval_env.curr_step + count)
         total_steps += eval_env.curr_step
 
-
-    
     return 1 - (num_crashes / eval_episodes), total_reward / eval_episodes, \
-        total_steps / eval_episodes, accum_avgAoI / eval_episodes, accum_peakAoI / eval_episodes, \
-        accum_dataDist / eval_episodes, 1000 * accum_dataColl / eval_episodes, CH_Metrics, \
-        accum_comms/eval_episodes, accum_move/eval_episodes, accum_harvest/eval_episodes
+           total_steps / eval_episodes, accum_avgAoI / eval_episodes, accum_peakAoI / eval_episodes, \
+           accum_dataDist / eval_episodes, 1000 * accum_dataColl / eval_episodes, CH_Metrics, \
+           accum_comms / eval_episodes, accum_move / eval_episodes, accum_harvest / eval_episodes
 
 
 def train(
         agent,
-        agent_p,    # Pass None if using Single Agent
+        agent_p,  # Pass None if using Single Agent
         env: object,
         env_str: str,
         total_steps: int,
@@ -313,7 +313,7 @@ def train(
         done = step(agent, agent_p, env)
 
         if done:
-        #     # for agent in agents:
+            #     # for agent in agents:
             if len(agent.memory) > 16382:
                 agent.train(16382)
             """Dual Agent Systems"""
@@ -360,7 +360,6 @@ def train(
             """END"""
 
             env.reset()
-
 
         print(
             f"Training Steps: {timestep}, Env: {env_str}, Sucess Rate: {sr:.2f}, Return: {ret:.2f}, Episode Length: {length:.2f}"
@@ -482,7 +481,7 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency):
 
             if (train_model or env.truncated) and not buffer_done:
                 agent.update_mem(old_state, old_action, env.archived_rewards,
-                                             env.curr_state, buffer_done, env.curr_step)
+                                 env.curr_state, buffer_done, env.curr_step)
 
             if train_p or done:
                 agent_p.update_mem(old_pstate, int(action_p), env.archived_rewardsp, env.curr_pstate, buffer_done)
@@ -500,12 +499,14 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency):
             agent.update_target_from_model()
             agent_p.update_target_From_model()
             env.reset()
+            agent.update_lr((timestep * agent.alpha) / prepop_steps)
+
 
 def run_experiment(args):
     env_str = args.env
     print("Creating Evironment")
     env = UAV_IoT_Sim.make_env(scene=env_str, num_sensors=50, num_ch=5, num_uav=1, max_num_steps=720)
-    
+
     gpu_devices = tf.config.experimental.list_physical_devices('GPU')
     for device in gpu_devices:
         tf.config.experimental.set_memory_growth(device, True)
@@ -544,6 +545,8 @@ def run_experiment(args):
     mean_success_rate = RunningAverage(10)
     mean_reward = RunningAverage(10)
     mean_episode_length = RunningAverage(10)
+
+    agent.update_lr(agent.alpha)
 
     print("Beginning Training")
     train(
