@@ -466,7 +466,7 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency):
 
     """Dual Model"""
     agent_p.decay_epsilon(0)
-    tf.keras.backend.set_value(agent.optimizer.learning_rate, ((1 * agent.alpha) / prepop_steps))
+    agent.update_learning_rate((1 * agent.alpha) / prepop_steps)
 
     while timestep < prepop_steps:
         env.reset()
@@ -501,7 +501,7 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency):
             agent.update_target_from_model()
             agent_p.update_target_From_model()
             env.reset()
-            tf.keras.backend.set_value(agent.optimizer.learning_rate, ((timestep * agent.alpha) / prepop_steps))
+            agent.update_learning_rate((timestep * agent.alpha) / prepop_steps)
 
 
 def run_experiment(args):
@@ -548,7 +548,7 @@ def run_experiment(args):
     mean_reward = RunningAverage(10)
     mean_episode_length = RunningAverage(10)
 
-    tf.keras.backend.set_value(agent.optimizer.learning_rate, agent.alpha)
+    agent.update_learning_rate(agent.alpha)
 
     print("Beginning Training")
     train(

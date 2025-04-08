@@ -297,6 +297,9 @@ class get_ddqn_agent():
         model.summary()
         return model
 
+    def update_learning_rate(self, new_learning_rate):
+        tf.keras.backend.set_value(self.model.optimizer.learning_rate, new_learning_rate)
+
     def decay_epsilon(self, n):
         """
         Decays the get_ddqn_agent's exploration rate according to n, which is a
