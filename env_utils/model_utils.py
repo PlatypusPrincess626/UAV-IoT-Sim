@@ -287,9 +287,9 @@ class get_ddqn_agent():
         model.add(tf.keras.layers.BatchNormalization())
         model.add(tf.keras.layers.Dropout(0.2))
         model.add(tf.keras.layers.Dense(self.nA, activation='softmax'))  # Layer 2 -> [output]
-        model.compile(loss='mean_squared_error',  # Loss function: Mean Squared Error
-                      optimizer=tf.keras.optimizers.Adam(
-                          learning_rate=self.alpha))  # Optimaizer: Adam (Feel free to check other options)
+        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.alpha),
+                      loss='mean_squared_error',  # Loss function: Mean Squared Error
+                      metrics=['accuracy'] )  # Optimaizer: Adam (Feel free to check other options)
 
         '''
         lr = 1/sqrt(d_model) * min (1 / step num , step_num * 1 / 
