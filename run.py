@@ -504,10 +504,6 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency):
             tf.keras.backend.set_value(agent.optimizer.learning_rate, ((timestep * agent.alpha) / prepop_steps))
 
 
-
-    def update_lr(self, new_lr):
-
-
 def run_experiment(args):
     env_str = args.env
     print("Creating Evironment")
