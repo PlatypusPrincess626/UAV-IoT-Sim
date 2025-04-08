@@ -294,6 +294,7 @@ class get_ddqn_agent():
         '''
         lr = 1/sqrt(d_model) * min (1 / step num , step_num * 1 / 
         '''
+        model.summary()
         return model
 
     def decay_epsilon(self, n):
