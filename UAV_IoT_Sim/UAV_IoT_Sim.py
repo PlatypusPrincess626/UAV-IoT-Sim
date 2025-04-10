@@ -193,9 +193,9 @@ class make_env:
                         train_model = True
                         train_CH = self.deciding_CH
                         self.full_reward = self.accum_reward / max(self.accum_steps, 1)
-                        self.archived_rewards = np.array([self.rewards[0],
-                                                          self.rewards[1],
-                                                          self.rewards[2]])
+                        self.archived_rewards = np.array([(1 - uav.bad_targeet) * self.rewards[0],
+                                                          (1 - uav.bad_targeet) * self.rewards[1],
+                                                          (1 - uav.bad_targeet) * self.rewards[2]])
 
 
                     self.curr_state = uav.state

@@ -47,7 +47,7 @@ class QuadUAV:
         self.lat = lat
         self.long = long
         self.last_AoI = 0
-        self.bad_target = False
+        self.bad_target = 0
 
         # Movement
         self.maxSpd = 15  # 15 m/s max speed cap
@@ -133,7 +133,7 @@ class QuadUAV:
         self.tour = []
         self.tour_iter = 0
 
-        self.bad_target = False
+        self.bad_target = 0
         self.targetType = True
 
         self.step_move_cost = 0
@@ -380,8 +380,6 @@ class QuadUAV:
             DCH = self.targetSerial
             self.action = action
 
-            if self.bad_target:
-                self.bad_target = False
 
             if self.model_transit and changed_transit:
                 self.model_transit = False
@@ -405,34 +403,33 @@ class QuadUAV:
             """
             New Charging: Dynamic Charging
             """
-            if self.p_cycle < 1.0:
-                self.p_cycle = 30
-                """
-                Dynamic determination of charging time.
-                1) Emergency Charge when below threshold to 1.5 * needed
-                2) If tour would result in emergency situation
-                """
-                if self.state[0][2] < 0.2 * self.max_energy * 1_000:
-                    self.p_count = min(20,
-                                       round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
-
-                elif ((self.state[0][2] -
-                      1.25 * (dist / self.maxSpd) * (1_000 * self.max_energy / (self.flight_discharge * 60 * 60))) <=
-                      0.2 * self.max_energy * 1_000):
-                    self.p_count = min(20,
-                                       round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
-
-                else:
-                    if peak <= 240 and self.state[0][2] < 0.8 * self.max_energy * 1_000:
-                        self.p_count = min(20,
-                                           round(0.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
-                    else:
-                        self.p_count = 0
-
-                if self.p_count > 0:
-                    self.is_charging = True
-                else:
-                    self.is_charging = False
+            # if self.p_cycle < 1.0:
+            #     self.p_cycle = 30
+            #     """
+            #     Dynamic determination of charging time.
+            #     1) Emergency Charge when below threshold to 1.5 * needed
+            #     2) If tour would result in emergency situation
+            #     """
+            #     if self.state[0][2] < 0.2 * self.max_energy * 1_000:
+            #         self.p_count = min(20,
+            #                            round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
+            #
+            #     elif ((self.state[0][2] -
+            #           1.25 * (dist / self.maxSpd) * (1_000 * self.max_energy / (self.flight_discharge * 60 * 60))) <=
+            #           0.2 * self.max_energy * 1_000):
+            #         self.p_count = min(20,
+            #                            round(1.5 * (dist / self.maxSpd) * (self.flight_discharge / self.charge_rate)))
+            #
+            #     else:
+            #         if peak <= 240 and self.state[0][2] < 0.8 * self.max_energy * 1_000:
+            #             self.p_count = min(20,round(0.5*(dist/self.maxSpd)*(self.flight_discharge/self.charge_rate)))
+            #         else:
+            #             self.p_count = 0
+            #
+            #     if self.p_count > 0:
+            #         self.is_charging = True
+            #     else:
+            #         self.is_charging = False
             """
             Model Charging
             """
@@ -498,10 +495,10 @@ class QuadUAV:
                 else:
                     if dest.headSerial == self.targetSerial:
                         self.targetType = True
-                        self.bad_target = True
+                        self.bad_target = 1
                     else:
                         self.targetType = False
-                        self.bad_target = False
+                        self.bad_target = 0
 
                     if changed_transit:
                         train_model = True
