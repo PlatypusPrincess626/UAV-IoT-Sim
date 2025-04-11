@@ -153,7 +153,7 @@ class make_env:
         old_paction = 0
         old_pstate = [0, 0, 0, 0]
         self.reward2 = 0
-        bad_target = int(False)
+        bad_target = 0
 
         old_state = [[0, 0, 0, 0] for _ in range(self.num_ch + 1)]
 
@@ -173,19 +173,16 @@ class make_env:
 
                 for uav in range(self._num_uav):
                     uav = self._env.UAVTable.iat[uav, 0]
-                    last_CH = uav.targetHead
+                    bad_target = uav.bad_target
                     train_model, DCH, used_model, train_p, state, action, action_p, p_state, comms, move, harvest = \
                         (uav.set_dest(model, model_p, self.curr_step))
                     uav.navigate_step(self._env)
-                    curr_CH = uav.targetHead
                     self.uavX = uav.indX
                     self.uavY = uav.indY
 
                     train_model2, change_archives = uav.receive_data(self.curr_step)
                     excess_energy = uav.receive_energy()
-                    # bad_target = uav.bad_target
 
-                    bad_target = int(last_CH == curr_CH)
                     self.reward(excess_energy, bad_target)
 
                     # train_model = True
@@ -193,10 +190,9 @@ class make_env:
                         train_model = True
                         train_CH = self.deciding_CH
                         self.full_reward = self.accum_reward / max(self.accum_steps, 1)
-                        self.archived_rewards = np.array([(1 - uav.bad_targeet) * self.rewards[0],
-                                                          (1 - uav.bad_targeet) * self.rewards[1],
-                                                          (1 - uav.bad_targeet) * self.rewards[2]])
-
+                        self.archived_rewards = np.array([(1 - bad_target) * self.rewards[0],
+                                                          (1 - bad_target) * self.rewards[1],
+                                                          (1 - bad_target) * self.rewards[2]])
 
                     self.curr_state = uav.state
                     self.last_action = action
@@ -321,12 +317,10 @@ class make_env:
 
         rewardAvgAge = 1 - avgAge/max(self.curr_step, 1)
 
-        rewardTarget = 0 if bad_target else 1
 
         rewardDataChange = dataChange / 1_498_500
 
-        rewardChange = (0 * rewardDist + 0.7 * rewardPeak + 0.3 * rewardAvgAge
-                        + 0 * rewardDataChange + 0 * rewardTarget)
+        rewardChange = bad_target * (0.7 * rewardPeak + 0.3 * rewardAvgAge)
 
         reward_energy = max(excess_energy, 0)
         reward2Change = 0.25 * rewardPeak + 0.25 * rewardAvgAge + 0 * rewardDataChange + 0.5 * reward_energy
