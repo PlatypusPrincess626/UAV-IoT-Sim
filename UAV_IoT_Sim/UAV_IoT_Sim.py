@@ -320,7 +320,7 @@ class make_env:
 
         rewardDataChange = dataChange / 1_498_500
 
-        rewardChange = bad_target * (0.7 * rewardPeak + 0.3 * rewardAvgAge)
+        rewardChange = (1 - bad_target) * (0.7 * rewardPeak + 0.3 * rewardAvgAge)
 
         reward_energy = max(excess_energy, 0)
         reward2Change = 0.25 * rewardPeak + 0.25 * rewardAvgAge + 0 * rewardDataChange + 0.5 * reward_energy
