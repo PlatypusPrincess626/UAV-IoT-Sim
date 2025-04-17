@@ -210,7 +210,7 @@ def evaluate(
             for cluster in range(len(eval_env.chX)):
                 CHCoords.append([eval_env.chX[cluster], eval_env.chY[cluster]])
 
-        csv_str = ("_Dual_NForced_500K_3K.csv")
+        csv_str = ("_Dual_NForced_100K_3K.csv")
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("sens_pts_" + curr_date_time.strftime("%d") + "_" +
@@ -255,11 +255,11 @@ def evaluate(
 
         # DDQN
         # for agent in agents:
-        if len(agent.memory) > 16000:
-            agent.train(16000)
+        if len(agent.memory) > 2500:
+            agent.train(2500)
         """Dual Agent Systems"""
-        if len(agent_p.memory) > 16000:
-            agent_p.train(16000)
+        if len(agent_p.memory) > 2500:
+            agent_p.train(2500)
         """END"""
 
         accum_avgAoI += avgAoI / (eval_env.curr_step + count)
@@ -311,11 +311,11 @@ def train(
 
         if done:
             #     # for agent in agents:
-            if len(agent.memory) > 16000:
-                agent.train(16000)
+            if len(agent.memory) > 2500:
+                agent.train(2500)
             """Dual Agent Systems"""
-            if len(agent_p.memory) > 16000:
-                agent_p.train(16000)
+            if len(agent_p.memory) > 2500:
+                agent_p.train(2500)
             """END"""
 
         if timestep % eval_frequency == 0:
@@ -443,10 +443,10 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency):
 
             timestep += 1
 
-        if len(agent.memory) > 16000:
-            agent.train(16000)
-        if len(agent_p.memory) > 16000:
-            agent_p.train(16000)
+        if len(agent.memory) > 2500:
+            agent.train(2500)
+        if len(agent_p.memory) > 2500:
+            agent_p.train(2500)
 
         if timestep % eval_frequency == 0:
             # DDQN
@@ -469,12 +469,12 @@ def run_experiment(args):
     agent = model_utils.get_ddqn_agent(
         ((env.num_ch + 1) * 3),
         env.num_ch,
-        mem_len=16000
+        mem_len=25000
     )
     agent_p = model_utils.get_ddqn_agentp(
         4,
         10,
-        mem_len=16000
+        mem_len=25000
     )
 
     policy_save_dir = os.path.join(
