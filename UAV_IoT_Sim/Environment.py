@@ -94,7 +94,7 @@ class sim_env:
         self.xPts = [0] * self.total_sensors
         self.yPts = [0] * self.total_sensors
 
-        if(scene == "test"):
+        if(scene=="test"):
             # Test scene will be Yellowstone National Park
             self.lat_center = 44.424           # Latitude
             self.long_center = -110.589        # Longitude

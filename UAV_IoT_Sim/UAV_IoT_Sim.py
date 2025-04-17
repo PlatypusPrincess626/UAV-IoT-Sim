@@ -17,6 +17,8 @@ class make_env:
     ):
         self.scene = scene
         self._env = Environment.sim_env(scene, num_sensors, num_uav, num_ch, max_num_steps)
+        self.dim = self._env.dim
+
         self.sensX = self._env.xPts
         self.sensY = self._env.yPts
         self.chX = self._env.chX
