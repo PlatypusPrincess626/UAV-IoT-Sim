@@ -29,7 +29,7 @@ class make_env:
         self._num_sensors = num_sensors
         self.num_ch = num_ch
         self._num_uav = num_uav
-        self._max_steps = max_num_steps
+        self.max_num_steps = max_num_steps
         self.dims = self._env.dim
         
         self.curr_step = 0
@@ -161,7 +161,7 @@ class make_env:
 
         if not self.terminated:
             self.truncated = False
-            if self.curr_step < self._max_steps:
+            if self.curr_step < self.max_num_steps:
                 x = self.curr_step/60 + 2
                 alpha = abs(104 - 65 * x + 47 * pow(x, 2) - 12 * pow(x, 3) + pow(x, 4))
 
