@@ -255,11 +255,11 @@ def evaluate(
 
         # DDQN
         # for agent in agents:
-        if len(agent.memory) > 16382:
-            agent.train(16382)
+        if len(agent.memory) > 16000:
+            agent.train(16000)
         """Dual Agent Systems"""
-        if len(agent_p.memory) > 16382:
-            agent_p.train(16382)
+        if len(agent_p.memory) > 16000:
+            agent_p.train(16000)
         """END"""
 
         accum_avgAoI += avgAoI / (eval_env.curr_step + count)
@@ -295,9 +295,6 @@ def train(
         eval_frequency: int,
         eval_episodes: int,
         policy_path: str,
-        mean_success_rate: RunningAverage,
-        mean_episode_length: RunningAverage,
-        mean_reward: RunningAverage,
         logger=None,
 ):
     start_time = time()
@@ -314,26 +311,16 @@ def train(
 
         if done:
             #     # for agent in agents:
-            if len(agent.memory) > 16382:
-                agent.train(16382)
+            if len(agent.memory) > 16000:
+                agent.train(16000)
             """Dual Agent Systems"""
-            if len(agent_p.memory) > 16382:
-                agent_p.train(16382)
+            if len(agent_p.memory) > 16000:
+                agent_p.train(16000)
             """END"""
 
         if timestep % eval_frequency == 0:
             hours = (time() - start_time) / 3600
-            log_vals = {
-                "losses/TD_Error": agent.td_errors.mean(),
-                "losses/Grad_Norm": agent.grad_norms.mean(),
-                "losses/Max_Q_Value": agent.qvalue_max.mean(),
-                "losses/Mean_Q_Value": agent.qvalue_mean.mean(),
-                "losses/Min_Q_Value": agent.qvalue_min.mean(),
-                "losses/Max_Target_Value": agent.target_max.mean(),
-                "losses/Mean_Target_Value": agent.target_mean.mean(),
-                "losses/Min_Target_Value": agent.target_min.mean(),
-                "losses/hours": hours,
-            }
+
             """Single Model Call"""
             # sr, ret, length, avgAoI, peakAoI, dataDist, dataColl, CH_Metrics, \
             #     comms, move, harvest = evaluate(agent, env, eval_episodes)
@@ -341,18 +328,6 @@ def train(
             sr, ret, length, avgAoI, peakAoI, dataDist, dataColl, CH_Metrics, \
                 comms, move, harvest = evaluate(agent, agent_p, env, eval_episodes)
             """END"""
-
-            log_vals.update(
-                {
-                    f"{env_str}/SuccessRate": sr,
-                    f"{env_str}/Return": ret,
-                    f"{env_str}/EpisodeLength": length,
-                    f"{env_str}/AverageAoI": avgAoI,
-                    f"{env_str}/PeakAoI": peakAoI,
-                    f"{env_str}/Distribution": dataDist,
-                    f"{env_str}/TotalCollected": dataColl,
-                }
-            )
 
             agent.update_target_from_model()
             """Dual Model"""
@@ -366,17 +341,7 @@ def train(
         )
 
     hours = (time() - start_time) / 3600
-    log_vals = {
-        "losses/TD_Error": agent.td_errors.mean(),
-        "losses/Grad_Norm": agent.grad_norms.mean(),
-        "losses/Max_Q_Value": agent.qvalue_max.mean(),
-        "losses/Mean_Q_Value": agent.qvalue_mean.mean(),
-        "losses/Min_Q_Value": agent.qvalue_min.mean(),
-        "losses/Max_Target_Value": agent.target_max.mean(),
-        "losses/Mean_Target_Value": agent.target_mean.mean(),
-        "losses/Min_Target_Value": agent.target_min.mean(),
-        "losses/hours": hours,
-    }
+
     """Single Model Call"""
     # sr, ret, length, avgAoI, peakAoI, dataDist, dataColl, CH_Metrics, \
     #     comms, move, harvest = evaluate(agent, env, eval_episodes, True, env_str, start_time)
@@ -384,18 +349,6 @@ def train(
     sr, ret, length, avgAoI, peakAoI, dataDist, dataColl, CH_Metrics, \
         comms, move, harvest = evaluate(agent, agent_p, env, eval_episodes, True, env_str, start_time)
     """END"""
-
-    log_vals.update(
-        {
-            f"{env_str}/SuccessRate": sr,
-            f"{env_str}/Return": ret,
-            f"{env_str}/EpisodeLength": length,
-            f"{env_str}/AverageAoI": avgAoI,
-            f"{env_str}/PeakAoI": peakAoI,
-            f"{env_str}/Distribution": dataDist,
-            f"{env_str}/TotalCollected": dataColl,
-        }
-    )
 
 
 def step(agent, agent_p, env):
@@ -413,7 +366,7 @@ def step(agent, agent_p, env):
 
     if (train_model or env.truncated) and not buffer_done:
         print(f"Training")
-        #QL/GANN
+        # QL/GANN
         # agent.update(old_state, old_action, env.archived_rewards,
         #              env.curr_state, buffer_done, env.curr_step)
         # DDQN
@@ -490,10 +443,10 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency):
 
             timestep += 1
 
-        if len(agent.memory) > 16382:
-            agent.train(16382)
-        if len(agent_p.memory) > 16382:
-            agent_p.train(16382)
+        if len(agent.memory) > 16000:
+            agent.train(16000)
+        if len(agent_p.memory) > 16000:
+            agent_p.train(16000)
 
         if timestep % eval_frequency == 0:
             # DDQN
@@ -513,25 +466,15 @@ def run_experiment(args):
     for device in gpu_devices:
         tf.config.experimental.set_memory_growth(device, True)
 
-    # Other
-    # agent = model_utils.get_ddqn_agent(
-    #     env
-    # )
-    # DDQN
-    # agents = []
-    # for i in range(env.num_ch):
     agent = model_utils.get_ddqn_agent(
-        env,
         ((env.num_ch + 1) * 3),
-        env.num_ch
+        env.num_ch,
+        mem_len=16000
     )
-    # agents.append(agent)
-
-    # Power Determination
     agent_p = model_utils.get_ddqn_agentp(
-        env,
         4,
-        10
+        10,
+        mem_len=16000
     )
 
     policy_save_dir = os.path.join(
@@ -543,11 +486,7 @@ def run_experiment(args):
         f"model={args.model}"
     )
 
-    prepopulate(agent, agent_p, 500_000, env, args.eval_frequency)
-    mean_success_rate = RunningAverage(10)
-    mean_reward = RunningAverage(10)
-    mean_episode_length = RunningAverage(10)
-
+    prepopulate(agent, agent_p, 100_000, env, args.eval_frequency)
     agent.update_learning_rate(agent.alpha)
 
     print("Beginning Training")
@@ -560,9 +499,6 @@ def run_experiment(args):
         args.eval_frequency,
         args.eval_episodes,
         policy_path,
-        mean_success_rate,
-        mean_episode_length,
-        mean_reward,
         # logger
     )
 
