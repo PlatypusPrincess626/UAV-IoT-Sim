@@ -87,6 +87,7 @@ class sim_env:
         self.total_sensors = num_sensors
         self.total_uav = num_uav
         self.total_clusterheads = num_clusterheads
+        self.max_num_steps = max_num_steps
 
         self.chX = [0] * self.total_clusterheads
         self.chY = [0] * self.total_clusterheads
@@ -106,7 +107,7 @@ class sim_env:
             self.dim = 3_000                  # Map dimension n x n
             self.numObst = 500                # Number of obstacles decided
             self.stepSize = 'min'               # Frequency of time steps
-            self.times = pd.date_range('2021-01-01 8:00', freq=self.stepSize, periods=max_num_steps, tz="MST")
+            self.times = pd.date_range('2021-01-01 8:00', freq=self.stepSize, periods=self.max_num_steps, tz="MST")
             random.seed('2021-01-01 8:00')
             
             

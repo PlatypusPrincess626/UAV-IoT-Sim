@@ -329,7 +329,7 @@ class get_ddqn_agent():
         """
         self.epsilon = max(
             self.epsilon_f,
-            self.epsilon_i * n)
+            self.epsilon_i - n * (self.epsilon_i - self.epsilon_f))
 
     def update_target_from_model(self):
         """
@@ -431,30 +431,29 @@ class get_ddqn_agent():
         return loss
 
 
+
 class get_ddqn_agentp():
-    def __init__(self, nS, nA, epsilon_i=1.0, epsilon_f=0.0, n_epsilon=0.1,
-                 alpha=0.5, gamma=0.95, epsilon=0.5, epsilon_min=0.1, epsilon_decay=0.01, mem_len: int = 2500):
+    def __init__(self, env, nS: int, nA: int, epsilon_i: float = 1.0, epsilon_f: float = 0.0,
+                 alpha: float = 0.001, gamma: float = 0.95, epsilon: float = 0.5, mem_len: int = 2500):
         # ADF 2.0
         self.nS = nS
         self.nA = nA
 
-        self.state1_max = 1_000
-        self.state2_max = 720
+        self.state1_max = env.dim
+        self.state2_max = env.max_num_steps
 
         self.memory = deque([], mem_len)
         self.alpha = alpha
         self.gamma = gamma
         # Explore/Exploit
         self.epsilon = epsilon
-        self.epsilon_min = epsilon_min
-        self.epsilon_decay = epsilon_decay
+        self.epsilon_i = epsilon_i
+        self.epsilon_f = epsilon_f
+
         self.model = self.build_model()
         self.model_target = self.build_model()  # Second (target) neural network
         self.update_target_from_model()  # Update weights
         self.loss = []
-        self.epsilon_i = epsilon_i
-        self.epsilon_f = epsilon_f
-        self.n_epsilon = n_epsilon
 
     def build_model(self):
         model = tf.keras.Sequential()  # linear stack of layers https://keras.io/models/sequential/
@@ -479,7 +478,7 @@ class get_ddqn_agentp():
         """
         self.epsilon = max(
             self.epsilon_f,
-            self.epsilon_i - (n / self.n_epsilon) * (self.epsilon_i - self.epsilon_f))
+            self.epsilon_i - n * (self.epsilon_i - self.epsilon_f))
 
     def update_target_from_model(self):
         # Update the target model from the base model

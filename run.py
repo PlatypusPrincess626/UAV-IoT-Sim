@@ -472,6 +472,7 @@ def run_experiment(args):
         mem_len=25000
     )
     agent_p = model_utils.get_ddqn_agentp(
+        env,
         4,
         10,
         mem_len=25000
