@@ -137,6 +137,7 @@ def evaluate(
     """Dual Agent Systems"""
     agent_p.decay_epsilon(1)
     """END"""
+    switch = True
 
     for i in range(eval_episodes):
         eval_env.reset()
@@ -255,11 +256,15 @@ def evaluate(
 
         # DDQN
         # for agent in agents:
-        if len(agent.memory) > 2500:
-            agent.train(2500)
-        """Dual Agent Systems"""
-        if len(agent_p.memory) > 2500:
-            agent_p.train(2500)
+        if switch:
+            if len(agent.memory) > 2500:
+                agent.train(2500)
+            switch = not switch
+        # """Dual Agent Systems"""
+        else:
+            if len(agent_p.memory) > 2500:
+                agent_p.train(2500)
+            switch = not switch
         """END"""
 
         accum_avgAoI += avgAoI / (eval_env.curr_step + count)
@@ -305,18 +310,23 @@ def train(
     """Dual Agent Systems"""
     agent_p.decay_epsilon(1)
     """END"""
+    switch = True
 
     for timestep in range(total_steps):
         done = step(agent, agent_p, env)
 
         if done:
-            #     # for agent in agents:
-            if len(agent.memory) > 2500:
-                agent.train(2500)
-            """Dual Agent Systems"""
-            if len(agent_p.memory) > 2500:
-                agent_p.train(2500)
+            if switch:
+                if len(agent.memory) > 2500:
+                    agent.train(2500)
+                switch = not switch
+            #"""Dual Agent Systems"""
+            else:
+                if len(agent_p.memory) > 2500:
+                    agent_p.train(2500)
+                switch = not switch
             """END"""
+
 
         if timestep % eval_frequency == 0:
             hours = (time() - start_time) / 3600
@@ -381,7 +391,7 @@ def step(agent, agent_p, env):
     return done
 
 
-def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency):
+def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr):
     timestep = 0
     # QL
     agent.decay_epsilon(0)
@@ -420,7 +430,7 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency):
     """Dual Model"""
     agent_p.decay_epsilon(0)
     agent.update_learning_rate((1 * agent.alpha) / prepop_steps)
-
+    switch = True
     while timestep < prepop_steps:
         env.reset()
         done = False
@@ -443,10 +453,14 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency):
 
             timestep += 1
 
-        if len(agent.memory) > 2500:
-            agent.train(2500)
-        if len(agent_p.memory) > 2500:
-            agent_p.train(2500)
+        if switch:
+            if len(agent.memory) > 2500:
+                agent.train(2500)
+            switch = not switch
+        else:
+            if len(agent_p.memory) > 2500:
+                agent_p.train(2500)
+            switch = not switch
 
         if timestep % eval_frequency == 0:
             # DDQN
@@ -454,8 +468,10 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency):
             agent.update_target_from_model()
             agent_p.update_target_From_model()
             env.reset()
-            agent.update_learning_rate((timestep * agent.alpha) / prepop_steps)
-
+            if timestep < 0.2 * prepop_steps:
+                agent.update_learning_rate((timestep * lr) / (0.2 * prepop_steps))
+            else:
+                agent.update_learning_rate(lr)
 
 def run_experiment(args):
     env_str = args.env
@@ -466,15 +482,18 @@ def run_experiment(args):
     for device in gpu_devices:
         tf.config.experimental.set_memory_growth(device, True)
 
+    lr = 0.0001
     agent = model_utils.get_ddqn_agent(
         ((env.num_ch + 1) * 3),
         env.num_ch,
+        alpha=lr,
         mem_len=25000
     )
     agent_p = model_utils.get_ddqn_agentp(
         env,
         4,
         10,
+        alpha=lr,
         mem_len=25000
     )
 
@@ -487,8 +506,8 @@ def run_experiment(args):
         f"model={args.model}"
     )
 
-    prepopulate(agent, agent_p, 100_000, env, args.eval_frequency)
-    agent.update_learning_rate(agent.alpha)
+    prepopulate(agent, agent_p, 100_000, env, args.eval_frequency,lr)
+    agent.update_learning_rate(lr)
 
     print("Beginning Training")
     train(

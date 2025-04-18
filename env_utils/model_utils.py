@@ -490,8 +490,8 @@ class get_ddqn_agentp():
         if np.random.rand() < self.epsilon:
             return np.random.randint(self.nA)
 
-        action_vals = self.model.predict(np.reshape(np.array(r_state), (
-        -1, self.nS)))  # Exploit: Use the NN to predict the correct action from this state
+        # Exploit: Use the NN to predict the correct action from this state
+        action_vals = self.model.predict(np.reshape(np.array(r_state), (-1, self.nS)))
         return np.argmax(action_vals[0])
 
     def test_action(self, state):  # Exploit
