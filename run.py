@@ -429,7 +429,7 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr):
 
     """Dual Model"""
     agent_p.decay_epsilon(0)
-    agent.update_learning_rate((1 * agent.alpha) / prepop_steps)
+    agent.update_learning_rate((1 * lr) / prepop_steps)
     switch = True
     while timestep < prepop_steps:
         env.reset()
