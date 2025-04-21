@@ -211,7 +211,7 @@ def evaluate(
             for cluster in range(len(eval_env.chX)):
                 CHCoords.append([eval_env.chX[cluster], eval_env.chY[cluster]])
 
-        csv_str = ("_Dual_NForced_100K_3K_2.csv")
+        csv_str = ("_Dual_NForced_500K_3K_2.csv")
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("sens_pts_" + curr_date_time.strftime("%d") + "_" +
@@ -257,14 +257,13 @@ def evaluate(
         # DDQN
         # for agent in agents:
         if switch:
-            if len(agent.memory) > 2500:
-                agent.train(2500)
-            switch = not switch
+            if len(agent.memory) > 25000:
+                agent.train(25000)
         # """Dual Agent Systems"""
         else:
             if len(agent_p.memory) > 2500:
                 agent_p.train(2500)
-            switch = not switch
+        switch = not switch
         """END"""
 
         accum_avgAoI += avgAoI / (eval_env.curr_step + count)
@@ -317,14 +316,13 @@ def train(
 
         if done:
             if switch:
-                if len(agent.memory) > 2500:
-                    agent.train(2500)
-                switch = not switch
+                if len(agent.memory) > 25000:
+                    agent.train(25000)
             #"""Dual Agent Systems"""
             else:
                 if len(agent_p.memory) > 2500:
                     agent_p.train(2500)
-                switch = not switch
+            switch = not switch
             """END"""
 
 
@@ -454,13 +452,12 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr):
             timestep += 1
 
         if switch:
-            if len(agent.memory) > 2500:
-                agent.train(2500)
-            switch = not switch
+            if len(agent.memory) > 25000:
+                agent.train(25000)
         else:
             if len(agent_p.memory) > 2500:
                 agent_p.train(2500)
-            switch = not switch
+        switch = not switch
 
         if timestep % eval_frequency == 0:
             # DDQN
@@ -487,7 +484,7 @@ def run_experiment(args):
         ((env.num_ch + 1) * 3),
         env.num_ch,
         alpha=lr,
-        mem_len=25000
+        mem_len=250000
     )
     agent_p = model_utils.get_ddqn_agentp(
         env,
@@ -506,7 +503,7 @@ def run_experiment(args):
         f"model={args.model}"
     )
 
-    prepopulate(agent, agent_p, 100_000, env, args.eval_frequency,lr)
+    prepopulate(agent, agent_p, 500_000, env, args.eval_frequency,lr)
     agent.update_learning_rate(lr)
 
     print("Beginning Training")
