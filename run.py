@@ -211,7 +211,7 @@ def evaluate(
             for cluster in range(len(eval_env.chX)):
                 CHCoords.append([eval_env.chX[cluster], eval_env.chY[cluster]])
 
-        csv_str = ("_Dual_NForced_500K_3K_2.csv")
+        csv_str = ("_Dual_NForced_500K_3K.csv")
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("sens_pts_" + curr_date_time.strftime("%d") + "_" +
@@ -254,17 +254,22 @@ def evaluate(
                 csvwriter = csv.writer(csvfile, delimiter='|')
                 csvwriter.writerows(UAV_Metrics)
 
-        # DDQN
-        # for agent in agents:
-        if switch:
-            if len(agent.memory) > 25000:
-                agent.train(25000)
-        # """Dual Agent Systems"""
-        else:
-            if len(agent_p.memory) > 2500:
-                agent_p.train(2500)
-        switch = not switch
-        """END"""
+        if len(agent.memory) > 25000:
+            agent.train(25000)
+        if len(agent_p.memory) > 2500:
+            agent_p.train(2500)
+
+        # # DDQN
+        # # for agent in agents:
+        # if switch:
+        #     if len(agent.memory) > 25000:
+        #         agent.train(25000)
+        # # """Dual Agent Systems"""
+        # else:
+        #     if len(agent_p.memory) > 2500:
+        #         agent_p.train(2500)
+        # switch = not switch
+        # """END"""
 
         accum_avgAoI += avgAoI / (eval_env.curr_step + count)
         accum_peakAoI += peakAoI / (eval_env.curr_step + count)
@@ -314,16 +319,21 @@ def train(
     for timestep in range(total_steps):
         done = step(agent, agent_p, env)
 
-        if done:
-            if switch:
-                if len(agent.memory) > 25000:
-                    agent.train(25000)
-            #"""Dual Agent Systems"""
-            else:
-                if len(agent_p.memory) > 2500:
-                    agent_p.train(2500)
-            switch = not switch
-            """END"""
+        if len(agent.memory) > 25000:
+            agent.train(25000)
+        if len(agent_p.memory) > 2500:
+            agent_p.train(2500)
+
+        # if done:
+        #     if switch:
+        #         if len(agent.memory) > 25000:
+        #             agent.train(25000)
+        #     #"""Dual Agent Systems"""
+        #     else:
+        #         if len(agent_p.memory) > 2500:
+        #             agent_p.train(2500)
+        #     switch = not switch
+        #     """END"""
 
 
         if timestep % eval_frequency == 0:
@@ -451,13 +461,18 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr):
 
             timestep += 1
 
-        if switch:
-            if len(agent.memory) > 25000:
-                agent.train(25000)
-        else:
-            if len(agent_p.memory) > 2500:
-                agent_p.train(2500)
-        switch = not switch
+        if len(agent.memory) > 25000:
+            agent.train(25000)
+        if len(agent_p.memory) > 2500:
+            agent_p.train(2500)
+
+        # if switch:
+        #     if len(agent.memory) > 25000:
+        #         agent.train(25000)
+        # else:
+        #     if len(agent_p.memory) > 2500:
+        #         agent_p.train(2500)
+        # switch = not switch
 
         if timestep % eval_frequency == 0:
             # DDQN
