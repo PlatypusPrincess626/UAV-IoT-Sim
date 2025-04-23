@@ -181,18 +181,18 @@ def evaluate(
                 CH_Metrics[ch][0] = eval_env.curr_state[ch + 1][1]
                 CH_Metrics[ch][1] = eval_env.curr_state[ch + 1][2]
 
-            if (train_model or eval_env.truncated) and not buffer_done:
-                # agent.update(old_state, old_action, eval_env.archived_rewards,
-                #              eval_env.curr_state, buffer_done, eval_env.curr_step)
-                # DDQN
-                agent.update_mem(old_state, old_action, eval_env.archived_rewards,
-                                 eval_env.curr_state, buffer_done, eval_env.curr_step)
-
-            """Dual Model Training Addition"""
-            if train_p or done:
-                agent_p.update_mem(old_pstate, int(action_p), eval_env.archived_rewardsp,
-                                   eval_env.curr_pstate, buffer_done)
-            """END"""
+            # if (train_model or eval_env.truncated) and not buffer_done:
+            #     # agent.update(old_state, old_action, eval_env.archived_rewards,
+            #     #              eval_env.curr_state, buffer_done, eval_env.curr_step)
+            #     # DDQN
+            #     agent.update_mem(old_state, old_action, eval_env.archived_rewards,
+            #                      eval_env.curr_state, buffer_done, eval_env.curr_step)
+            #
+            # """Dual Model Training Addition"""
+            # if train_p or done:
+            #     agent_p.update_mem(old_pstate, int(action_p), eval_env.archived_rewardsp,
+            #                        eval_env.curr_pstate, buffer_done)
+            # """END"""
 
             ep_reward += eval_env.full_reward
 
@@ -254,10 +254,10 @@ def evaluate(
                 csvwriter = csv.writer(csvfile, delimiter='|')
                 csvwriter.writerows(UAV_Metrics)
 
-        if len(agent.memory) > 25000:
-            agent.train(25000)
-        if len(agent_p.memory) > 2500:
-            agent_p.train(2500)
+        # if len(agent.memory) > 25000:
+        #     agent.train(25000)
+        # if len(agent_p.memory) > 2500:
+        #     agent_p.train(2500)
 
         # # DDQN
         # # for agent in agents:
@@ -319,21 +319,21 @@ def train(
     for timestep in range(total_steps):
         done = step(agent, agent_p, env)
 
-        if len(agent.memory) > 25000:
-            agent.train(25000)
-        if len(agent_p.memory) > 2500:
-            agent_p.train(2500)
+        if done:
+            if len(agent.memory) > 25000:
+                agent.train(25000)
+            if len(agent_p.memory) > 2500:
+                agent_p.train(2500)
 
-        # if done:
-        #     if switch:
-        #         if len(agent.memory) > 25000:
-        #             agent.train(25000)
-        #     #"""Dual Agent Systems"""
-        #     else:
-        #         if len(agent_p.memory) > 2500:
-        #             agent_p.train(2500)
-        #     switch = not switch
-        #     """END"""
+            # if switch:
+            #     if len(agent.memory) > 25000:
+            #         agent.train(25000)
+            # #"""Dual Agent Systems"""
+            # else:
+            #     if len(agent_p.memory) > 2500:
+            #         agent_p.train(2500)
+            # switch = not switch
+            # """END"""
 
 
         if timestep % eval_frequency == 0:
