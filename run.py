@@ -518,7 +518,7 @@ def run_experiment(args):
         f"model={args.model}"
     )
 
-    prepopulate(agent, agent_p, 500_000, env, args.eval_frequency,lr)
+    prepopulate(agent, agent_p, 100_000, env, args.eval_frequency,lr)
     agent.update_learning_rate(lr)
 
     print("Beginning Training")
