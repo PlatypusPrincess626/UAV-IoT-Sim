@@ -303,6 +303,7 @@ def train(
         total_steps: int,
         eval_frequency: int,
         eval_episodes: int,
+        lr: float,
         policy_path: str,
         logger=None,
 ):
@@ -351,6 +352,11 @@ def train(
             """Dual Model"""
             agent_p.update_target_from_model()
             """END"""
+
+            if timestep < 0.5 * total_steps:
+                agent.update_learning_rate(1 - (timestep * lr) / (0.5 * total_steps))
+            else:
+                agent.update_learning_rate(0)
 
             env.reset()
 
@@ -530,6 +536,7 @@ def run_experiment(args):
         args.steps,
         args.eval_frequency,
         args.eval_episodes,
+        lr,
         policy_path,
         # logger
     )

@@ -387,6 +387,22 @@ class get_ddqn_agent():
         self.memory.append((r_state, action, reward, r_nstate, done, step))
 
     def train(self, batch_size):
+        # We can use the change in weights from the target network to current network for stability
+        weights = []
+        for layer in self.model.layers:
+            for weight in layer.weights:
+                weights.append(weight.numpy().flatten())
+        np_weights = np.concatenate(weights)
+
+        weights_target = []
+        for layer in self.model_target.layers:
+            for weight in layer.weights:
+                weights_target.append(weight.numpy().flatten())
+        np_weights_target = np.concatenate(weights_target)
+
+        # Output is number from [0,1]
+        avg_weight_diff = np.average((np_weights - np_weights_target) / (np_weights + np_weights_target))
+
         # Execute the experience replay
         minibatch = random.sample(self.memory, batch_size)  # Randomly sample from memory
 
@@ -411,12 +427,13 @@ class get_ddqn_agent():
             nst_action_predict_model = nst_predict[index]
 
             if np.array(reward).mean() <= 0.0:
-                target = (0 + self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)])
+                target = self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)] - avg_weight_diff
             elif done:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
-                target = (np.array([0.7, 0.3, 0]) @ reward)
+                target = (np.array([0.7, 0.3, 0]) @ reward) - avg_weight_diff
             else:  # Non terminal, Using Q to get T is Double DQN
                 target = ((np.array([0.7, 0.3, 0]) @ reward) +
-                          self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)])
+                          self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)]
+                          - avg_weight_diff)
 
             target_f = st_predict[index]
             target_f[action] = target
