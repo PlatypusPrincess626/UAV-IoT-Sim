@@ -402,6 +402,7 @@ class get_ddqn_agent():
 
         # Output is number from [0,1]
         avg_weight_diff = np.average((np_weights - np_weights_target) / (np_weights + np_weights_target))
+        avg_sqr_diff = avg_weight_diff / abs(avg_weight_diff) * avg_weight_diff ** 2
 
         # Execute the experience replay
         minibatch = random.sample(self.memory, batch_size)  # Randomly sample from memory
@@ -427,13 +428,13 @@ class get_ddqn_agent():
             nst_action_predict_model = nst_predict[index]
 
             if np.array(reward).mean() <= 0.0:
-                target = self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)] - avg_weight_diff
+                target = self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)] - avg_sqr_diff
             elif done:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
-                target = (np.array([0.7, 0.3, 0]) @ reward) - avg_weight_diff
+                target = (np.array([0.7, 0.3, 0]) @ reward) - avg_sqr_diff
             else:  # Non terminal, Using Q to get T is Double DQN
                 target = ((np.array([0.7, 0.3, 0]) @ reward) +
                           self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)]
-                          - avg_weight_diff)
+                          - avg_sqr_diff)
 
             target_f = st_predict[index]
             target_f[action] = target
