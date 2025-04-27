@@ -428,13 +428,12 @@ class get_ddqn_agent():
             nst_action_predict_model = nst_predict[index]
 
             if np.array(reward).mean() <= 0.0:
-                target = self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)] - avg_sqr_diff
+                target = self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)]
             elif done:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
-                target = (np.array([0.7, 0.3, 0]) @ reward) - avg_sqr_diff
+                target = (np.array([0.7, 0.3, 0]) @ reward)
             else:  # Non terminal, Using Q to get T is Double DQN
                 target = ((np.array([0.7, 0.3, 0]) @ reward) +
-                          self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)]
-                          - avg_sqr_diff)
+                          self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)])
 
             target_f = st_predict[index]
             target_f[action] = target
