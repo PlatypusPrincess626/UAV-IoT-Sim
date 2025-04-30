@@ -500,7 +500,7 @@ def run_experiment(args):
     for device in gpu_devices:
         tf.config.experimental.set_memory_growth(device, True)
 
-    lr = 0.0001
+    lr = 0.00001
     agent = model_utils.get_ddqn_agent(
         ((env.num_ch + 1) * 3),
         env.num_ch,

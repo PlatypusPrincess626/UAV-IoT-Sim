@@ -261,7 +261,7 @@ class get_ddqn_agent():
     """
 
     def __init__(self, nS: int, nA: int, epsilon_i: float = 1.0, epsilon_f: float = 0.0,
-                 alpha: float = 0.001, gamma: float = 0.95, epsilon: float = 0.5, mem_len: int = 2500):
+                 alpha: float = 0.0001, gamma: float = 0.95, epsilon: float = 0.5, mem_len: int = 2500):
         # ADF 2.0
         self.nS = nS
         self.nA = nA

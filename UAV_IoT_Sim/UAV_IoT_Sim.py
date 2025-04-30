@@ -315,8 +315,6 @@ class make_env:
 
         rewardPeak = (1-peakAge/self._aoi_threshold) if (1-peakAge/self._aoi_threshold) > 0 else 0
 
-        # rewardAvgAge = (1-avgAge/(0.5 * self._aoi_threshold)) if (1-avgAge/(0.5 * self._aoi_threshold)) > 0 else 0
-
         rewardAvgAge = 1 - avgAge/max(self.curr_step, 1)
 
 
