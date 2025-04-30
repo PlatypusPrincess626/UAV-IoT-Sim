@@ -354,7 +354,7 @@ def train(
             """END"""
 
             if timestep < 0.5 * total_steps:
-                agent.update_learning_rate(1 - (timestep * lr) / (0.5 * total_steps))
+                agent.update_learning_rate(((0.5 * total_steps - timestep) * 0.80 * lr) / (0.5 * total_steps))
             else:
                 agent.update_learning_rate(0)
 
