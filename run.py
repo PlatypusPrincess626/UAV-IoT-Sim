@@ -326,16 +326,6 @@ def train(
             if len(agent_p.memory) > 2500:
                 agent_p.train(2500)
 
-            # if switch:
-            #     if len(agent.memory) > 25000:
-            #         agent.train(25000)
-            # #"""Dual Agent Systems"""
-            # else:
-            #     if len(agent_p.memory) > 2500:
-            #         agent_p.train(2500)
-            # switch = not switch
-            # """END"""
-
 
         if timestep % eval_frequency == 0:
             hours = (time() - start_time) / 3600
@@ -472,13 +462,6 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr):
         if len(agent_p.memory) > 2500:
             agent_p.train(2500)
 
-        # if switch:
-        #     if len(agent.memory) > 25000:
-        #         agent.train(25000)
-        # else:
-        #     if len(agent_p.memory) > 2500:
-        #         agent_p.train(2500)
-        # switch = not switch
 
         if timestep % eval_frequency == 0:
             # DDQN
@@ -500,7 +483,7 @@ def run_experiment(args):
     for device in gpu_devices:
         tf.config.experimental.set_memory_growth(device, True)
 
-    lr = 0.0001
+    lr = 0.00001
     agent = model_utils.get_ddqn_agent(
         ((env.num_ch + 1) * 3),
         env.num_ch,
