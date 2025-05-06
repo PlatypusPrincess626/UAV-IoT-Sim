@@ -294,7 +294,10 @@ class get_ddqn_agent():
         model.add(tf.keras.layers.Dense(1028, activation='relu'))  # [Input] -> Layer 1
         model.add(tf.keras.layers.BatchNormalization())
         model.add(tf.keras.layers.Dropout(0.2))
-        model.add(tf.keras.layers.Dense(512, activation='relu'))  # Layer 1 -> 2
+        model.add(tf.keras.layers.Dense(256, activation='relu'))  # Layer 1 -> 2
+        model.add(tf.keras.layers.BatchNormalization())
+        model.add(tf.keras.layers.Dropout(0.2))
+        model.add(tf.keras.layers.Dense(96, activation='relu'))  # Layer 1 -> 2
         model.add(tf.keras.layers.BatchNormalization())
         model.add(tf.keras.layers.Dropout(0.2))
         model.add(tf.keras.layers.Dense(self.nA, activation='softmax'))  # Layer 2 -> [output]
