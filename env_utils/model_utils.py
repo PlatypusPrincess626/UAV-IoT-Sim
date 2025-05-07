@@ -291,10 +291,10 @@ class get_ddqn_agent():
         """
         model = tf.keras.Sequential()  # linear stack of layers https://keras.io/models/sequential/
         model.add(tf.keras.layers.Input(shape=(self.nS,)))
-        model.add(tf.keras.layers.Dense(2048, activation='relu'))  # [Input] -> Layer 1
+        model.add(tf.keras.layers.Dense(1024, activation='relu'))  # [Input] -> Layer 1
         model.add(tf.keras.layers.BatchNormalization())
         model.add(tf.keras.layers.Dropout(0.5))
-        model.add(tf.keras.layers.Dense(1028, activation='relu'))  # Layer 1 -> 2
+        model.add(tf.keras.layers.Dense(1024, activation='relu'))  # Layer 1 -> 2
         model.add(tf.keras.layers.BatchNormalization())
         model.add(tf.keras.layers.Dropout(0.5))
         model.add(tf.keras.layers.Dense(512, activation='relu'))  # Layer 1 -> 2
