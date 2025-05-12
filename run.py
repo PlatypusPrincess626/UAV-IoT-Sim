@@ -211,7 +211,7 @@ def evaluate(
             for cluster in range(len(eval_env.chX)):
                 CHCoords.append([eval_env.chX[cluster], eval_env.chY[cluster]])
 
-        csv_str = ("_Dual_NForced_500K_3K.csv")
+        csv_str = ("_Dual_NForced_1M_3K.csv")
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("sens_pts_" + curr_date_time.strftime("%d") + "_" +
@@ -507,7 +507,7 @@ def run_experiment(args):
         f"model={args.model}"
     )
 
-    prepopulate(agent, agent_p, 500_000, env, args.eval_frequency,lr)
+    prepopulate(agent, agent_p, 1_000_000, env, args.eval_frequency,lr)
     agent.update_learning_rate(lr)
 
     print("Beginning Training")
