@@ -17,18 +17,20 @@ from env_utils.logger_utils import RunningAverage
 
 def modify_state(state):
     total_data = state[0][1]
-    refined_state = [[0, 0, 0] for _ in range(len(state))]
+    refined_state = [[0.0, 0.0, 0.0] for _ in range(len(state))]
     np_state = np.array(state)
     _, _, zmax, _ = np_state.max(axis=0)
 
     # ADF 2.0
     for i in range(len(state)):
-        refined_state[i][0] = state[i][1] / max(total_data, 1)
+        refined_state[i][0] = float(int(256 * state[i][1] / max(total_data, 1)) / 256.0)
         if i == 0:
-            refined_state[i][1] = state[i][2] / 6_800_000
+            # Quantize to int8 and return to float for operations (positive only)
+            refined_state[i][1] = float(int(256 * state[i][2] / 6_800_000)) / 256.0
         else:
-            refined_state[i][1] = state[i][2] / max(zmax, 1)
-            refined_state[i][2] = state[i][3] / max(zmax, 1)
+            # Quantize to int8 and return to float for operations (positive only) values from 0 to max episodic length
+            refined_state[i][1] = float(int(256 * state[i][2] / 720)) / 256.0
+            refined_state[i][2] = float(int(256 * state[i][3] / 720)) / 256.0
 
     return refined_state
 
