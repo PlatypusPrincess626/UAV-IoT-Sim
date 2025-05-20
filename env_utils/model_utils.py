@@ -1,5 +1,7 @@
 import numpy as np
 import tensorflow as tf
+from keras.models import Model
+from keras import backend as K
 
 import os
 import sys
@@ -246,6 +248,152 @@ class get_gann_agent:
                                        data_inputs=inputs)
 
         return np.argmax(predictions)
+
+
+class get_ppo_agent:
+    """
+    Implementation of a Proximal Policy Optimization agent for comparison with DDQN
+    """
+    def __init__(self, nS: int, nA: int, alpha: float = 0.0001, gamma: float = 0.99,
+                 epsilon_i: float = 1.0, epsilon_f: float = 0.0, mem_len: int = 2500):
+        self.nS = nS
+        self.nA = nA
+        self.alpha = alpha
+        self.gamma = gamma
+
+        self.epsilon = 0
+        self.epsilon_f = epsilon_f
+        self.epsilon_i = epsilon_i
+
+        self.memory = deque([], mem_len)
+
+        self.Actor = self.build_model(self.nA)
+        self.Critic = self.build_model(1)
+
+    def build_model(self, out_size: int):
+        """
+        Build the sequential layers of both DDQN models.
+        Called at initialization with no input.
+
+        OUTPUT:
+            model -> returns an agent for the ddqn class
+        """
+        model = tf.keras.Sequential()  # linear stack of layers https://keras.io/models/sequential/
+        model.add(tf.keras.layers.Input(shape=(self.nS,)))
+        model.add(tf.keras.layers.Dense(512, activation='relu'))  # [Input] -> Layer 1
+        model.add(tf.keras.layers.Dense(512, activation='relu'))  # Layer 1 -> Layer 2
+        model.add(tf.keras.layers.Dense(out_size, activation='softmax'))  # Layer 2 -> [output]
+        model.compile(optimizer=tf.keras.optimizers.RMSprop(learning_rate=self.alpha),
+                      loss='categorical_crossentropy',  # Loss function: Mean Squared Error
+                      metrics=['accuracy'])  # Optimaizer: Adam (Feel free to check other options)
+        return model
+
+    def decay_epsilon(self, n: float):
+        """
+        Directly sets exploration rate according to n with 0 meaning 'just started' and 1 meaning 'done'.
+        Using maximum of epsilon_f and epsilon_i, these values are max and min exploitation probability.
+
+        INPUT:
+            n -> value on scale [0,1] that mutates the upper limit to determine exploration change (float)
+
+        OUTPUT:
+            change in exploration rate (no return)
+        """
+        self.epsilon = max(
+            self.epsilon_f,
+            self.epsilon_i - n * (self.epsilon_i - self.epsilon_f))
+
+    def act(self, state):
+        """
+        Equivalent to "forward". Uses the provided state to determine the action.
+        Action is gated by explore/exploit change.
+        If random float is less than epsilon, explore: Else, exploit.
+
+        INPUT:
+            state -> environment state (potentially unknown values)
+
+        OUTPUT:
+            action -> value projected on actin space (int)
+        """
+        r_state = modify_state(state)
+        if np.random.rand() < self.epsilon:
+            # Explore: Make random prediction on action space
+            return np.random.randint(self.nA)
+
+        # Exploit: Use the NN to predict the correct action from this state
+        action_vals = self.Actor.predict(np.expand_dims(np.array(r_state).flatten(), axis=0))
+        return np.argmax(action_vals[0])
+
+    def update_mem(self, state, action, reward, nstate, done, step):
+        """
+        Stores current performance period on the memory stack
+
+        """
+        # Store the experience in memory
+        r_state = modify_state(state)
+        r_nstate = modify_state(nstate)
+        self.memory.append((r_state, action, reward, r_nstate, done, step))
+
+    def train(self, batch_size):
+        # Execute the experience replay
+        minibatch = random.sample(self.memory, batch_size)  # Randomly sample from memory
+
+        # Convert to numpy for speed by vectorization
+        x = []
+        y_Actor = []
+        y_Critic = []
+        np_array = minibatch
+        st = np.zeros((0, self.nS))  # States
+        nst = np.zeros((0, self.nS))  # Next States
+        for i in range(len(np_array)):  # Creating the state and next state np arrays
+            st = np.append(st, np.expand_dims(np.array(np_array[i][0]).flatten(), axis=0), axis=0)
+            nst = np.append(nst, np.expand_dims(np.array(np_array[i][3]).flatten(), axis=0), axis=0)
+
+        predictions = self.Actor.predict(st)  # Here is the speedup! I can predict on the ENTIRE batch
+        values = self.Critic.predict(st)  # Predict values
+        next_values = self.Critic.predict(nst)
+
+        # next_predictions = self.Actor.predict(nst)
+
+        n = 0
+        discounted_rewards = np.zeros(batch_size)
+        for _, _, reward, _, _, _ in minibatch:
+            discounted_rewards[n] = reward * self.gamma
+            n += 1
+
+        discounted_rewards -= np.mean(discounted_rewards)
+        discounted_rewards /= np.std(discounted_rewards)
+        advantages = discounted_rewards - values
+
+        index = 0
+        for state, action, reward, nstate, done, step in minibatch:
+            x.append(np.expand_dims(np.array(state).flatten(), axis=0))
+            # Predict from state
+            value = values[index]            # Singular value of a prediciton
+            prediction = predictions[index]  # Array of predicted values
+            advantage = advantages[index]    # Singular advantage of prediction
+
+            calc_reward = (np.array([0.7, 0.3, 0]) @ reward)
+
+            if np.array(reward).mean() <= 0.0:
+                target = 0.0
+            else:  # Non terminal, Using Q to get T is Double DQN
+                target = calc_reward + advantage * prediction[action]
+
+            prediction[action] = target
+
+            y_Actor.append(prediction)
+            y_Critic.append(discounted_rewards[index])
+            index += 1
+
+        # Reshape for Keras Fit
+        x_reshape = np.array(x).reshape(batch_size, self.nS)
+        yA_reshape = np.array(y_Actor)
+        yC_reshape = np.array(y_Critic)
+
+        loss = self.Actor.train_on_batch(x_reshape, yA_reshape)
+        loss2 = self.Critic.train_on_batch(x_reshape, yC_reshape)
+        return loss
 
 
 class get_ddqn_agent():

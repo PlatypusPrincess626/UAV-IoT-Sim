@@ -211,7 +211,7 @@ def evaluate(
             for cluster in range(len(eval_env.chX)):
                 CHCoords.append([eval_env.chX[cluster], eval_env.chY[cluster]])
 
-        csv_str = ("_Dual_NForced_500K_3K.csv")
+        csv_str = ("_PPO_500K_3K.csv")
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("sens_pts_" + curr_date_time.strftime("%d") + "_" +
@@ -343,10 +343,10 @@ def train(
             agent_p.update_target_from_model()
             """END"""
 
-            if timestep < 0.5 * total_steps:
-                agent.update_learning_rate(((0.5 * total_steps - timestep) * 0.80 * lr) / (0.5 * total_steps))
-            else:
-                agent.update_learning_rate(0)
+            # if timestep < 0.5 * total_steps:
+            #     agent.update_learning_rate(((0.5 * total_steps - timestep) * 0.80 * lr) / (0.5 * total_steps))
+            # else:
+            #     agent.update_learning_rate(0)
 
             env.reset()
 
@@ -433,7 +433,7 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr):
 
     """Dual Model"""
     agent_p.decay_epsilon(0)
-    agent.update_learning_rate((1 * lr) / prepop_steps)
+    # agent.update_learning_rate((1 * lr) / prepop_steps)
     switch = True
     while timestep < prepop_steps:
         env.reset()
@@ -469,10 +469,10 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr):
             agent.update_target_from_model()
             agent_p.update_target_From_model()
             env.reset()
-            if timestep < 0.2 * prepop_steps:
-                agent.update_learning_rate((timestep * lr) / (0.2 * prepop_steps))
-            else:
-                agent.update_learning_rate(lr)
+            # if timestep < 0.2 * prepop_steps:
+            #     agent.update_learning_rate((timestep * lr) / (0.2 * prepop_steps))
+            # else:
+            #     agent.update_learning_rate(lr)
 
 def run_experiment(args):
     env_str = args.env
@@ -484,7 +484,7 @@ def run_experiment(args):
         tf.config.experimental.set_memory_growth(device, True)
 
     lr = 0.00001
-    agent = model_utils.get_ddqn_agent(
+    agent = model_utils.get_ppo_agent(
         ((env.num_ch + 1) * 3),
         env.num_ch,
         alpha=lr,
@@ -508,7 +508,7 @@ def run_experiment(args):
     )
 
     prepopulate(agent, agent_p, 500_000, env, args.eval_frequency,lr)
-    agent.update_learning_rate(lr)
+    # agent.update_learning_rate(lr)
 
     print("Beginning Training")
     train(
