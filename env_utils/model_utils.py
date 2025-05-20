@@ -358,7 +358,7 @@ class get_ppo_agent:
         n = 0
         discounted_rewards = np.zeros(batch_size)
         for _, _, reward, _, _, _ in minibatch:
-            discounted_rewards[n] = reward * self.gamma
+            discounted_rewards[n] = (np.array([0.7, 0.3, 0]) @ reward) * self.gamma
             n += 1
 
         discounted_rewards -= np.mean(discounted_rewards)
