@@ -267,10 +267,10 @@ class get_ppo_agent:
 
         self.memory = deque([], mem_len)
 
-        self.Actor = self.build_model(self.nA)
-        self.Critic = self.build_model(1)
+        self.Actor = self.build_model(self.nA, 'categorical_crossentropy')
+        self.Critic = self.build_model(1, 'binary_crossentropy')
 
-    def build_model(self, out_size: int):
+    def build_model(self, out_size: int, loss: str):
         """
         Build the sequential layers of both DDQN models.
         Called at initialization with no input.
@@ -284,7 +284,7 @@ class get_ppo_agent:
         model.add(tf.keras.layers.Dense(512, activation='relu'))  # Layer 1 -> Layer 2
         model.add(tf.keras.layers.Dense(out_size, activation='softmax'))  # Layer 2 -> [output]
         model.compile(optimizer=tf.keras.optimizers.RMSprop(learning_rate=self.alpha),
-                      loss='categorical_crossentropy',  # Loss function: Mean Squared Error
+                      loss=loss,  # Loss function: Mean Squared Error
                       metrics=['accuracy'])  # Optimaizer: Adam (Feel free to check other options)
         return model
 
@@ -376,16 +376,12 @@ class get_ppo_agent:
             prediction = predictions[index]  # Array of predicted values
             advantage = advantages[index]    # Singular advantage of prediction
 
-            print(advantage)
-
             calc_reward = (np.array([0.7, 0.3, 0]) @ reward)
 
             if np.array(reward).mean() <= 0.0:
                 target = 0.0
             else:  # Non terminal, Using Q to get T is Double DQN
                 target = calc_reward + advantage * prediction[action]
-
-            print(target)
 
             prediction[action] = target
 
@@ -400,6 +396,9 @@ class get_ppo_agent:
 
         loss = self.Actor.train_on_batch(x_reshape, yA_reshape)
         loss2 = self.Critic.train_on_batch(x_reshape, yC_reshape)
+
+        raise "Complete"
+
         return loss
 
 
