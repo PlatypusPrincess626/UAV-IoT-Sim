@@ -380,6 +380,8 @@ class get_ppo_agent:
             else:  # Non terminal, Using Q to get T is Double DQN
                 target = calc_reward + advantage * prediction[action]
 
+            print(target)
+
             prediction[action] = target
 
             y_Actor.append(prediction)
