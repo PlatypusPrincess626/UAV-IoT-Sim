@@ -359,14 +359,15 @@ class get_ppo_agent:
         advantages = np.zeros(batch_size)
         for _, _, reward, _, _, _ in minibatch:
             discounted_rewards[n] = (np.array([0.7, 0.3, 0]) @ reward) * self.gamma
-            advantages[n] = discounted_rewards[n] - values[n]
             n += 1
 
         discounted_rewards -= np.mean(discounted_rewards)
         discounted_rewards /= np.std(discounted_rewards)
 
+        n = 0
         for disc_r, value in zip(discounted_rewards, values):
-            advantages = disc_r - value
+            advantages[n] = disc_r - value
+            n += 1
 
         index = 0
         for state, action, reward, nstate, done, step in minibatch:
