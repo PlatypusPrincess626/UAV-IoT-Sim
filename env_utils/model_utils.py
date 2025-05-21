@@ -351,7 +351,6 @@ class get_ppo_agent:
 
         predictions = self.Actor.predict(st)  # Here is the speedup! I can predict on the ENTIRE batch
         values = self.Critic.predict(st)  # Predict values
-        next_values = self.Critic.predict(nst)
 
         # next_predictions = self.Actor.predict(nst)
 
@@ -369,9 +368,10 @@ class get_ppo_agent:
         for state, action, reward, nstate, done, step in minibatch:
             x.append(np.expand_dims(np.array(state).flatten(), axis=0))
             # Predict from state
-            value = values[index]            # Singular value of a prediciton
             prediction = predictions[index]  # Array of predicted values
             advantage = advantages[index]    # Singular advantage of prediction
+
+            print("%.2f, %.2f", prediction, advantage)
 
             calc_reward = (np.array([0.7, 0.3, 0]) @ reward)
 
