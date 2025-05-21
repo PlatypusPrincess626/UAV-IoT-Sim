@@ -356,14 +356,17 @@ class get_ppo_agent:
 
         n = 0
         discounted_rewards = np.zeros(batch_size)
+        advantages = np.zeros(batch_size)
         for _, _, reward, _, _, _ in minibatch:
             discounted_rewards[n] = (np.array([0.7, 0.3, 0]) @ reward) * self.gamma
-            print(discounted_rewards[n])
+            advantages[n] = discounted_rewards[n] - values[n]
             n += 1
 
         discounted_rewards -= np.mean(discounted_rewards)
         discounted_rewards /= np.std(discounted_rewards)
-        advantages = discounted_rewards - values
+
+        for disc_r, value in zip(discounted_rewards, values):
+            advantages = disc_r - value
 
         index = 0
         for state, action, reward, nstate, done, step in minibatch:
@@ -372,7 +375,7 @@ class get_ppo_agent:
             prediction = predictions[index]  # Array of predicted values
             advantage = advantages[index]    # Singular advantage of prediction
 
-            print("%.2f, %.2f", prediction, advantage)
+            print(advantage)
 
             calc_reward = (np.array([0.7, 0.3, 0]) @ reward)
 
