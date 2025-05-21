@@ -457,8 +457,8 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr):
 
             timestep += 1
 
-        if len(agent.memory) > 25:
-            agent.train(25)
+        if len(agent.memory) > 25000:
+            agent.train(25000)
         if len(agent_p.memory) > 2500:
             agent_p.train(2500)
 

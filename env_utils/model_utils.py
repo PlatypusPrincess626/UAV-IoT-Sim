@@ -397,8 +397,6 @@ class get_ppo_agent:
         loss = self.Actor.train_on_batch(x_reshape, yA_reshape)
         loss2 = self.Critic.train_on_batch(x_reshape, yC_reshape)
 
-        raise "Complete"
-
         return loss
 
 
