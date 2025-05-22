@@ -338,10 +338,10 @@ def train(
                 comms, move, harvest = evaluate(agent, agent_p, env, eval_episodes)
             """END"""
 
-            agent.update_target_from_model()
-            """Dual Model"""
-            agent_p.update_target_from_model()
-            """END"""
+            # agent.update_target_from_model()
+            # """Dual Model"""
+            # agent_p.update_target_from_model()
+            # """END"""
 
             # if timestep < 0.5 * total_steps:
             #     agent.update_learning_rate(((0.5 * total_steps - timestep) * 0.80 * lr) / (0.5 * total_steps))
@@ -465,9 +465,9 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr):
 
         if timestep % eval_frequency == 0:
             # DDQN
-            # for agent in agents:
-            agent.update_target_from_model()
-            agent_p.update_target_From_model()
+            # # for agent in agents:
+            # agent.update_target_from_model()
+            # agent_p.update_target_From_model()
             env.reset()
             # if timestep < 0.2 * prepop_steps:
             #     agent.update_learning_rate((timestep * lr) / (0.2 * prepop_steps))
