@@ -452,7 +452,7 @@ class get_ddaqn_agent():
         model.add(tf.keras.layers.Lambda(lambda x: tf.expand_dims(x, axis=1)))
 
         model.add(tf.keras.layer.MultiHeadAttention(num_heads=self.nA, key_dim=256))
-        model.add(tf.keras.layer.LayerNormalization(epsilon=1e-6))
+        model.add(tf.keras.layers.LayerNormalization(epsilon=1e-6))
 
         model.add(tf.keras.layers.Lambda(lambda x: tf.squeeze(x, axis=1)))
 
