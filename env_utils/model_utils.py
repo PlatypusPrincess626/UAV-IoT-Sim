@@ -400,6 +400,217 @@ class get_ppo_agent:
         return loss
 
 
+class get_ddaqn_agent():
+    """
+    Implementation of a DDQN agent to determine the next target of for the UAV
+
+    INPUTS:
+        nS -> number of state space variables when state is flattened (int)
+        nA -> number of action space output (int)
+        epsilon_i & epsilon_f -> boundaries for epsilon decay of function (max float, min float)
+                --> See decay_epsilon() function for further explanation
+        alpha -> model learning rate assign at initialization (float)
+        gamma -> contribution of target model for target updates (float)
+        epsilon -> initialized value for epsilon (float)
+    """
+
+    def __init__(self, nS: int, nA: int, epsilon_i: float = 1.0, epsilon_f: float = 0.0,
+                 alpha: float = 0.0001, gamma: float = 0.95, epsilon: float = 0.5, mem_len: int = 2500):
+        # ADF 2.0
+        self.nS = nS
+        self.nA = nA
+        # ADF 1.0
+
+        self.memory = deque([], mem_len)
+        self.alpha = alpha
+        self.gamma = gamma
+        # Explore/Exploit
+        self.epsilon = epsilon
+        self.epsilon_i = epsilon_i
+        self.epsilon_f = epsilon_f
+
+        self.model = self.build_model()
+        self.model_target = self.build_model()  # Second (target) neural network
+        self.update_target_from_model()  # Update weights
+
+        self.loss = []
+
+    def build_model(self):
+        """
+        Build the sequential layers of both DDQN models.
+        Called at initialization with no input.
+
+        OUTPUT:
+            model -> returns an agent for the ddqn class
+        """
+        model = tf.keras.Sequential()  # linear stack of layers https://keras.io/models/sequential/
+        model.add(tf.keras.layers.Input(shape=(self.nS,)))
+        model.add(tf.keras.layers.Dense(1024, activation='relu'))  # [Input] -> Layer 1
+        model.add(tf.keras.layers.BatchNormalization())
+        model.add(tf.keras.layers.Dropout(0.1))
+
+        model.add(tf.keras.layers.Lambda(lambda x: tf.expand_dims(x, axis=1)))
+
+        model.add(tf.keras.layer.MultiHeadAttention(num_heads=self.nA, key_dim=256))
+        model.add(tf.keras.layer.LayerNormalization(epsilon=1e-6))
+
+        model.add(tf.keras.layers.Lambda(lambda x: tf.squeeze(x, axis=1)))
+
+        model.add(tf.keras.layers.Dense(512, activation='relu'))  # Layer 1 -> 2
+        model.add(tf.keras.layers.BatchNormalization())
+        model.add(tf.keras.layers.Dropout(0.1))
+        model.add(tf.keras.layers.Dense(self.nA, activation='softmax'))  # Layer 2 -> [output]
+        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.alpha),
+                      loss='mean_squared_error',  # Loss function: Mean Squared Error
+                      metrics=['accuracy'])  # Optimaizer: Adam (Feel free to check other options)
+        return model
+
+
+    def update_learning_rate(self, new_learning_rate):
+        """
+        Updates the learning rate of the DDQN model by adjusting the optimizer learning rate.
+        Enables the use of warmup logic when training model
+
+        INPUT:
+            new_learning_rate -> value to change to which the learning rate is adjusted
+
+        OUTPUT:
+            change in model learning rate (no return)
+        """
+        tf.keras.backend.set_value(self.model.optimizer.learning_rate, new_learning_rate)
+
+    def decay_epsilon(self, n: float):
+        """
+        Directly sets exploration rate according to n with 0 meaning 'just started' and 1 meaning 'done'.
+        Using maximum of epsilon_f and epsilon_i, these values are max and min exploitation probability.
+
+        INPUT:
+            n -> value on scale [0,1] that mutates the upper limit to determine exploration change (float)
+
+        OUTPUT:
+            change in exploration rate (no return)
+        """
+        self.epsilon = max(
+            self.epsilon_f,
+            self.epsilon_i - n * (self.epsilon_i - self.epsilon_f))
+
+    def update_target_from_model(self):
+        """
+        Copy the weights from the primary model to the target model.
+        Use at intervals that create learning "checkpoints" for the model.
+        """
+        # Update the target model from the base model
+        self.model_target.set_weights(self.model.get_weights())
+
+    def act(self, state):
+        """
+        Equivalent to "forward". Uses the provided state to determine the action.
+        Action is gated by explore/exploit change.
+        If random float is less than epsilon, explore: Else, exploit.
+
+        INPUT:
+            state -> environment state (potentially unknown values)
+
+        OUTPUT:
+            action -> value projected on actin space (int)
+        """
+        r_state = modify_state(state)
+        if np.random.rand() < self.epsilon:
+            # Explore: Make random prediction on action space
+            return np.random.randint(self.nA)
+
+        # Exploit: Use the NN to predict the correct action from this state
+        action_vals = self.model.predict(np.expand_dims(np.array(r_state).flatten(), axis=0))
+        return np.argmax(action_vals[0])
+
+    def test_action(self, state):  # Exploit
+        """
+        Equivalent to "forward" and "act". Uses the provided state to determine the action.
+        Action is not gated by explore/exploit change leading to model decisions.
+
+        INPUT:
+            state -> environment state (potentially unknown values)
+
+        OUTPUT:
+            action -> value projected on actin space (int)
+        """
+        r_state = modify_state(state)
+        # Exploit: Use the NN to predict the correct action from this state
+        action_vals = self.model.predict(np.expand_dims(np.array(r_state).flatten(), axis=0))
+        return np.argmax(action_vals[0])
+
+    def update_mem(self, state, action, reward, nstate, done, step):
+        """
+        Stores current performance period on the memory stack
+
+        """
+        # Store the experience in memory
+        r_state = modify_state(state)
+        r_nstate = modify_state(nstate)
+        self.memory.append((r_state, action, reward, r_nstate, done, step))
+
+    def train(self, batch_size):
+        # We can use the change in weights from the target network to current network for stability
+        weights = []
+        for layer in self.model.layers:
+            for weight in layer.weights:
+                weights.append(weight.numpy().flatten())
+        np_weights = np.concatenate(weights)
+
+        weights_target = []
+        for layer in self.model_target.layers:
+            for weight in layer.weights:
+                weights_target.append(weight.numpy().flatten())
+        np_weights_target = np.concatenate(weights_target)
+
+        # Output is number from [0,1]
+        avg_weight_diff = np.average((np_weights - np_weights_target) / (np_weights + np_weights_target))
+        avg_sqr_diff = avg_weight_diff / abs(avg_weight_diff) * avg_weight_diff ** 2
+
+        # Execute the experience replay
+        minibatch = random.sample(self.memory, batch_size)  # Randomly sample from memory
+
+        # Convert to numpy for speed by vectorization
+        x = []
+        y = []
+        np_array = minibatch
+        st = np.zeros((0, self.nS))  # States
+        nst = np.zeros((0, self.nS))  # Next States
+        for i in range(len(np_array)):  # Creating the state and next state np arrays
+            st = np.append(st, np.expand_dims(np.array(np_array[i][0]).flatten(), axis=0), axis=0)
+            nst = np.append(nst, np.expand_dims(np.array(np_array[i][3]).flatten(), axis=0), axis=0)
+        st_predict = self.model.predict(st)  # Here is the speedup! I can predict on the ENTIRE batch
+        nst_predict = self.model.predict(nst)
+        nst_predict_target = self.model_target.predict(nst)  # Predict from the TARGET
+        index = 0
+
+        for state, action, reward, nstate, done, step in minibatch:
+            x.append(np.expand_dims(np.array(state).flatten(), axis=0))
+            # Predict from state
+            nst_action_predict_target = nst_predict_target[index]
+            nst_action_predict_model = nst_predict[index]
+
+            if np.array(reward).mean() <= 0.0:
+                target = self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)]
+            elif done:  # Terminal: Just assign reward much like {* (not done) - QB[state][action]}
+                target = (np.array([0.7, 0.3, 0]) @ reward)
+            else:  # Non terminal, Using Q to get T is Double DQN
+                target = ((np.array([0.7, 0.3, 0]) @ reward) +
+                          self.gamma * nst_action_predict_target[np.argmax(nst_action_predict_model)])
+
+            target_f = st_predict[index]
+            target_f[action] = target
+            y.append(target_f)
+            index += 1
+
+        # Reshape for Keras Fit
+        x_reshape = np.array(x).reshape(batch_size, self.nS)
+        y_reshape = np.array(y)
+
+        loss = self.model.train_on_batch(x_reshape, y_reshape)
+        return loss
+
+
 class get_ddqn_agent():
     """
     Implementation of a DDQN agent to determine the next target of for the UAV
@@ -603,7 +814,6 @@ class get_ddqn_agent():
 
         loss = self.model.train_on_batch(x_reshape, y_reshape)
         return loss
-
 
 
 class get_ddqn_agentp():
