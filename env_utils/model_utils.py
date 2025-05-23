@@ -443,26 +443,34 @@ class get_ddaqn_agent():
         OUTPUT:
             model -> returns an agent for the ddqn class
         """
-        model = tf.keras.Sequential()  # linear stack of layers https://keras.io/models/sequential/
-        model.add(tf.keras.layers.Input(shape=(self.nS,)))
-        model.add(tf.keras.layers.Dense(1024, activation='relu'))  # [Input] -> Layer 1
-        model.add(tf.keras.layers.BatchNormalization())
-        model.add(tf.keras.layers.Dropout(0.1))
+        inputs = tf.keras.layers.Input(shape=(self.nS, ))
 
-        model.add(tf.keras.layers.Lambda(lambda x: tf.expand_dims(x, axis=1)))
+        x = tf.keras.layers.Dense(1024, activation='relu')(inputs)
+        x = tf.keras.layers.BatchNormalization()(x)
+        x = tf.keras.layers.Dropout(0.1)(x)
 
-        model.add(tf.keras.layers.MultiHeadAttention(num_heads=self.nA, key_dim=256))
-        model.add(tf.keras.layers.LayerNormalization(epsilon=1e-6))
+        x_expanded = tf.keras.layers.Lambda(lambda x: tf.expand_dims(x, axis=1))(x)
 
-        model.add(tf.keras.layers.Lambda(lambda x: tf.squeeze(x, axis=1)))
+        attn_output = tf.keras.layers.MultiHeadAttention(num_heads=self.nA, key_dim=256)(
+            query=x_expanded, value=x_expanded, key=x_expanded
+        )
+        x = tf.keras.layers.LayerNormalization(epsilon=1e-6)(attn_output + x_expanded)
 
-        model.add(tf.keras.layers.Dense(512, activation='relu'))  # Layer 1 -> 2
-        model.add(tf.keras.layers.BatchNormalization())
-        model.add(tf.keras.layers.Dropout(0.1))
-        model.add(tf.keras.layers.Dense(self.nA, activation='softmax'))  # Layer 2 -> [output]
-        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=self.alpha),
-                      loss='mean_squared_error',  # Loss function: Mean Squared Error
-                      metrics=['accuracy'])  # Optimaizer: Adam (Feel free to check other options)
+        x = tf.keras.layers.Lambda(lambda x: tf.squeeze(x, axis=1))(x)
+
+        x = tf.keras.layers.Dense(512, activation='relu')(x)
+        x = tf.keras.layers.BatchNormalization()(x)
+        x = tf.keras.layers.Dropout(0.1)(x)
+
+        outputs = tf.keras.layers.Dense(self.nA, activation='softmax')(x)
+
+        model = Model(inputs, outputs)
+
+        model.compile(
+            optimizer=tf.keras.optimizers.Adam(learning_rate=self.alpha),
+            loss='mean_squared_error',  # Loss function: Mean Squared Error
+            metrics=['accuracy']  # Optimaizer: Adam (Feel free to check other options)
+        )
         return model
 
 
