@@ -466,6 +466,7 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr):
         if timestep % eval_frequency == 0:
             # DDQN
             # # for agent in agents:
+            print("Eval Here")
             agent.update_target_from_model()
             agent_p.update_target_From_model()
             env.reset()
@@ -484,7 +485,7 @@ def run_experiment(args):
         tf.config.experimental.set_memory_growth(device, True)
 
     lr = 0.00001
-    agent = model_utils.get_ppo_agent(
+    agent = model_utils.get_ddaqn_agent(
         ((env.num_ch + 1) * 3),
         env.num_ch,
         alpha=lr,
@@ -508,7 +509,7 @@ def run_experiment(args):
     )
 
     prepopulate(agent, agent_p, 500_000, env, args.eval_frequency,lr)
-    # agent.update_learning_rate(lr)
+    agent.update_learning_rate(lr)
 
     print("Beginning Training")
     train(
