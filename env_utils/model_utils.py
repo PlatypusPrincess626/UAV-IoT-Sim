@@ -445,7 +445,7 @@ class get_ddaqn_agent():
         """
         inputs = tf.keras.layers.Input(shape=(self.nS, ))
 
-        x = tf.keras.layers.Dense(1024, activation='relu')(inputs)
+        x = tf.keras.layers.Dense(512, activation='relu')(inputs)
         x = tf.keras.layers.BatchNormalization()(x)
         x = tf.keras.layers.Dropout(0.1)(x)
 
@@ -458,7 +458,7 @@ class get_ddaqn_agent():
 
         x = tf.keras.layers.Lambda(lambda x: tf.squeeze(x, axis=1))(x)
 
-        x = tf.keras.layers.Dense(512, activation='relu')(x)
+        x = tf.keras.layers.Dense(128, activation='relu')(x)
         x = tf.keras.layers.BatchNormalization()(x)
         x = tf.keras.layers.Dropout(0.1)(x)
 
@@ -467,7 +467,7 @@ class get_ddaqn_agent():
         model = Model(inputs, outputs)
 
         model.compile(
-            optimizer=tf.keras.optimizers.Adam(learning_rate=self.alpha),
+            optimizer=tf.keras.optimizers.AdamW(learning_rate=self.alpha),
             loss='mean_squared_error',  # Loss function: Mean Squared Error
             metrics=['accuracy']  # Optimaizer: Adam (Feel free to check other options)
         )
