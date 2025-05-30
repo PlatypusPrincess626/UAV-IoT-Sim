@@ -445,13 +445,13 @@ class get_ddaqn_agent():
         """
         inputs = tf.keras.layers.Input(shape=(self.nS, ))
 
-        x = tf.keras.layers.Dense(256, activation='relu')(inputs)
+        x = tf.keras.layers.Dense(512, activation='relu')(inputs)
         x = tf.keras.layers.BatchNormalization()(x)
         x = tf.keras.layers.Dropout(0.1)(x)
 
         x_expanded = tf.keras.layers.Lambda(lambda y: tf.expand_dims(y, axis=1))(x)
 
-        attn_output = tf.keras.layers.MultiHeadAttention(num_heads=self.nA, key_dim=256)(
+        attn_output = tf.keras.layers.MultiHeadAttention(num_heads=self.nA, key_dim=512)(
             query=x_expanded, value=x_expanded, key=x_expanded
         )
         x = tf.keras.layers.LayerNormalization(epsilon=1e-6)(attn_output + x_expanded)
