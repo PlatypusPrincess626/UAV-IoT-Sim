@@ -104,10 +104,11 @@ def evaluate(
         agent_p,  # Used for Dual Model/ Pass None for single model
         eval_env,
         eval_episodes,
+        Rewards,
         log_metrics=False,
         env_str=None,
         logger=None,
-        start_time=None
+        start_time=None,
 ):
     total_reward = 0
     num_crashes = 0
@@ -254,6 +255,14 @@ def evaluate(
                 csvwriter = csv.writer(csvfile, delimiter='|')
                 csvwriter.writerows(UAV_Metrics)
 
+        if log_metrics and i == eval_episodes - 1:
+            filename = ("rewards_" + curr_date_time.strftime("%d") + "_" +
+                        curr_date_time.strftime("%m") + csv_str)
+            open(filename, 'x')
+            with open(filename, 'w') as csvfile:
+                csvwriter = csv.writer(csvfile, delimiter='|')
+                csvwriter.writerows(Rewards)
+
         # if len(agent.memory) > 25000:
         #     agent.train(25000)
         # if len(agent_p.memory) > 2500:
@@ -305,11 +314,14 @@ def train(
         eval_episodes: int,
         lr: float,
         policy_path: str,
+        Rewards,
         logger=None,
 ):
     start_time = time()
     env.reset()
     sr, ret, length = 0.0, 0.0, 0.0
+    average_reward = [0.0, 0.0]
+    curr_step = 0
 
     agent.decay_epsilon(1)
     """Dual Agent Systems"""
@@ -319,8 +331,13 @@ def train(
 
     for timestep in range(total_steps):
         done = step(agent, agent_p, env)
+        average_reward += [agent.curr_reward, agent.reward2]
+        curr_step += 1
 
         if done:
+            average_reward = average_reward / curr_step
+            Rewards.append(average_reward)
+            average_reward = [0.0, 0.0]
             if len(agent.memory) > 25000:
                 agent.train(25000)
             if len(agent_p.memory) > 2500:
@@ -335,7 +352,7 @@ def train(
             #     comms, move, harvest = evaluate(agent, env, eval_episodes)
             """Dual Model Call"""
             sr, ret, length, avgAoI, peakAoI, dataDist, dataColl, CH_Metrics, \
-                comms, move, harvest = evaluate(agent, agent_p, env, eval_episodes)
+                comms, move, harvest = evaluate(agent, agent_p, env, eval_episodes, Rewards)
             """END"""
 
             agent.update_target_from_model()
@@ -343,8 +360,8 @@ def train(
             agent_p.update_target_from_model()
             """END"""
 
-            if timestep < 0.5 * total_steps:
-                agent.update_learning_rate(((0.5 * total_steps - timestep) * 0.80 * lr) / (0.5 * total_steps))
+            if timestep < total_steps:
+                agent.update_learning_rate(((total_steps - timestep) * 0.80 * lr) / (0.5 * total_steps))
             else:
                 agent.update_learning_rate(0)
 
@@ -361,7 +378,7 @@ def train(
     #     comms, move, harvest = evaluate(agent, env, eval_episodes, True, env_str, start_time)
     """Dual Model Call"""
     sr, ret, length, avgAoI, peakAoI, dataDist, dataColl, CH_Metrics, \
-        comms, move, harvest = evaluate(agent, agent_p, env, eval_episodes, True, env_str, start_time)
+        comms, move, harvest = evaluate(agent, agent_p, env, eval_episodes, Rewards, True, env_str, start_time)
     """END"""
 
 
@@ -395,7 +412,7 @@ def step(agent, agent_p, env):
     return done
 
 
-def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr):
+def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr, Rewards):
     timestep = 0
     # QL
     agent.decay_epsilon(0)
@@ -438,6 +455,8 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr):
     while timestep < prepop_steps:
         env.reset()
         done = False
+        curr_step = 0
+        average_reward = [0.0, 0.0]
 
         while not done:
             print(f"Prepop Step: {timestep}, Reward: {env.full_reward}")
@@ -448,6 +467,8 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr):
             if buffer_done or env.truncated:
                 done = True
 
+            average_reward += [agent.curr_reward, agent.reward2]
+
             if (train_model or env.truncated) and not buffer_done:
                 agent.update_mem(old_state, old_action, env.archived_rewards,
                                  env.curr_state, buffer_done, env.curr_step)
@@ -455,7 +476,11 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr):
             if train_p or done:
                 agent_p.update_mem(old_pstate, int(action_p), env.archived_rewardsp, env.curr_pstate, buffer_done)
 
+            curr_step += 1
             timestep += 1
+
+        average_reward = average_reward / curr_step
+        Rewards.append(average_reward)
 
         if len(agent.memory) > 25000:
             agent.train(25000)
@@ -465,7 +490,7 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr):
 
         if timestep % eval_frequency == 0:
             # DDQN
-            # # for agent in agents:
+            # # for agent average_rewardin agents:
             print("Eval Here")
             agent.update_target_from_model()
             agent_p.update_target_From_model()
@@ -508,7 +533,9 @@ def run_experiment(args):
         f"model={args.model}"
     )
 
-    prepopulate(agent, agent_p, 500_000, env, args.eval_frequency,lr)
+    Rewards = []
+
+    prepopulate(agent, agent_p, 500_000, env, args.eval_frequency,lr,Rewards)
     agent.update_learning_rate(lr)
 
     print("Beginning Training")
@@ -522,6 +549,7 @@ def run_experiment(args):
         args.eval_episodes,
         lr,
         policy_path,
+        Rewards,
         # logger
     )
 
