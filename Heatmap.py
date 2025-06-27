@@ -54,7 +54,7 @@ def main():
     	ax.set_axis_off()
     	fig.add_axes(ax)
     	plt.imshow(po, cmap='turbo', interpolation='none', vmin = 0, vmax = powMax)
-    	plt.show()
+    	plt.savefig("output.png")
 
     return 0
     
