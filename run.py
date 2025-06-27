@@ -331,7 +331,7 @@ def train(
 
     for timestep in range(total_steps):
         done = step(agent, agent_p, env)
-        average_reward += [agent.curr_reward, agent.reward2]
+        average_reward += [env.curr_reward, env.reward2]
         curr_step += 1
 
         if done:
@@ -467,7 +467,7 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr, Rewards):
             if buffer_done or env.truncated:
                 done = True
 
-            average_reward += [agent.curr_reward, agent.reward2]
+            average_reward += [env.curr_reward, env.reward2]
 
             if (train_model or env.truncated) and not buffer_done:
                 agent.update_mem(old_state, old_action, env.archived_rewards,
