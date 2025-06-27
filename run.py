@@ -51,13 +51,13 @@ def get_args():
     parser.add_argument(
         "--steps",
         type=int,
-        default=100_000,
+        default=18_000,
         help="Maximum number of steps for training."
     )
     parser.add_argument(
         "--eval-frequency",
         type=int,
-        default=10_000,
+        default=3_600,
         help="Frequency of agent evaluation."
     )
     parser.add_argument(
