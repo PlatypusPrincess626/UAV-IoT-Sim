@@ -10,7 +10,7 @@ import math
 def main():
     lat_center = 44.424  # Latiitude
     long_center = -110.589  # Longitude
-    dim = 10  # Map dimension n x n
+    dim = 100  # Map dimension n x n
 
     if (dim % 2 == 0):
         dim += 1
