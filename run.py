@@ -335,7 +335,7 @@ def train(
         curr_step += 1
 
         if done:
-            average_reward = average_reward / curr_step
+            average_reward = [average_reward[0] / curr_step, average_reward[1] / curr_step]
             Rewards.append(average_reward)
             average_reward = [0.0, 0.0]
             if len(agent.memory) > 25000:
@@ -479,7 +479,7 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr, Rewards):
             curr_step += 1
             timestep += 1
 
-        average_reward = average_reward / curr_step
+        average_reward = [average_reward[0] / curr_step, average_reward[1] / curr_step]
         Rewards.append(average_reward)
 
         if len(agent.memory) > 25000:
