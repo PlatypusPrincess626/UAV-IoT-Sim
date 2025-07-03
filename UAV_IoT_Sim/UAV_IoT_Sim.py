@@ -141,7 +141,8 @@ class make_env:
             self.terminated = False
             self._curr_total_data = 0
             return self._env
-    
+        return None
+
     def step(self, model, model_p):
         train_model = False
         train_CH = 0

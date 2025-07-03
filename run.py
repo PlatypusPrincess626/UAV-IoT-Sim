@@ -307,12 +307,12 @@ def evaluate(
 def train(
         agent,
         agent_p,  # Pass None if using Single Agent
-        env: object,
-        env_str: str,
-        total_steps: int,
-        eval_frequency: int,
-        eval_episodes: int,
-        lr: float,
+        env,
+        env_str,
+        total_steps,
+        eval_frequency,
+        eval_episodes,
+        lr,
         policy_path: str,
         Rewards,
         logger=None,
@@ -320,7 +320,8 @@ def train(
     start_time = time()
     env.reset()
     sr, ret, length = 0.0, 0.0, 0.0
-    average_reward = [0.0, 0.0]
+    average_reward = 0.0
+    average_reward_p = 0.0
     curr_step = 0
 
     agent.decay_epsilon(1)
@@ -331,13 +332,16 @@ def train(
 
     for timestep in range(total_steps):
         done = step(agent, agent_p, env)
-        average_reward += [env.curr_reward, env.reward2]
+        average_reward += env.curr_reward
+        average_reward_p += env.reward2
         curr_step += 1
 
         if done:
-            average_reward = [average_reward[0] / curr_step, average_reward[1] / curr_step]
-            Rewards.append(average_reward)
-            average_reward = [0.0, 0.0]
+            average_reward = average_reward / curr_step
+            average_reward_p = average_reward_p / curr_step
+            Rewards.append([average_reward, average_reward_p])
+            average_reward = 0.0
+            average_reward_p = 0.0
             if len(agent.memory) > 25000:
                 agent.train(25000)
             if len(agent_p.memory) > 2500:
@@ -456,7 +460,8 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr, Rewards):
         env.reset()
         done = False
         curr_step = 0
-        average_reward = [0.0, 0.0]
+        average_reward = 0.0
+        average_reward_p = 0.0
 
         while not done:
             print(f"Prepop Step: {timestep}, Reward: {env.full_reward}")
@@ -467,7 +472,8 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr, Rewards):
             if buffer_done or env.truncated:
                 done = True
 
-            average_reward += [env.curr_reward, env.reward2]
+            average_reward += env.curr_reward
+            average_reward_p += env.reward2
 
             if (train_model or env.truncated) and not buffer_done:
                 agent.update_mem(old_state, old_action, env.archived_rewards,
@@ -479,8 +485,9 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr, Rewards):
             curr_step += 1
             timestep += 1
 
-        average_reward = [average_reward[0] / curr_step, average_reward[1] / curr_step]
-        Rewards.append(average_reward)
+        average_reward = average_reward / curr_step
+        average_reward_p = average_reward_p / curr_step
+        Rewards.append([average_reward, average_reward_p])
 
         if len(agent.memory) > 25000:
             agent.train(25000)
