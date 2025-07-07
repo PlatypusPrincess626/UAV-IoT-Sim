@@ -342,6 +342,7 @@ def train(
             Rewards.append([average_reward, average_reward_p])
             average_reward = 0.0
             average_reward_p = 0.0
+            curr_step = 0
             if len(agent.memory) > 25000:
                 agent.train(25000)
             if len(agent_p.memory) > 2500:
@@ -485,10 +486,6 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr, Rewards):
             curr_step += 1
             timestep += 1
 
-        average_reward = average_reward / curr_step
-        average_reward_p = average_reward_p / curr_step
-        Rewards.append([average_reward, average_reward_p])
-
         if len(agent.memory) > 25000:
             agent.train(25000)
         if len(agent_p.memory) > 2500:
@@ -496,6 +493,10 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr, Rewards):
 
 
         if timestep % eval_frequency == 0:
+            average_reward = average_reward / curr_step
+            average_reward_p = average_reward_p / curr_step
+            Rewards.append([average_reward, average_reward_p])
+
             # DDQN
             # # for agent average_rewardin agents:
             print("Eval Here")
