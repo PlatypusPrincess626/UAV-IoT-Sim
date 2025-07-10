@@ -485,7 +485,7 @@ class get_ddaqn_agent():
         OUTPUT:
             change in model learning rate (no return)
         """
-        tf.keras.backend.set_value(self.model.optimizer.learning_rate, new_learning_rate)
+        self.model.optimizer.learning_rate.assign(new_learning_rate)
 
     def decay_epsilon(self, n: float):
         """
