@@ -6,6 +6,7 @@ from time import time, sleep
 from typing import Optional, Tuple
 import csv
 import datetime
+import numpy as np
 
 import wandb
 
@@ -212,7 +213,7 @@ def evaluate(
             for cluster in range(len(eval_env.chX)):
                 CHCoords.append([eval_env.chX[cluster], eval_env.chY[cluster]])
 
-        csv_str = ("_DDAQN_500K_5K.csv")
+        csv_str = ("_DDAQN_500K_3K.csv")
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("sens_pts_" + curr_date_time.strftime("%d") + "_" +
@@ -320,8 +321,8 @@ def train(
     start_time = time()
     env.reset()
     sr, ret, length = 0.0, 0.0, 0.0
-    average_reward = 0.0
-    average_reward_p = 0.0
+    average_reward1 = 0.0
+    average_reward2 = 0.0
     curr_step = 0
 
     agent.decay_epsilon(1)
@@ -332,16 +333,16 @@ def train(
 
     for timestep in range(total_steps):
         done = step(agent, agent_p, env)
-        average_reward += env.curr_reward
-        average_reward_p += env.reward2
+        average_reward1 += np.array([0.7, 0.3, 0]) @ env.rewards
+        average_reward2 += np.array([0.25, 0.25, 0.5]) @ env.rewards
         curr_step += 1
 
         if done:
-            average_reward = average_reward / curr_step
-            average_reward_p = average_reward_p / curr_step
-            Rewards.append([average_reward, average_reward_p])
-            average_reward = 0.0
-            average_reward_p = 0.0
+            average_reward1 = average_reward1 / curr_step
+            average_reward2 = average_reward2 / curr_step
+            Rewards.append([average_reward1, average_reward2])
+            average_reward1 = 0.0
+            average_reward2 = 0.0
             curr_step = 0
             if len(agent.memory) > 25000:
                 agent.train(25000)
@@ -461,8 +462,8 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr, Rewards):
         env.reset()
         done = False
         curr_step = 0
-        average_reward = 0.0
-        average_reward_p = 0.0
+        average_reward1 = 0.0
+        average_reward2 = 0.0
 
         while not done:
             print(f"Prepop Step: {timestep}, Reward: {env.full_reward}")
@@ -473,8 +474,8 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr, Rewards):
             if buffer_done or env.truncated:
                 done = True
 
-            average_reward += env.curr_reward
-            average_reward_p += env.reward2
+            average_reward1 += np.array([0.7, 0.3, 0]) @ env.rewards
+            average_reward2 += np.array([0.25, 0.25, 0.5]) @ env.rewards
 
             if (train_model or env.truncated) and not buffer_done:
                 agent.update_mem(old_state, old_action, env.archived_rewards,
@@ -493,9 +494,9 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr, Rewards):
 
 
         if timestep % eval_frequency == 0:
-            average_reward = average_reward / curr_step
-            average_reward_p = average_reward_p / curr_step
-            Rewards.append([average_reward, average_reward_p])
+            average_reward1 = average_reward1 / curr_step
+            average_reward2 = average_reward2 / curr_step
+            Rewards.append([average_reward1, average_reward2])
 
             # DDQN
             # # for agent average_rewardin agents:
