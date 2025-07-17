@@ -321,8 +321,6 @@ def train(
     start_time = time()
     env.reset()
     sr, ret, length = 0.0, 0.0, 0.0
-    average_reward1 = 0.0
-    average_reward2 = 0.0
     curr_step = 0
 
     agent.decay_epsilon(1)
@@ -333,16 +331,10 @@ def train(
 
     for timestep in range(total_steps):
         done = step(agent, agent_p, env)
-        average_reward1 += np.array([0.7, 0.3, 0]) @ env.rewards
-        average_reward2 += np.array([0.25, 0.25, 0.5]) @ env.rewards
         curr_step += 1
 
         if done:
-            average_reward1 = average_reward1 / curr_step
-            average_reward2 = average_reward2 / curr_step
-            Rewards.append([average_reward1, average_reward2])
-            average_reward1 = 0.0
-            average_reward2 = 0.0
+            Rewards.append([env.full_reward, env.full_reward2])
             curr_step = 0
             if len(agent.memory) > 25000:
                 agent.train(25000)
@@ -462,8 +454,6 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr, Rewards):
         env.reset()
         done = False
         curr_step = 0
-        average_reward1 = 0.0
-        average_reward2 = 0.0
 
         while not done:
             print(f"Prepop Step: {timestep}, Reward: {env.full_reward}")
@@ -473,9 +463,6 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr, Rewards):
 
             if buffer_done or env.truncated:
                 done = True
-
-            average_reward1 += np.array([0.7, 0.3, 0]) @ env.rewards
-            average_reward2 += np.array([0.25, 0.25, 0.5]) @ env.rewards
 
             if (train_model or env.truncated) and not buffer_done:
                 agent.update_mem(old_state, old_action, env.archived_rewards,
@@ -494,9 +481,7 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr, Rewards):
 
 
         if timestep % eval_frequency == 0:
-            average_reward1 = average_reward1 / curr_step
-            average_reward2 = average_reward2 / curr_step
-            Rewards.append([average_reward1, average_reward2])
+            Rewards.append([env.full_reward, env.full_reward2])
 
             # DDQN
             # # for agent average_rewardin agents:
