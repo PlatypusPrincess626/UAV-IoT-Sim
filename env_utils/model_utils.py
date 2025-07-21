@@ -445,20 +445,20 @@ class get_ddaqn_agent():
         """
         inputs = tf.keras.layers.Input(shape=(self.nS, ))
 
-        x = tf.keras.layers.Dense(324, activation='relu')(inputs)
+        x = tf.keras.layers.Dense(171, activation='relu')(inputs)
         x = tf.keras.layers.BatchNormalization()(x)
         x = tf.keras.layers.Dropout(0.1)(x)
 
         x_expanded = tf.keras.layers.Lambda(lambda y: tf.expand_dims(y, axis=1))(x)
 
-        attn_output = tf.keras.layers.MultiHeadAttention(num_heads=self.nA, key_dim=324)(
+        attn_output = tf.keras.layers.MultiHeadAttention(num_heads=self.nA, key_dim=171)(
             query=x_expanded, value=x_expanded, key=x_expanded
         )
         x = tf.keras.layers.LayerNormalization(epsilon=1e-6)(attn_output + x_expanded)
 
         x = tf.keras.layers.Lambda(lambda y: tf.squeeze(y, axis=1))(x)
 
-        x = tf.keras.layers.Dense(165, activation='relu')(x)
+        x = tf.keras.layers.Dense(88, activation='relu')(x)
         x = tf.keras.layers.BatchNormalization()(x)
         x = tf.keras.layers.Dropout(0.1)(x)
 
@@ -850,10 +850,10 @@ class get_ddqn_agentp():
     def build_model(self):
         model = tf.keras.Sequential()  # linear stack of layers https://keras.io/models/sequential/
         model.add(tf.keras.layers.Input(shape=(self.nS,)))
-        model.add(tf.keras.layers.Dense(16, activation='relu'))  # [Input] -> Layer 1
+        model.add(tf.keras.layers.Dense(10, activation='relu'))  # [Input] -> Layer 1
         model.add(tf.keras.layers.BatchNormalization())
         model.add(tf.keras.layers.Dropout(0.2))
-        model.add(tf.keras.layers.Dense(13, activation='relu'))  # Layer 2 -> 3
+        model.add(tf.keras.layers.Dense(10, activation='relu'))  # Layer 2 -> 3
         model.add(tf.keras.layers.BatchNormalization())
         model.add(tf.keras.layers.Dropout(0.2))
         model.add(tf.keras.layers.Dense(self.nA, activation='softmax'))  # Layer 3 -> [output]
