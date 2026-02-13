@@ -215,6 +215,7 @@ class Sensor(EdgeDevice):
         interference = env.get_obfuscation(self.id_x, self.id_y, step)
         cell_current = np.trapz(spectra['poa_global'] * self.spectral_response, spectra['wavelength'], axis=0)
         power = abs(alpha / 100) * interference * cell_current * self.solar_area
+        print(power)
 
         if power / self.solar_current > self.solar_voltage * 0.8:
             self.is_solar = True
