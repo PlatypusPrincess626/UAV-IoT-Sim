@@ -334,6 +334,7 @@ class QuadUAV:
 
         if self.target is None:
             minDist = 10_000.0
+            print(self.full_sensor_list)
             minCH = self.full_sensor_list.iat[1, 0]
             for CH in range(len(self.full_sensor_list.index) - 1):
                 dist = math.sqrt(pow((self.id_x - self.full_sensor_list.iat[CH + 1, 0].id_x), 2)
