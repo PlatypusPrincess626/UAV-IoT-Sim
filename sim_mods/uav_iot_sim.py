@@ -168,7 +168,7 @@ class make_env:
 
                 for CH in range(self.num_ch):
                     self._env.ch_table.iat[CH, 0].harvest_energy(alpha, self._env, self.curr_step)
-                    self._env.ch_table.iat[CH, 0].ch_download(self.curr_step)
+                    self._env.ch_table.iat[CH, 0].download(self.curr_step)
 
                 for uav in range(self._num_uav):
                     uav = self._env.uav_table.iat[uav, 0]
