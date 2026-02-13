@@ -77,7 +77,7 @@ class sim_env:
             if checkpoint == 0:
                 self.obfuscation_array = np.expand_dims(shadows, axis=0)
             else:
-                np.append(self.obfuscation_array, np.expand_dims(shadows, axis=0))
+                np.append(self.obfuscation_array, np.expand_dims(shadows, axis=0), axis=1)
 
         print(self.obfuscation_array.shape)
 
