@@ -82,8 +82,6 @@ class sim_env:
 
         self.obfuscation_array = np.array(shadow_array)
 
-        print(self.obfuscation_array.shape)
-
         self.envMap = self.makeMap()
 
     # Create Map and Grid

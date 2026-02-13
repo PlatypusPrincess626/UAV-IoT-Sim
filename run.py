@@ -456,7 +456,7 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr, Rewards):
         curr_step = 0
 
         while not done:
-            print(f"Prepop Step: {timestep}, Reward: {env.full_reward}")
+            print(f"Prepop Step: {timestep}, Reward: {env.rewards}")
             train_model, train_p, old_state, old_action, action_p, old_pstate, comms, move, harvest = (
                 env.step(agent, agent_p))
             buffer_done = env.terminated
