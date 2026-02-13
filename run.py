@@ -15,7 +15,7 @@ from sim_mods import uav_iot_sim
 from env_utils import model_utils
 from env_utils.logger_utils import RunningAverage, get_logger
 
-import os
+os.environ['XLA_FLAGS'] = '--xla_gpu_cuda_data_dir=/usr/local/anaconda3/nvvm/libdevice/libdevice.10.bc'
 import tensorflow as tf
 
 
