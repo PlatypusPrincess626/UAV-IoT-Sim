@@ -337,7 +337,7 @@ class ClusterHead(EdgeDevice):
         self.stored_energy = self.battery_calc(self.stored_energy, self.max_energy, self.total_amp_spent, self.step_charge)
 
     def harvest_energy(self, alpha, env, step):
-        spectra = env.getIrradiance(self.lat, self.long, self.tilt, self.azimuth, step)
+        spectra = env.get_spectrum(self.lat, self.long, self.tilt, self.azimuth, step)
         interference = env.get_obfuscation(self.id_x, self.id_y, step)
         cell_current = np.trapz(spectra['poa_global'] * self.spectral_response, spectra['wavelength'], axis=0)
         power = abs(alpha / 100) * interference * cell_current * self.solar_area
