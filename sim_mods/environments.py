@@ -79,6 +79,8 @@ class sim_env:
             else:
                 np.append(self.obfuscation_array, np.expand_dims(shadows, axis=0))
 
+        print(self.obfuscation_array.shape)
+
         self.envMap = self.makeMap()
 
     # Create Map and Grid
