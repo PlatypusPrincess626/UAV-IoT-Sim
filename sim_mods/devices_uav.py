@@ -75,17 +75,13 @@ class QuadUAV:
         self.origin_action = None
 
         # Pandas version of state used for environment comparisons
-        ch_list = []
-        sensor_list = []
-        ch_list.append(self)
-        sensor_list.append(len(CHList))
+        # ch_list = []
+        # ch_list.append(self)
+        #
+        # for ch in range(len(CHList)):
+        #     ch_list.append(CHList[ch])
 
-        for ch in range(len(CHList)):
-            ch_list.append(CHList[ch][0])
-            sensor_list.append(CHList[ch][1])
-
-        self.full_sensor_list = pd.DataFrame(np.array(ch_list))
-        self.sensor_count = pd.DataFrame(np.array(sensor_list))
+        self.full_sensor_list = pd.DataFrame(np.array(CHList))
         self.full_sensor_list.rename(
             columns={0: "Device"},
             inplace=True
