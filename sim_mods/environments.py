@@ -163,7 +163,7 @@ class sim_env:
                                                    self.long_center + self.stp * (int(position / self.dim) - self.dim),
                                                    random.randint(1, 3))])
 
-        K = 0
+        K = 1
         while True:
             err_dist = False
             k_means = KMeans(n_clusters=K, random_state=0, n_init=10).fit(sensor_pts)
