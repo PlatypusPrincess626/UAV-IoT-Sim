@@ -170,8 +170,8 @@ class make_env:
                     self._env.ch_table.iat[CH, 0].harvest_energy(alpha, self._env, self.curr_step)
                     self._env.ch_table.iat[CH, 0].download(self.curr_step)
 
-                for uav in range(self._num_uav):
-                    uav = self._env.uav_table.iat[uav, 0]
+                for UAV in range(self._num_uav):
+                    uav = self._env.uav_table.iat[UAV, 0]
                     bad_target = uav.bad_target
                     train_model, DCH, used_model, train_p, state, action, action_p, p_state, comms, move, harvest = \
                         (uav.set_dest(model, model_p, self.curr_step))
@@ -183,7 +183,7 @@ class make_env:
                     excess_energy = uav.receive_energy()
 
                     # Make battery calculations when there is only one UAV
-                    self._env.uav_table.iat[uav, 0].step_battery()
+                    self._env.uav_table.iat[UAV, 0].step_battery()
                     for sens in range(self._num_sensors):
                         self._env.sensor_table.iat[sens, 0].step_battery()
                     for CH in range(self.num_ch):
