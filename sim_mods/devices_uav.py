@@ -226,7 +226,7 @@ class QuadUAV:
         change_archives = False
 
         if self.target.type == 1:
-            dataReturn = max(0, device.ws_upload_data(int(self.id_x), int(self.id_y)))
+            dataReturn = max(0, device.upload(int(self.id_x), int(self.id_y)))
 
             if math.sqrt(pow((self.id_x - self.target.id_x), 2) + pow((self.id_y - self.target.id_y), 2)) < \
                     self._comms.get("max_dist_ambc"):
@@ -267,7 +267,7 @@ class QuadUAV:
 
                 self.inRange = True
 
-                dataReturn, self.last_AoI, avg_AoI = device.ch_upload(int(self.id_x), int(self.id_y))
+                dataReturn, self.last_AoI, avg_AoI = device.upload(int(self.id_x), int(self.id_y))
                 dataReturn = max(0, dataReturn)
                 totalData += dataReturn
 
