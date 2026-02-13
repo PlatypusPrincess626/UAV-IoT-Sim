@@ -257,7 +257,7 @@ class QuadUAV:
             self.state[self.last_Head + 1][2] = step - self.last_AoI
             self.state[self.last_Head + 1][1] += totalData
             self.state[0][1] += totalData
-            self.targetSerial = self.targetHead.headSerial
+            self.targetSerial = self.targetHead.cluster_num
 
 
         else:
@@ -290,7 +290,7 @@ class QuadUAV:
             if device.type == 1:
                 self.state[CH + 1][2] += 1
                 self.state[CH + 1][3] += 1
-            elif device.headSerial != self.full_sensor_list.iat[CH + 1, 0].headSerial:
+            elif device.cluster_num != self.full_sensor_list.iat[CH + 1, 0].cluster_num:
                 self.state[CH + 1][2] += 1
                 self.state[CH + 1][3] += 1
             elif not self.inRange:
@@ -329,7 +329,7 @@ class QuadUAV:
         p_state = [0, 0, 0, 0]
 
         if self.targetHead is not None:
-            self.last_Head = self.targetHead.headSerial
+            self.last_Head = self.targetHead.cluster_num
 
         if self.target is None:
             minDist = 10_000.0
@@ -346,7 +346,7 @@ class QuadUAV:
             self.targetHead = minCH
             self.target_x = minCH.id_x
             self.target_y = minCH.id_y
-            self.targetSerial = self.targetHead.headSerial
+            self.targetSerial = self.targetHead.cluster_num
             self.targetType = False
             DCH = 0
 
@@ -373,7 +373,7 @@ class QuadUAV:
             self.p_cycle -= 1
 
             if self.targetType:
-                if dest.headSerial == self.targetSerial:
+                if dest.cluster_num == self.targetSerial:
                     self.force_count += 1
                 else:
                     self.force_count = 1
@@ -496,7 +496,7 @@ class QuadUAV:
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
                 else:
-                    if dest.headSerial == self.targetSerial:
+                    if dest.cluster_num == self.targetSerial:
                         self.targetType = True
                         self.bad_target = 1
                     else:
@@ -508,12 +508,12 @@ class QuadUAV:
 
                     self.target = dest
                     self.targetHead = dest
-                    self.targetSerial = self.targetHead.headSerial
+                    self.targetSerial = self.targetHead.cluster_num
                     self.target_x = dest.id_x
                     self.target_y = dest.id_y
 
                     return (train_model, DCH, used_model, train_p, state, action, action_p, p_state,
                             self.step_comms_cost, self.step_move_cost, self.energy_harvested)
 
-        return (train_model, DCH, used_model, train_p, self.state, self.targetHead.headSerial, action_p, p_state,
+        return (train_model, DCH, used_model, train_p, self.state, self.targetHead.cluster_num, action_p, p_state,
                 self.step_comms_cost, self.step_move_cost, self.energy_harvested)
