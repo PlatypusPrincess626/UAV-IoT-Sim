@@ -75,8 +75,7 @@ class QuadUAV:
         self.origin_action = None
 
         # Pandas version of state used for environment comparisons
-        ch_list = []
-        ch_list.append(len(CHList))
+        ch_list = [len(CHList)]
 
         for ch in range(len(CHList)):
             ch_list.append(CHList[ch])
