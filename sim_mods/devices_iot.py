@@ -238,7 +238,7 @@ class ClusterHead(EdgeDevice):
     """
     Child class of EdgeDevice that simulates a cluster head
     """
-    def __init__(self, env, x: int, y: int, long: float, lat: float, cluster_num: int, r_move: float, sensor_list: list):
+    def __init__(self, env, x: int, y: int, long: float, lat: float, sensor_list: list, r_move: float, cluster_num: int):
         super().__init__(x, y, long, lat, 12_500_000)
         self.type = 2
         self.typeStr = "Clusterhead"
