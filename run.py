@@ -11,7 +11,7 @@ import numpy as np
 import wandb
 
 # custom dependencies
-from UAV_IoT_Sim import UAV_IoT_Sim
+from sim_mods import uav_iot_sim
 from env_utils import model_utils
 from env_utils.logger_utils import RunningAverage, get_logger
 
@@ -497,7 +497,7 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr, Rewards):
 def run_experiment(args):
     env_str = args.env
     print("Creating Evironment")
-    env = UAV_IoT_Sim.make_env(scene=env_str, num_sensors=50, num_ch=5, num_uav=1, max_num_steps=720)
+    env = uav_iot_sim.make_env(scene=env_str, num_sensors=50, num_ch=5, num_uav=1, max_num_steps=720)
 
     gpu_devices = tf.config.experimental.list_physical_devices('GPU')
     for device in gpu_devices:
