@@ -164,7 +164,7 @@ class make_env:
 
                 for sens in range(self._num_sensors):
                     self._env.sensor_table.iat[sens, 0].harvest_energy(alpha, self._env, self.curr_step)
-                    self._env.sensor_table.iat[sens, 0].harvest_data(self.curr_step)
+                    self._env.sensor_table.iat[sens, 0].harvest_data()
 
                 for CH in range(self.num_ch):
                     self._env.ch_table.iat[CH, 0].harvest_energy(alpha, self._env, self.curr_step)
