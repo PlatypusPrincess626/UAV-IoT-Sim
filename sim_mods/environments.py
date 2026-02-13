@@ -256,5 +256,5 @@ class sim_env:
         return spectra
 
     def get_obfuscation(self, x: int, y: int, step):
-        return self.obfuscation_array[int(step / 30), (y * self.dim + x)]
+        return self.obfuscation_array[int(step / 30), int(y * self.dim + x)]
 
