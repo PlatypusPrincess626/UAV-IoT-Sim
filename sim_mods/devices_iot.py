@@ -364,8 +364,12 @@ class ClusterHead(EdgeDevice):
 
         self.active_table = np.array([0] * self.num_sensors)
         self.age_table = np.array([0] * self.num_sensors)
-        self.data_table = np.concatenate([self.stored_data], [0] * self.num_sensors)
         self.sens_table = pd.DataFrame(np.array(sens_list))
+
+        data_list = [self.stored_data]
+        for sensor in range(self.num_sensors):
+            data_list.append(0)
+        self.data_table = np.array(data_list)
 
     def download(self, step):
         rotations = math.ceil(len(self.sens_table.index) / 2)
