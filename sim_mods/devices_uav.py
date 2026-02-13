@@ -18,19 +18,19 @@ class QuadUAV:
 
         # Communication Specifications
         self._comms = {
-            "max_dist_lora": 5_000,
-            "max_bitrate_lora": 24_975,
-            "": 4_200,  # micro-amps transmitting
-            "voltage_lora": 3.7,
-            "pow_active_lora": 0.020,  # transmitting
-            "pow_sleep_lora": 0.004,  # static
-            "current_sleep_lora": 1_200,  # micro-amps
+            "max_dist_lora": 5_000,  # LoRa maximum distance (m)
+            "max_bitrate_lora": 24_975,  # LoRa maximum bitrate (bps)
+            "current_active_lora": 4_200,  # LoRa active current (muA)
+            "current_sleep_lora": 1_200,  # LoRa dormant current (muA)
+            "voltage_lora": 3.7,  # LoRa voltage requirements (V)
+            "pow_active_lora": 20,  # LoRa active power (muW)
+            "pow_sleep_lora": 4,  # LoRa dormant power (muW)
 
-            "max_dist_ambc": 800,
-            "max_bitrate_ambc": 1_592,
-            "pow_ambc": 0.00259,  # upkeep
-            "voltage_ambc": 3.3,
-            "current_ambc": 785  # micro-amps upkeep
+            "max_dist_ambc": 800,  # AmBC maximum distance (m)
+            "max_bitrate_ambc": 1_592,  # AmBC maximum bitrate (bps)
+            "pow_ambc": 3,  # AmBC upkeep power (muW)
+            "voltage_ambc": 3.3,  # AmBC voltage requirements (V)
+            "current_ambc": 785  # AmBC upkeep current (muA)
         }
 
         # Positioning
