@@ -71,13 +71,16 @@ class sim_env:
 
         # insert interference creation loop
         checkpoints = int(720 / 30)
-        self.obfuscation_array = None
+        shadow_array = []
         for checkpoint in range(checkpoints):
             shadows = self.init_interference()
-            if checkpoint == 0:
-                self.obfuscation_array = np.expand_dims(shadows, axis=0)
-            else:
-                np.append(self.obfuscation_array, np.expand_dims(shadows, axis=0), axis=0)
+            shadow_array.append(shadows)
+            # if checkpoint == 0:
+            #     self.obfuscation_array = np.expand_dims(shadows, axis=0)
+            # else:
+            #     np.append(self.obfuscation_array, np.expand_dims(shadows, axis=0), axis=0)
+
+        self.obfuscation_array = np.array(shadow_array)
 
         print(self.obfuscation_array.shape)
 
