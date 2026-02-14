@@ -486,7 +486,7 @@ def prepopulate(agent, agent_p, prepop_steps, env, eval_frequency, lr, Rewards):
             # # for agent average_rewardin agents:
             print("Eval Here")
             agent.update_target_from_model()
-            agent_p.update_target_From_model()
+            agent_p.update_target_from_model()
             env.reset()
             if timestep < 0.2 * prepop_steps:
                 agent.update_learning_rate((timestep * lr) / (0.2 * prepop_steps))
