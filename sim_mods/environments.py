@@ -52,6 +52,8 @@ class sim_env:
 
         self.chX = [0] * self.total_clusterheads
         self.chY = [0] * self.total_clusterheads
+        self.sensor_pts = []
+        self.ch_pts = []
 
         if (scene == "test"):
             # Test scene will be Yellowstone National Park
@@ -63,7 +65,7 @@ class sim_env:
             self.tau500 = 0.75  # Aerosol Turbidity 500nm
             self.ozone = 0.23  # Ozone in atm-cm
             self.albedo = 0.2  # Bare Ground and Grassy
-            self.dim = 3_000  # Map dimension n x n
+            self.dim = 5_000  # Map dimension n x n
             self.numObst = 500  # Number of obstacles decided
             self.stepSize = 'min'  # Frequency of time steps
             self.times = pd.date_range('2021-01-01 8:00', freq=self.stepSize, periods=self.max_num_steps, tz="MST")
@@ -221,6 +223,9 @@ class sim_env:
                                                  count,
                                                  ch_list)])
             count += 1
+
+        self.sensor_pts = sensor_pts
+        self.ch_pts = centroids
 
         self.sensor_table = pd.DataFrame(sensor_list)
         self.sensor_table.rename(

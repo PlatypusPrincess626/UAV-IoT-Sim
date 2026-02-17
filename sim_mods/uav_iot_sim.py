@@ -27,6 +27,8 @@ class make_env:
 
         self.uav_x = 0
         self.uav_y = 0
+        self.sensor_pts = self._env.sensor_pts
+        self.ch_pts = self._env.ch_pts
 
         self._num_sensors = num_sensors
         self.num_ch = self._env.total_clusterheads  # K-means changes the number of clusterheads used

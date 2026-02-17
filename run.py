@@ -122,11 +122,11 @@ def evaluate(
 
     CH_Metrics = [[0, 0] for _ in range(eval_env.num_ch)]
 
-    CH_Age = []
-    CH_Data = []
+    CH_Age = [[0]*eval_env.num_ch]*eval_episodes
+    CH_Data = [[0]*(eval_env.num_ch + 1)]*eval_episodes
     UAV_Metrics = []
-    CHCoords = []
-    SensCoords = []
+    CHCoords = [[[0, 0]]*eval_env.num_ch]*eval_episodes
+    SensCoords = [[[0, 0]]*eval_env._num_sensors]*eval_episodes
 
     accum_comms = 0
     accum_move = 0
@@ -198,21 +198,22 @@ def evaluate(
             ep_reward += eval_env.full_reward
 
             if log_metrics and i == eval_episodes - 1:
-                CH_Age.append([CH_Metrics[0][1], CH_Metrics[1][1], CH_Metrics[2][1],
-                               CH_Metrics[3][1], CH_Metrics[4][1]])
-                CH_Data.append([eval_env.curr_state[0][1], CH_Metrics[0][0], CH_Metrics[1][0], CH_Metrics[2][0],
-                                CH_Metrics[3][0], CH_Metrics[4][0]])
+                CH_Data[i][0] = eval_env.curr_state[0][1]
+                for ch in range(eval_env.num_ch):
+                    CH_Age[i][ch] = CH_Metrics[ch][1]
+                    CH_Data[i][ch+1] = CH_Metrics[ch][0]
                 UAV_Metrics.append([eval_env.uavX, eval_env.uavY, eval_env.curr_state[0][2], comms, move, harvest])
 
         curr_date_time = datetime.datetime.now()
 
         if log_metrics and i == eval_episodes - 1:
-            for sensor in range(len(eval_env.sensX)):
-                SensCoords.append([eval_env.sensX[sensor], eval_env.sensY[sensor]])
-            for cluster in range(len(eval_env.chX)):
-                CHCoords.append([eval_env.chX[cluster], eval_env.chY[cluster]])
+            for sensor in range(eval_env._num_sensors):
+                SensCoords[i][sensor] = [eval_env.sensor_table.iat[sensor, 0].id_x,
+                                         eval_env.sensor_table.iat[sensor, 0].id_y]
+            for ch in range(eval_env.num_ch):
+                SensCoords[i][ch] = eval_env.ch_table.iat[ch, 0].self.curr_pt
 
-        csv_str = ("_DDAQN_500K_3K.csv")
+        csv_str = ("_DDAQN_500K_5K_1K.csv")
 
         if log_metrics and i == eval_episodes - 1:
             filename = ("sens_pts_" + curr_date_time.strftime("%d") + "_" +
