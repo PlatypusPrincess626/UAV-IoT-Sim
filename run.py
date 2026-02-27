@@ -202,7 +202,7 @@ def evaluate(
                 for ch in range(eval_env.num_ch):
                     CH_Age[i][ch] = CH_Metrics[ch][1]
                     CH_Data[i][ch+1] = CH_Metrics[ch][0]
-                UAV_Metrics.append([eval_env.uavX, eval_env.uavY, eval_env.curr_state[0][2], comms, move, harvest])
+                UAV_Metrics.append([eval_env.uav_x, eval_env.uav_y, eval_env.curr_state[0][2], comms, move, harvest])
 
         curr_date_time = datetime.datetime.now()
 

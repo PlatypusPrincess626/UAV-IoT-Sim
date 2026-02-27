@@ -141,6 +141,132 @@ class EdgeDevice:
         return pt_optimal
 
 
+    def find_power(self, env, x: int, y: int, step: int,
+                   sol_area: int, tilt: int, azimuth: int):
+
+        spectra = env.get_spectrum(self.lat, self.long, tilt, azimuth, step)
+        interference = env.get_obfuscation(x, y, step)
+        cell_current = np.trapz(spectra['poa_global'] * self.spectral_response,
+                                spectra['wavelength'], axis=0)
+        a = step / 60 + 2
+        alpha = abs(104 - 65 * a + 47 * pow(a, 2) - 12 * pow(a, 3) + pow(a, 4))
+        power = abs(alpha / 100) * interference * cell_current * sol_area
+
+        return power
+
+    def path(self, env, num_legs: int, r_max: int, max_speed: int, acceleration: int, u_rr: float, w: int,
+             sol_area: int, sol_current: int, sol_voltage: int, tilt: int, azimuth: int):
+        legs = []
+        times = []
+        leg = 0
+        centroid = [self.get_indicies()]
+        pt_max = [self.get_indicies()]
+        t_run = 0
+        pts = []
+
+        inactive_flag = False
+        while not inactive_flag:
+            power = self.find_power(env, self.id_x, self.id_y, t_run, sol_area, tilt, azimuth)
+
+            if power / sol_current > sol_voltage * 0.8:
+                t_run += 1
+            else:
+                inactive_flag = True
+        t_max = t_run
+
+        for x in range(2 * math.floor(r_max) + 1):
+            for y in range(2 * math.floor(r_max) + 1):
+                x_try = centroid[0] + x - math.floor(r_max)
+                y_try = centroid[1] + y - math.floor(r_max)
+                t_run = 0
+                if math.sqrt((centroid[0] - x_try) ** 2 + (centroid[1] - y_try) ** 2) < r_max:
+                    pts.append([x_try, y_try])
+                    inactive_flag = False
+                    while not inactive_flag:
+                        power = self.find_power(env, x_try, y_try, t_run, sol_area, tilt, azimuth)
+                        if power / sol_current > sol_voltage * 0.8:
+                            t_run += 1
+                        else:
+                            inactive_flag = True
+                    if t_run > t_max:
+                        pt_max = [x_try, y_try]
+                        t_max = t_run
+        legs.append(pt_max)
+        times.append(t_max)
+        t_temp = t_max
+        leg += 1
+
+        while leg < (num_legs - 1):
+            max_energy = 0
+            for pt in pts:
+                t_run = t_temp
+                energy_harvest = 0
+                travel_dist = math.sqrt((pt_max[0] - pt[0]) ** 2 + (pt_max[1] - pt[1]) ** 2)
+                accel_dist = ((0.5 * acceleration * (max_speed/acceleration)**2) +
+                              (max_speed * (max_speed/acceleration) - 0.5 * acceleration * (max_speed/acceleration)**2))
+
+                if accel_dist < travel_dist:
+                    t_accel = math.sqrt(travel_dist/acceleration)
+                    v_final = acceleration * t_accel
+                    energy_move = w/9.8 * v_final**2
+                else:
+                    t_remain = (travel_dist - accel_dist) / max_speed
+                    power_velocity = w * 3600 * max_speed * u_rr
+                    energy_move = w/9.8 * max_speed**2 + power_velocity * t_remain
+
+                inactive_flag = False
+                while not inactive_flag:
+                    power = self.find_power(env, pt[0], pt[1], t_run, sol_area, tilt, azimuth)
+                    if power / sol_current > sol_voltage * 0.8:
+                        t_run += 1
+                        energy_harvest += power
+                    else:
+                        inactive_flag = True
+
+                if energy_harvest - energy_move > max_energy:
+                    pt_max = [pt[0], pt[1]]
+                    t_max = t_run
+                    max_energy = energy_harvest - energy_move
+            legs.append(pt_max)
+            times.append(t_max)
+            t_temp = t_max
+            leg += 1
+
+        max_energy = 0
+        for pt in pts:
+            energy_harvest = 0
+            t_run = t_temp
+            travel_dist = math.sqrt((pt_max[0] - pt[0]) ** 2 + (pt_max[1] - pt[1]) ** 2)
+            accel_dist = ((0.5 * acceleration * (max_speed / acceleration) ** 2) +
+                          (max_speed * (max_speed / acceleration) - 0.5 * acceleration *
+                           (max_speed / acceleration) ** 2))
+
+            if accel_dist < travel_dist:
+                t_accel = math.sqrt(travel_dist / acceleration)
+                v_final = acceleration * t_accel
+                energy_move = w / 9.8 * v_final ** 2
+            else:
+                t_remain = (travel_dist - accel_dist) / max_speed
+                power_velocity = w * 3600 * max_speed * u_rr
+                energy_move = w / 9.8 * max_speed ** 2 + power_velocity * t_remain
+
+            while t_run < env.max_num_steps:
+                power = self.find_power(env, pt[0], pt[1], t_run, sol_area, tilt, azimuth)
+                if power / sol_current > sol_voltage * 0.8:
+                    t_run += 1
+                    energy_harvest += power
+
+            if energy_harvest - energy_move > max_energy:
+                pt_max = [pt[0], pt[1]]
+                t_max = t_run
+                max_energy = energy_harvest - energy_move
+        legs.append(pt_max)
+        times.append(t_max)
+        leg += 1
+
+        return legs, times
+
+
 class Sensor(EdgeDevice):
     """
     Child class of EdgeDevice that simulates a sensor
@@ -252,10 +378,22 @@ class ClusterHead(EdgeDevice):
         self.solar_voltage = 18  # V
         self.solar_current = 6  # A
         self.solar_power = 100  # W
+
         self.r_max = r_move
-        self.speed = 1  # m / min
-        self.curr_pt = self.optimal_move(env, self.r_max, self.id_x, self.id_y,
-                                         0.75, 0, 0, self.speed)
+        self.speed = 20  # m / min
+        self.acceleration = 300  # m / min**2
+        self.u_rr = 0.1
+        self.num_legs = 4
+        self.w = 21  # N
+        self.legs, self.times = self.path(env, self.num_legs, self.r_max, self.speed, self.acceleration,
+                                          self.u_rr, self.w, self.solar_area, self.solar_current,
+                                          self.solar_voltage, self.tilt, self.azimuth)
+
+        self.leg_num = 0
+        self.leg = self.legs[self.leg_num]
+        self.est_point = self.leg
+        self.curr_pt = self.leg
+        self.curr_spd = 0
 
         # State tracking of sensors
         self.max_age = 0
@@ -291,8 +429,9 @@ class ClusterHead(EdgeDevice):
         self.max_energy = 12_000  # Maximum battery capacity (mAh)
         self.charge_rate = 1 / 3  # Charge rate of battery (A/h)
         self.discharge_rate = 0.655  # Discharge rate of batter (A/h)
+        self.battery_voltage = 15
 
-        self.uav_charge_amp = 10  #A
+        self.uav_charge_amp = 10  # A
 
         self.stored_energy = 100  # Battery initialization
         self.total_amp_spent = 0.0
@@ -313,6 +452,12 @@ class ClusterHead(EdgeDevice):
         self.stored_energy = 100
         self.total_amp_spent = 0.0
         self.step_charge = 100 / (self.charge_rate * 60)
+
+        self.leg_num = 0
+        self.leg = self.legs[self.leg_num]
+        self.est_point = self.leg
+        self.curr_pt = self.leg
+        self.curr_spd = 0
 
         # Reset target
         self.contribution = 0
@@ -337,10 +482,7 @@ class ClusterHead(EdgeDevice):
         self.stored_energy = self.battery_calc(self.stored_energy, self.max_energy, self.total_amp_spent, self.step_charge)
 
     def harvest_energy(self, alpha, env, step):
-        spectra = env.get_spectrum(self.lat, self.long, self.tilt, self.azimuth, step)
-        interference = env.get_obfuscation(self.id_x, self.id_y, step)
-        cell_current = np.trapz(spectra['poa_global'] * self.spectral_response, spectra['wavelength'], axis=0)
-        power = abs(alpha / 100) * interference * cell_current * self.solar_area
+        power = self.find_power(env, self.curr_pt[0], self.curr_pt[1], step, self.solar_area, self.tilt, self.azimuth)
 
         # Check if the machine is powered
         if power / self.solar_current > self.solar_voltage * 0.8:
@@ -348,12 +490,52 @@ class ClusterHead(EdgeDevice):
         else:
             self.is_solar = False
 
-        # Check if CH should move this step
-        recommended_pt = self.optimal_move(env, self.r_max, self.id_x, self.id_y,
-                                           0.75, 0, 0, self.speed)
-        if self.curr_pt != recommended_pt:
-            self.curr_pt = recommended_pt
-            self.total_amp_spent += 282
+        if step == self.times[self.leg_num]:
+            self.leg_num += 1
+            self.leg = self.legs[self.leg_num]
+
+        energy_move = 0
+        if self.curr_pt != self.leg:
+            travel_dist = math.sqrt((self.leg[0] - self.est_point[0]) ** 2 + (self.leg[1] - self.est_point[1]) ** 2)
+            accel_dist = ((0.5 * self.acceleration * (self.speed / self.acceleration) ** 2) +
+                          (self.speed * (self.speed / self.acceleration) - 0.5 * self.acceleration *
+                           (self.speed / self.acceleration) ** 2))
+            if accel_dist < travel_dist:
+                t_accel = math.sqrt(travel_dist / self.acceleration)
+                v_final = self.acceleration * t_accel
+                energy_move = self.w / 9.8 * v_final ** 2
+                self.curr_pt = self.leg
+                self.est_point = self.leg
+            elif (accel_dist + (1 - 2 * self.speed / self.acceleration) * self.speed) >= travel_dist:
+                t_remain = (travel_dist - accel_dist) / self.speed
+                power_velocity = self.w * 3600 * self.speed * self.u_rr
+                energy_move = self.w / 9.8 * self.speed ** 2 + power_velocity * t_remain
+                self.curr_pt = self.leg
+                self.est_point = self.leg
+            elif self.curr_spd < self.speed:
+                t_remain = (travel_dist - 0.5 * accel_dist) / self.speed
+                power_velocity = self.w * 3600 * self.speed * self.u_rr
+                energy_move = self.w / 9.8 * self.speed ** 2 + power_velocity * t_remain
+                travelled = self.speed * t_remain + 0.5 * self.acceleration * (self.speed / self.acceleration)**2
+                self.est_point = [self.est_point[0] + (travelled / travel_dist) * (self.leg[0] - self.est_point[0]),
+                                  self.est_point[1] + (travelled / travel_dist) * (self.leg[1] - self.est_point[1])]
+                self.curr_pt = [round(self.est_point[0]), round(self.est_point[1])]
+            elif (0.5 * accel_dist + (1 - self.speed / self.acceleration) * self.speed) > travel_dist:
+                t_remain = (travel_dist - 0.5 * accel_dist) / self.speed
+                power_velocity = self.w * 3600 * self.speed * self.u_rr
+                energy_move = self.w / 9.8 * self.speed ** 2 + power_velocity * t_remain
+                self.curr_pt = self.leg
+                self.est_point = self.leg
+            else:
+                power_velocity = self.w * 3600 * self.speed * self.u_rr
+                energy_move = power_velocity
+                travelled = self.speed
+                self.est_point = [self.est_point[0] + (travelled / travel_dist) * (self.leg[0] - self.est_point[0]),
+                                  self.est_point[1] + (travelled / travel_dist) * (self.leg[1] - self.est_point[1])]
+                self.curr_pt = [round(self.est_point[0]), round(self.est_point[1])]
+
+            self.total_amp_spent += energy_move / self.battery_voltage
+
 
         amp_upkeep = (self.current_cpu + self._comms.get("current_active_lora")) / 1_000  # to mA
         self.total_amp_spent += amp_upkeep
