@@ -536,7 +536,6 @@ class ClusterHead(EdgeDevice):
 
             self.total_amp_spent += energy_move / self.battery_voltage
 
-
         amp_upkeep = (self.current_cpu + self._comms.get("current_active_lora")) / 1_000  # to mA
         self.total_amp_spent += amp_upkeep
 
