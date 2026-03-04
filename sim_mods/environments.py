@@ -72,7 +72,8 @@ class sim_env:
             random.seed('2021-01-01 8:00')
 
         # insert interference creation loop
-        checkpoints = int(720 / 30)
+        self.chkpt_div = 15
+        checkpoints = int(720 / self.chkpt_div)
         shadow_array = []
         for checkpoint in range(checkpoints):
             shadows = self.init_interference()
@@ -264,5 +265,5 @@ class sim_env:
         return spectra
 
     def get_obfuscation(self, x: int, y: int, step):
-        return self.obfuscation_array[int(step / 30), int(y * self.dim + x)]
+        return self.obfuscation_array[int(step / self.chkpt_div), int(y * self.dim + x)]
 

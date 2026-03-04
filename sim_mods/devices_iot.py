@@ -165,7 +165,7 @@ class EdgeDevice:
         pts = []
 
         inactive_flag = False
-        while not inactive_flag:
+        while not inactive_flag and t_run < env.max_num_steps:
             power = self.find_power(env, self.id_x, self.id_y, t_run, sol_area, tilt, azimuth)
 
             if power / sol_current > sol_voltage * 0.8:
@@ -182,7 +182,7 @@ class EdgeDevice:
                 if math.sqrt((centroid[0] - x_try) ** 2 + (centroid[1] - y_try) ** 2) < r_max:
                     pts.append([x_try, y_try])
                     inactive_flag = False
-                    while not inactive_flag:
+                    while not inactive_flag and t_run < env.max_num_steps:
                         power = self.find_power(env, x_try, y_try, t_run, sol_area, tilt, azimuth)
                         if power / sol_current > sol_voltage * 0.8:
                             t_run += 1
@@ -196,8 +196,11 @@ class EdgeDevice:
         t_temp = t_max
         leg += 1
 
-        while leg < (num_legs - 1):
+        while leg < (num_legs - 1) and t_run < env.max_num_steps:
             max_energy = 0
+            t_travel_max = 0
+            pt_max_next = pt_max
+            t_max_next = t_max
             for pt in pts:
                 t_run = t_temp
                 energy_harvest = 0
@@ -209,13 +212,19 @@ class EdgeDevice:
                     t_accel = math.sqrt(travel_dist/acceleration)
                     v_final = acceleration * t_accel
                     energy_move = w/9.8 * v_final**2
+                    t_travel = t_accel
                 else:
                     t_remain = (travel_dist - accel_dist) / max_speed
                     power_velocity = w * 3600 * max_speed * u_rr
                     energy_move = w/9.8 * max_speed**2 + power_velocity * t_remain
+                    t_travel = math.sqrt(travel_dist/acceleration) + t_remain
+
+                t_run += t_travel
+                if t_travel > t_travel_max:
+                    t_travel_max = t_travel
 
                 inactive_flag = False
-                while not inactive_flag:
+                while not inactive_flag and t_run < env.max_num_steps:
                     power = self.find_power(env, pt[0], pt[1], t_run, sol_area, tilt, azimuth)
                     if power / sol_current > sol_voltage * 0.8:
                         t_run += 1
@@ -223,43 +232,63 @@ class EdgeDevice:
                     else:
                         inactive_flag = True
 
+                t_grace = t_max
+                grace_energy = 0
+                while t_grace < t_run:
+                    power = self.find_power(env, pt_max[0], pt_max[1], t_run, sol_area, tilt, azimuth)
+                    if power / sol_current > sol_voltage * 0.8:
+                        t_grace += 1
+                        grace_energy += power
+
+                if energy_harvest - energy_move > max_energy and energy_harvest - energy_move > grace_energy:
+                    pt_max_next = [pt[0], pt[1]]
+                    t_max_next = t_run
+                    max_energy = energy_harvest - energy_move
+
+            if pt_max_next != pt_max:
+                pt_max = pt_max_next
+                t_max = t_max_next
+                legs.append(pt_max)
+                times.append(t_max)
+                t_temp = t_max
+                leg += 1
+            else:
+                t_max += t_travel_max
+                t_temp = t_max
+
+        max_energy = 0
+        if t_max < env.max_num_steps:
+            for pt in pts:
+                t_run = t_temp
+                t_travel = 0
+                energy_harvest = 0
+                travel_dist = math.sqrt((pt_max[0] - pt[0]) ** 2 + (pt_max[1] - pt[1]) ** 2)
+                accel_dist = ((0.5 * acceleration * (max_speed / acceleration) ** 2) +
+                              (max_speed * (max_speed / acceleration) - 0.5 * acceleration *
+                               (max_speed / acceleration) ** 2))
+
+                if accel_dist < travel_dist:
+                    t_accel = math.sqrt(travel_dist / acceleration)
+                    v_final = acceleration * t_accel
+                    energy_move = w / 9.8 * v_final ** 2
+                    t_travel += t_accel
+                else:
+                    t_remain = (travel_dist - accel_dist) / max_speed
+                    power_velocity = w * 3600 * max_speed * u_rr
+                    energy_move = w / 9.8 * max_speed ** 2 + power_velocity * t_remain
+                    t_travel = math.sqrt(travel_dist / acceleration) + t_remain
+
+                t_run += t_travel
+                while t_run < env.max_num_steps:
+                    power = self.find_power(env, pt[0], pt[1], t_run, sol_area, tilt, azimuth)
+                    if power / sol_current > sol_voltage * 0.8:
+                        t_run += 1
+                        energy_harvest += power
+
                 if energy_harvest - energy_move > max_energy:
                     pt_max = [pt[0], pt[1]]
                     t_max = t_run
                     max_energy = energy_harvest - energy_move
-            legs.append(pt_max)
-            times.append(t_max)
-            t_temp = t_max
-            leg += 1
-
-        max_energy = 0
-        for pt in pts:
-            energy_harvest = 0
-            t_run = t_temp
-            travel_dist = math.sqrt((pt_max[0] - pt[0]) ** 2 + (pt_max[1] - pt[1]) ** 2)
-            accel_dist = ((0.5 * acceleration * (max_speed / acceleration) ** 2) +
-                          (max_speed * (max_speed / acceleration) - 0.5 * acceleration *
-                           (max_speed / acceleration) ** 2))
-
-            if accel_dist < travel_dist:
-                t_accel = math.sqrt(travel_dist / acceleration)
-                v_final = acceleration * t_accel
-                energy_move = w / 9.8 * v_final ** 2
-            else:
-                t_remain = (travel_dist - accel_dist) / max_speed
-                power_velocity = w * 3600 * max_speed * u_rr
-                energy_move = w / 9.8 * max_speed ** 2 + power_velocity * t_remain
-
-            while t_run < env.max_num_steps:
-                power = self.find_power(env, pt[0], pt[1], t_run, sol_area, tilt, azimuth)
-                if power / sol_current > sol_voltage * 0.8:
-                    t_run += 1
-                    energy_harvest += power
-
-            if energy_harvest - energy_move > max_energy:
-                pt_max = [pt[0], pt[1]]
-                t_max = t_run
-                max_energy = energy_harvest - energy_move
         legs.append(pt_max)
         times.append(t_max)
         leg += 1
