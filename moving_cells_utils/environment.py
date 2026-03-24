@@ -1,6 +1,6 @@
 from pvlib import spectrum, solarposition, irradiance, atmosphere
 import pandas as pd
-import devices_ugv as ugv
+from moving_cells_utils import devices_ugv as ugv
 import random
 import numpy as np
 from scipy.signal import windows
@@ -20,7 +20,7 @@ def gaussian_kernel(n, std, normalised=False):
 
 
 class SingleUGVEnv:
-    def __init__(self, max_steps: int=720, max_dim: int=800, chkpt_div: int=5):
+    def __init__(self, max_steps: int=720, max_dim: int=800, chkpt_div: int=60):
         """
         Need environment variables required by PVLib set up obfuscation table
         """
@@ -34,10 +34,11 @@ class SingleUGVEnv:
         checkpoints = int(720 / self.chkpt_div)
         shadow_array = []
         for checkpoint in range(checkpoints):
+            print("Making Happy Trees:", checkpoint)
             shadows = self.init_interference()
             shadow_array.append(shadows)
         self.obfuscation_array = np.array(shadow_array)
-        self.ugv = ugv.DeviceUGV(self, random.sample(range(int(self.dim*9/10)), k=1))
+        self.ugv = ugv.DeviceUGV(self, random.sample(range(int(self.dim*9/10)), k=1)[0])
 
         self.current_step = 0
 
@@ -49,7 +50,6 @@ class SingleUGVEnv:
     def init_interference(self):
         env_static_interference = [0.0] * (self.dim * self.dim)
         shadows = int(self.dim)
-        print("Making Happy Trees")
         for shadow in range(shadows):
             place = random.randint(0, self.dim * self.dim - 1)
             size = random.randint(int(8), int(50))
@@ -76,7 +76,7 @@ class SingleUGVEnv:
         """
         Return spectrum from PVLib
         """
-        solpos = solarposition.get_solarposition(self.times[time], self.latitude+x*self.res,
+        solpos = solarposition.spa_python(self.times[time], self.latitude+x*self.res,
                                                  self.longitude+y*self.res, pressure=self.pressure)
         relative_airmass = atmosphere.get_relative_airmass(solpos.apparent_zenith, model='kasten1966')
         spectra = spectrum.spectrl2(
