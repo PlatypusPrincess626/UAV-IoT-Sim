@@ -1,11 +1,12 @@
 import uopvp_solver as uopvp
 import numpy as np
-
+import environment
 import math
 
 
-class device_ugv:
-    def __init__(self, env: object, d_lim: int):
+class DeviceUGV:
+    def __init__(self, env: environment.SingleUGVEnv, d_lim: int):
+
         """
         Initialize with energy costs/limitations and solar cell specifications
         """
@@ -31,7 +32,7 @@ class device_ugv:
                                            [0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0],
                                            [0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0]])
 
-        self.router = uopvp.uopvp_solver(env, self)
+        self.router = uopvp.UOPVPSolver(env, self)
         self.position = 0
         self.curr_location = self.router.current_route[self.position]
         self.next_location = self.router.current_route[self.position]
