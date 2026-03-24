@@ -20,7 +20,7 @@ def gaussian_kernel(n, std, normalised=False):
 
 
 class SingleUGVEnv:
-    def __init__(self, max_steps: int=720, max_dim: int=800, chkpt_div: int=60):
+    def __init__(self, max_steps: int=720, max_dim: int=800, chkpt_div: int=15):
         """
         Need environment variables required by PVLib set up obfuscation table
         """
