@@ -1,9 +1,13 @@
 import math
 import copy
-import numpy as np
 import random
-
-from scipy.special import powm1
+import devices_ugv as ugv
+import environment
+import os
+import datetime
+import csv
+import atexit
+import time
 
 
 def sum_sqrt_diff_sq(x: int, stop: int):
@@ -15,10 +19,10 @@ def sum_sqrt_diff_sq(x: int, stop: int):
     return summation
 
 
-class uopvp_solver:
-    def __init__(self, env: object, agent: object):
+class UOPVPSolver:
+    def __init__(self, env: environment.SingleUGVEnv, agent: ugv.DeviceUGV):
         """
-        Set OPVP variables, set initial route, find initial window, call further optimization
+        Set UOPVP variables, set initial route, find initial window, call further optimization
         """
         self.env = env  # Environment class object
         self.agent = agent  # UGV class object
@@ -37,12 +41,93 @@ class uopvp_solver:
         # Find total nuber of vertices
         self.num_vertices = int(1 + 4 * self.d_max + 4 * sum_sqrt_diff_sq(self.d_max, self.d_max))  # Number of Vertices
 
+        """
+        Log Files
+        """
+        # Set directory path
+        log_dir = "logs"
+        os.makedirs(log_dir, exist_ok=True)
+        csv_str = ".csv"
+        date_time = datetime.datetime.now()
+        self.change_num = 0
+        # Route logging
+        route_log = ("solver_routes_" + date_time.strftime("%d") + "_" +
+                        date_time.strftime("%m") + csv_str)
+        route_logfile = os.path.join(log_dir, route_log)
+        # open once, append mode; newline='' avoids blank lines on Windows
+        self.route_file = open(route_logfile, mode='a', newline='', encoding='utf-8')
+        self.route_writer = csv.writer(self.route_file, delimiter='|')
+        # write header only if file is empty
+        if os.path.getsize(route_logfile) == 0:
+            self.route_writer.writerow(["change", "route"])
+            self.route_file.flush()
+
+        # Transition logging
+        t_route_log = ("solver_transitions_" + date_time.strftime("%d") + "_" +
+                     date_time.strftime("%m") + csv_str)
+        t_route_logfile = os.path.join(log_dir, t_route_log)
+        # open once, append mode; newline='' avoids blank lines on Windows
+        self.t_route_file = open(t_route_logfile, mode='a', newline='', encoding='utf-8')
+        self.t_route_writer = csv.writer(self.t_route_file, delimiter='|')
+        # write header only if file is empty
+        if os.path.getsize(t_route_logfile) == 0:
+            self.t_route_writer.writerow(["change", "transitions"])
+            self.t_route_file.flush()
+
+        # Service logging
+        service_log = ("solver_service_" + date_time.strftime("%d") + "_" +
+                       date_time.strftime("%m") + csv_str)
+        service_logfile = os.path.join(log_dir, service_log)
+        # open once, append mode; newline='' avoids blank lines on Windows
+        self.service_file = open(service_logfile, mode='a', newline='', encoding='utf-8')
+        self.service_writer = csv.writer(self.service_file, delimiter='|')
+        # write header only if file is empty
+        if os.path.getsize(service_logfile) == 0:
+            self.service_writer.writerow(["change", "intervals"])
+            self.service_file.flush()
+
+        # Route Scores logging
+        scores_log = ("solver_scores_" + date_time.strftime("%d") + "_" +
+                      date_time.strftime("%m") + csv_str)
+        scores_logfile = os.path.join(log_dir, scores_log)
+        # open once, append mode; newline='' avoids blank lines on Windows
+        self.scores_file = open(scores_logfile, mode='a', newline='', encoding='utf-8')
+        self.scores_writer = csv.writer(self.scores_file, delimiter='|')
+        # write header only if file is empty
+        if os.path.getsize(scores_logfile) == 0:
+            self.scores_writer.writerow(["change", "route score", "actual score"])
+            self.scores_file.flush()
+
+        # Time logging
+        time_log = ("solver_times_" + date_time.strftime("%d") + "_" +
+                       date_time.strftime("%m") + csv_str)
+        time_logfile = os.path.join(log_dir, time_log)
+        # open once, append mode; newline='' avoids blank lines on Windows
+        self.time_file = open(time_logfile, mode='a', newline='', encoding='utf-8')
+        self.time_writer = csv.writer(self.time_file, delimiter='|')
+        # write header only if file is empty
+        if os.path.getsize(time_logfile) == 0:
+            self.time_writer.writerow(["total", "swap", "add", "remove", "replace"])
+            self.time_file.flush()
+
+        start_time = time.perf_counter()
         self.profit_map, self.best_vertices = self.max_profits()
         self.current_route, self.current_t_route, self.current_route_score = self.initial_planner(self.best_vertices[0])
         self.current_service_interval = self.service_window_optimizer(self.current_route, self.current_t_route)
         (self.current_route, self.current_t_route, self.current_service_interval, self.current_actual_profit,
          self.current_route_score) = (self.optimize_route(self.current_route, self.current_t_route,
                                                           self.current_service_interval,  self.current_route_score))
+
+        self.route_writer.writerow([self.change_num, self.current_route])
+        self.route_file.flush()
+        self.t_route_writer.writerow([self.change_num, self.current_t_route])
+        self.t_route_file.flush()
+        self.service_writer.writerow([self.change_num, self.current_service_interval])
+        self.service_file.flush()
+        self.scores_writer.writerow([self.change_num, self.current_route_score, self.current_actual_profit])
+        self.scores_file.flush()
+        self.change_num += 1
+        print(self.change_num)
 
         for root in range(len(self.best_vertices) - 1):
             proposed_route, proposed_t_route, proposed_route_score = self.initial_planner(self.best_vertices[root+1])
@@ -56,6 +141,48 @@ class uopvp_solver:
                 self.current_actual_profit = proposed_actual_profit
                 self.current_route_score = proposed_route_score
 
+                self.route_writer.writerow([self.change_num, self.current_route])
+                self.route_file.flush()
+                self.t_route_writer.writerow([self.change_num, self.current_t_route])
+                self.t_route_file.flush()
+                self.service_writer.writerow([self.change_num, self.current_service_interval])
+                self.service_file.flush()
+                self.scores_writer.writerow([self.change_num, self.current_route_score, self.current_actual_profit])
+                self.scores_file.flush()
+                self.change_num += 1
+                print(self.change_num)
+        execution_time = time.perf_counter() - start_time
+        self.time_writer.writerow([execution_time, 0, 0, 0, 0])
+        self.time_file.flush()
+
+
+
+    def __del__(self):
+        try:
+            self.route_file.close()
+        except Exception:
+            pass
+        try:
+            self.t_route_file.close()
+        except Exception:
+            pass
+        try:
+            self.service_file.close()
+        except Exception:
+            pass
+        try:
+            self.scores_file.close()
+        except Exception:
+            pass
+        try:
+            self.time_file.close()
+        except Exception:
+            pass
+        atexit.register(lambda: self.route_file and not self.route_file.closed and self.route_file.close())
+        atexit.register(lambda: self.t_route_file and not self.t_route_file.closed and self.t_route_file.close())
+        atexit.register(lambda: self.service_file and not self.service_file.closed and self.service_file.close())
+        atexit.register(lambda: self.scores_file and not self.scores_file.closed and self.scores_file.close())
+        atexit.register(lambda: self.time_file and not self.time_file.closed and self.time_file.close())
 
     def find_profit_and_beta(self, x: int, y: int, t: int):
         energy = self.agent.try_harvest(x, y, t)  # Nonlinear function that determines profit
@@ -162,14 +289,14 @@ class uopvp_solver:
         """
         Using a root vertex, create an initial best route
         """
-        route = np.array([[root[0], root[1]]])
+        route = [[root[0], root[1]]]
         current_best_route = copy.deepcopy(route)
         t_route = []
         current_best_t_route = copy.deepcopy(t_route)
         route_score = root[2]
         current_best_route_score = root[2]
         searches = 0
-        while t_route <= 0.2 * self.t_max and searches < self.planner_limit:
+        while sum(t_route) <= 0.2 * self.t_max and searches < self.planner_limit:
             searches += 1
             last_node = copy.deepcopy(current_best_route)[-1]
             for x in range(-2*self.v_max, 2*self.v_max):
@@ -178,8 +305,10 @@ class uopvp_solver:
                     if (math.sqrt(x**2 + y**2) >= self.v_max
                             and math.sqrt((x+last_node[0])**2 + (y+last_node[1])**2) <= self.d_max):
                         proposed_node = [[last_node[0]+x, last_node[1]+y]]
-                        proposed_route = np.append(route, proposed_node, axis=0)
-                        proposed_t_route = copy.deepcopy(t_route).append(math.sqrt(x ** 2 + y ** 2) / self.v_max)
+                        proposed_route = copy.deepcopy(route)
+                        proposed_route.append(proposed_node)
+                        proposed_t_route = copy.deepcopy(current_best_t_route)
+                        proposed_t_route.append(int(math.sqrt(x ** 2 + y ** 2) / self.v_max))
                         
                         travel_cost = sum(proposed_t_route) * self.move_cost_ratio
                             
@@ -283,7 +412,7 @@ class uopvp_solver:
         alt_route, alt_t_route, alt_service, alt_route_score = [copy.deepcopy(route), copy.deepcopy(t_route),
                                                                 copy.deepcopy(service_intervals), route_score]
         actual_profit = self.find_actual_profits(alt_route, alt_t_route, alt_service)
-        for attempt in range(len(alt_route) / 2):
+        for attempt in range(int(len(alt_route)/2)):
             a, b = random.sample(range(len(alt_route)), k=2)
             proposed_route, proposed_t_route = self.swap(alt_route, alt_t_route, a, b)  # Same route score
             error_threshold = (self.e_t - self.e_max) / self.e_max * sum(proposed_t_route)
@@ -295,6 +424,17 @@ class uopvp_solver:
                 alt_t_route = copy.deepcopy(proposed_route)
                 alt_service = copy.deepcopy(proposed_service)
                 actual_profit = proposed_actual_profit
+
+                self.route_writer.writerow([self.change_num, alt_route])
+                self.route_file.flush()
+                self.t_route_writer.writerow([self.change_num, alt_t_route])
+                self.t_route_file.flush()
+                self.service_writer.writerow([self.change_num, alt_service])
+                self.service_file.flush()
+                self.scores_writer.writerow([self.change_num, proposed_actual_profit, alt_route_score])
+                self.scores_file.flush()
+                self.change_num += 1
+                print(self.change_num)
 
         return alt_route, alt_t_route, alt_service
 
@@ -332,6 +472,7 @@ class uopvp_solver:
                                                                 copy.deepcopy(service_intervals), route_score]
         actual_profit = self.find_actual_profits(alt_route, alt_t_route, alt_service)
         changed = False
+        time_swap = 0
         for attempt in range(int(self.v_max + sum_sqrt_diff_sq(self.v_max, self.v_max))):
             x = random.sample(range(-self.v_max, self.v_max), k=1)
             y_max = int(math.sqrt(self.v_max**2 - (x+1)**2)+1)
@@ -350,8 +491,10 @@ class uopvp_solver:
                                                                       proposed_service)
                     e_ppe = proposed_route_score - proposed_actual_profit
                     if e_ppe > error_threshold:
+                        time_start = time.perf_counter()
                         proposed_route, proposed_t_route, proposed_service = (
                             self.swap_method(proposed_route, proposed_t_route, proposed_service, proposed_route_score))
+                        time_swap = time.perf_counter() - time_start
                     proposed_actual_profit = self.find_actual_profits(proposed_route, proposed_t_route,
                                                                       proposed_service)
                     if proposed_actual_profit > actual_profit:
@@ -360,8 +503,19 @@ class uopvp_solver:
                         alt_service = copy.deepcopy(proposed_service)
                         alt_route_score = proposed_route_score
                         changed = True
+
+                        self.route_writer.writerow([self.change_num, alt_route])
+                        self.route_file.flush()
+                        self.t_route_writer.writerow([self.change_num, alt_t_route])
+                        self.t_route_file.flush()
+                        self.service_writer.writerow([self.change_num, alt_service])
+                        self.service_file.flush()
+                        self.scores_writer.writerow([self.change_num, proposed_actual_profit, alt_route_score])
+                        self.scores_file.flush()
+                        self.change_num += 1
+                        print(self.change_num)
                         break
-        return alt_route, alt_t_route, alt_service, alt_route_score, changed
+        return alt_route, alt_t_route, alt_service, alt_route_score, changed, time_swap
 
 
     @staticmethod
@@ -393,6 +547,7 @@ class uopvp_solver:
         actual_profit = self.find_actual_profits(alt_route, alt_t_route, alt_service)
         vertices = random.sample(range(len(route)-1), k=int(len(route)/2))
         changed = False
+        time_swap = 0
         for vertex in vertices:
             proposed_route, proposed_t_route = self.remove(alt_route, alt_t_route, vertex)
             proposed_route_score = (self.find_outage_coefficient(proposed_route) *
@@ -406,8 +561,10 @@ class uopvp_solver:
                                                                   proposed_service)
                 e_ppe = proposed_route_score - proposed_actual_profit
                 if e_ppe > error_threshold:
+                    time_start = time.perf_counter()
                     proposed_route, proposed_t_route, proposed_service = (
                         self.swap_method(proposed_route, proposed_t_route, proposed_service, proposed_route_score))
+                    time_swap = time.perf_counter() - time_start
                 proposed_actual_profit = self.find_actual_profits(proposed_route, proposed_t_route,
                                                                   proposed_service)
                 if proposed_actual_profit > actual_profit:
@@ -416,8 +573,19 @@ class uopvp_solver:
                     alt_service = copy.deepcopy(proposed_service)
                     alt_route_score = proposed_route_score
                     changed = True
+
+                    self.route_writer.writerow([self.change_num, alt_route])
+                    self.route_file.flush()
+                    self.t_route_writer.writerow([self.change_num, alt_t_route])
+                    self.t_route_file.flush()
+                    self.service_writer.writerow([self.change_num, alt_service])
+                    self.service_file.flush()
+                    self.scores_writer.writerow([self.change_num, proposed_actual_profit, alt_route_score])
+                    self.scores_file.flush()
+                    self.change_num += 1
+                    print(self.change_num)
                     break
-        return alt_route, alt_t_route, alt_service, alt_route_score, changed
+        return alt_route, alt_t_route, alt_service, alt_route_score, changed, time_swap
 
 
     @staticmethod
@@ -453,6 +621,7 @@ class uopvp_solver:
                                                                 copy.deepcopy(service_intervals), route_score]
         actual_profit = self.find_actual_profits(alt_route, alt_t_route, alt_service)
         changed = False
+        time_swap = 0
         for attempt in range(int(self.v_max + sum_sqrt_diff_sq(self.v_max, self.v_max))):
             x = random.sample(range(-self.v_max, self.v_max), k=1)
             y_max = int(math.sqrt(self.v_max ** 2 - (x + 1) ** 2) + 1)
@@ -471,8 +640,10 @@ class uopvp_solver:
                                                                       proposed_service)
                     e_ppe = proposed_route_score - proposed_actual_profit
                     if e_ppe > error_threshold:
+                        time_start = time.perf_counter()
                         proposed_route, proposed_t_route, proposed_service = (
                             self.swap_method(proposed_route, proposed_t_route, proposed_service, proposed_route_score))
+                        time_swap = time.perf_counter() - time_start
                     proposed_actual_profit = self.find_actual_profits(proposed_route, proposed_t_route,
                                                                       proposed_service)
                     if proposed_actual_profit > actual_profit:
@@ -481,8 +652,19 @@ class uopvp_solver:
                         alt_service = copy.deepcopy(proposed_service)
                         alt_route_score = proposed_route_score
                         changed = True
+
+                        self.route_writer.writerow([self.change_num, alt_route])
+                        self.route_file.flush()
+                        self.t_route_writer.writerow([self.change_num, alt_t_route])
+                        self.t_route_file.flush()
+                        self.service_writer.writerow([self.change_num, alt_service])
+                        self.service_file.flush()
+                        self.scores_writer.writerow([self.change_num, proposed_actual_profit, alt_route_score])
+                        self.scores_file.flush()
+                        self.change_num += 1
+                        print(self.change_num)
                         break
-        return alt_route, alt_t_route, alt_service, alt_route_score, changed
+        return alt_route, alt_t_route, alt_service, alt_route_score, changed, time_swap
 
 
     def optimize_route(self, route: list, t_route: list, service_intervals: list, route_score: float):
@@ -494,9 +676,13 @@ class uopvp_solver:
         actual_profit = self.find_actual_profits(alt_route, alt_t_route, alt_service)
         e_ppe = alt_route_score - actual_profit
         error_threshold = (self.e_t - self.e_max) / self.e_max * sum(alt_t_route)
+        time_swap, time_add, time_remove, time_replace = 0, 0, 0, 0
+        full_time_start = time.perf_counter()
         if e_ppe > error_threshold:
             # Internal Exchange: Swap a number of vertices
+            time_start = time.perf_counter()
             alt_route, alt_t_route, alt_service = self.swap_method(alt_route, alt_t_route, alt_service, alt_route_score)
+            time_swap = time.perf_counter() - time_start
 
         iterations = 0
         while iterations < self.optimization_steps:
@@ -506,13 +692,27 @@ class uopvp_solver:
             changed = False
             if t_route <= 0.2 * self.t_max and not changed:
                 vertex = random.sample(range(len(route) + 1), k=1)
-                alt_route, alt_t_route, alt_service, alt_route_score, changed = (
+                time_start = time.perf_counter()
+                alt_route, alt_t_route, alt_service, alt_route_score, changed, delta_swap = (
                     self.add_method(alt_route, alt_t_route, alt_service, alt_route_score, vertex))
+                t_add = time.perf_counter() - time_start - delta_swap
+                time_swap += delta_swap
             if len(route) > 1 and not changed:
-                alt_route, alt_t_route, alt_service, alt_route_score, changed = (
+                time_start = time.perf_counter()
+                alt_route, alt_t_route, alt_service, alt_route_score, changed, delta_swap = (
                     self.remove_method(alt_route, alt_t_route, alt_service, alt_route_score))
+                time_remove = time.perf_counter() - time_start - delta_swap
+                time_swap += delta_swap
             if not changed:
                 vertex = random.sample(range(len(route)), k=1)
-                alt_route, alt_t_route, alt_service, alt_route_score, changed = (
+                time_start = time.perf_counter()
+                alt_route, alt_t_route, alt_service, alt_route_score, changed, delta_swap = (
                     self.replace_method(alt_route, alt_t_route, alt_service, alt_route_score, vertex))
+                time_replace = time.perf_counter() - time_start - delta_swap
+                time_swap += delta_swap
+
+        full_time = time.perf_counter() - full_time_start
+        self.time_writer.writerow([full_time, time_swap, time_add, time_remove, time_replace])
+        self.time_file.flush()
+
         return alt_route, alt_t_route, alt_service, alt_route_score, actual_profit
