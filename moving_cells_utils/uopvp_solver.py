@@ -1,8 +1,6 @@
 import math
 import copy
 import random
-import devices_ugv as ugv
-import environment
 import os
 import datetime
 import csv
@@ -20,7 +18,7 @@ def sum_sqrt_diff_sq(x: int, stop: int):
 
 
 class UOPVPSolver:
-    def __init__(self, env: environment.SingleUGVEnv, agent: ugv.DeviceUGV):
+    def __init__(self, env, agent):
         """
         Set UOPVP variables, set initial route, find initial window, call further optimization
         """
@@ -45,7 +43,7 @@ class UOPVPSolver:
         Log Files
         """
         # Set directory path
-        log_dir = "logs"
+        log_dir = "moving_cells_utils/logs"
         os.makedirs(log_dir, exist_ok=True)
         csv_str = ".csv"
         date_time = datetime.datetime.now()
@@ -111,7 +109,7 @@ class UOPVPSolver:
             self.time_file.flush()
 
         start_time = time.perf_counter()
-        self.profit_map, self.best_vertices = self.max_profits()
+        self.best_vertices = self.max_profits()
         self.current_route, self.current_t_route, self.current_route_score = self.initial_planner(self.best_vertices[0])
         self.current_service_interval = self.service_window_optimizer(self.current_route, self.current_t_route)
         (self.current_route, self.current_t_route, self.current_service_interval, self.current_actual_profit,
@@ -189,7 +187,8 @@ class UOPVPSolver:
         powered = 0
         if energy > self.e_t:
             powered = 1
-        return (energy - self.e_t) / (self.e_max - self.e_t), powered
+        expected_energy = max((energy[0] - self.e_t) / (self.e_max - self.e_t), 0)
+        return expected_energy, powered
 
 
     def find_actual_profits(self, route: list, t_route: list, service_intervals: list):
@@ -220,7 +219,6 @@ class UOPVPSolver:
 
 
     def max_profits(self):
-        profit_map = [0] * self.num_vertices
         best_vertices = [[0, 0, 0]] * self.num_tries
 
         # Set origin values
@@ -229,60 +227,45 @@ class UOPVPSolver:
             profit, beta = self.find_profit_and_beta(0, 0, t)
             p0 += profit
             b0 += beta
-        profit_map[0] = p0
         best_vertices[0] = [0, 0, b0 / self.t_max * p0]
 
         for i in range(self.d_max):
-            for j in range(int(math.sqrt(self.d_max**2 - (i+1)**2) + 1)):
-                p1, p2, p3, p4 = 0, 0, 0, 0
-                b1, b2, b3, b4 = 0, 0, 0, 0
-                for t in range(self.t_max):
-                    # Quadrant 1
-                    profit, beta = self.find_profit_and_beta(i + 1, j, t)
-                    p1 += profit
-                    b1 += beta
-                    # Quadrant 2
-                    profit, beta = self.find_profit_and_beta(-j, i + 1, t)
-                    p2 += profit
-                    b2 += beta
-                    # Quadrant 3
-                    profit, beta = self.find_profit_and_beta(-(i + 1), -j, t)
-                    p3 += profit
-                    b3 += beta
-                    # Quadrant 4
-                    profit, beta = self.find_profit_and_beta(j, -(i + 1), t)
-                    p4 += profit
-                    b4 += beta
-                profit_map[self.get_profit_index(i+1, j)] = p1      # Quad 1 formula
-                profit_map[self.get_profit_index(-j, i+1)] = p2     # Quad 2 formula
-                profit_map[self.get_profit_index(-(i+1), -j)] = p3  # Quad 3 formula
-                profit_map[self.get_profit_index(j, -(i+1))] = p4   # Quad 4 formula
+            for j in range(int(math.sqrt(self.d_max**2 - (i+1)**2))):
+                if math.sqrt(i**2 + j**2) < self.d_max:
+                    p1, p2, p3, p4 = 0, 0, 0, 0
+                    b1, b2, b3, b4 = 0.0, 0.0, 0.0, 0.0
+                    for t in range(self.t_max):
+                        # Quadrant 1
+                        profit, beta = self.find_profit_and_beta(i + 1, j, t)
+                        p1 += profit
+                        b1 += beta
+                        # Quadrant 2
+                        profit, beta = self.find_profit_and_beta(-j, i + 1, t)
+                        p2 += profit
+                        b2 += beta
+                        # Quadrant 3
+                        profit, beta = self.find_profit_and_beta(-(i + 1), -j, t)
+                        p3 += profit
+                        b3 += beta
+                        # Quadrant 4
+                        profit, beta = self.find_profit_and_beta(j, -(i + 1), t)
+                        p4 += profit
+                        b4 += beta
 
-                origin_score_pairs = [[i+1, j, p1*b1/self.t_max],
-                                      [-j, i+1, p2*b2/self.t_max],
-                                      [-(i+1), -j, p3*b3/self.t_max],
-                                      [j, -(i+1), p4*b4/self.t_max]]
-                for origin_pair in origin_score_pairs:
-                    test_origin = copy.deepcopy(origin_pair)
-                    for vertex in range(self.num_tries):
-                        if test_origin[2] > best_vertices[vertex][2]:
-                            temp = copy.deepcopy(best_vertices[vertex])
-                            best_vertices[vertex] = copy.deepcopy(test_origin)
-                            test_origin = copy.deepcopy(temp)
+                    origin_score_pairs = [[i+1, j, p1*b1/self.t_max],
+                                          [-j, i+1, p2*b2/self.t_max],
+                                          [-(i+1), -j, p3*b3/self.t_max],
+                                          [j, -(i+1), p4*b4/self.t_max]]
+                    print(origin_score_pairs)
+                    for origin_pair in origin_score_pairs:
+                        test_origin = copy.deepcopy(origin_pair)
+                        for vertex in range(self.num_tries):
+                            if test_origin[2] > best_vertices[vertex][2]:
+                                temp = copy.deepcopy(best_vertices[vertex])
+                                best_vertices[vertex] = copy.deepcopy(test_origin)
+                                test_origin = copy.deepcopy(temp)
 
-        return profit_map, best_vertices
-
-
-    def get_profit_index(self, x: int, y: int):
-        if x > 0 and y >= 0:  # Quadrant 1
-            return sum_sqrt_diff_sq(self.d_max, x-1) + y + 1
-        elif not x > 0 and y > 0:  # Quadrant 2
-            return (self.num_vertices-1)/4 + sum_sqrt_diff_sq(self.d_max, y-1) + -1*x + 1
-        elif not x >= 0 and not y > 0:  # Quadrant 3
-            return (self.num_vertices-1)/2 + sum_sqrt_diff_sq(self.d_max, (-1*x)-1) + -1*y + 1
-        elif x >= 0 and not y >= 0:  # Quadrant 4
-            return 3*(self.num_vertices-1)/4 + sum_sqrt_diff_sq(self.d_max, (-1*y)-1) + x + 1
-        return 0  # Origin as default
+        return best_vertices
 
 
     def initial_planner(self, root: list):
@@ -297,6 +280,7 @@ class UOPVPSolver:
         current_best_route_score = root[2]
         searches = 0
         while sum(t_route) <= 0.2 * self.t_max and searches < self.planner_limit:
+            print(searches)
             searches += 1
             last_node = copy.deepcopy(current_best_route)[-1]
             for x in range(-2*self.v_max, 2*self.v_max):
@@ -315,8 +299,8 @@ class UOPVPSolver:
                         outage_coefficient = self.find_outage_coefficient(proposed_route)
                         average_profit = 0
                         for node in proposed_route:
-                            profit_index = self.get_profit_index(node[0], node[1])
-                            average_profit += self.profit_map[profit_index]
+                            delta_profit, _ = self.find_profit_and_beta(node[0], node[1])
+                            average_profit += delta_profit
                         
                         proposed_route_score = outage_coefficient * average_profit / len(proposed_route) - travel_cost
                         if proposed_route_score > current_best_route_score:
@@ -355,6 +339,7 @@ class UOPVPSolver:
             step = 0
             while (not ((profit_avg_i - profit_avg_j)**2 < self.optimizer_minimum and profit_chg_i - profit_chg_j < 0)
                    and step < self.optimizer_steps and s > 0):
+                print(step)
                 s = max(0, s + int(self.optimizer_weight * (profit_avg_i - profit_avg_j) +
                                    self.optimizer_weight**2 * (profit_chg_i**2 - profit_chg_j**2)))
                 profit_avg_i = sum(self.find_profit_and_beta(route[m][0], route[m][1], t)[0]
@@ -480,10 +465,14 @@ class UOPVPSolver:
             proposed_pt = [alt_route[vertex][0]+x, alt_route[vertex][1]+y]
             if math.sqrt(proposed_pt[0]**2 + proposed_pt[1]**2) <= self.d_max:
                 proposed_route, proposed_t_route = self.add(alt_route, alt_t_route, proposed_pt, vertex)
+                average_profit = 0
+                for node in proposed_route:
+                    delta_profit, _ = self.find_profit_and_beta(node[0], node[1])
+                    average_profit += delta_profit
                 proposed_route_score = (self.find_outage_coefficient(proposed_route) *
-                                        sum(self.profit_map[self.get_profit_index(node[0], node[1])]
-                                            for node in proposed_route) / len(proposed_route) -
+                                        average_profit / len(proposed_route) -
                                         sum(proposed_t_route) * self.move_cost_ratio)
+
                 if proposed_route_score >= alt_route_score:
                     error_threshold = (self.e_t - self.e_max) / self.e_max * sum(proposed_t_route)
                     proposed_service = self.service_window_optimizer(proposed_route, proposed_t_route)
@@ -550,9 +539,12 @@ class UOPVPSolver:
         time_swap = 0
         for vertex in vertices:
             proposed_route, proposed_t_route = self.remove(alt_route, alt_t_route, vertex)
+            average_profit = 0
+            for node in proposed_route:
+                delta_profit, _ = self.find_profit_and_beta(node[0], node[1])
+                average_profit += delta_profit
             proposed_route_score = (self.find_outage_coefficient(proposed_route) *
-                                    sum(self.profit_map[self.get_profit_index(node[0], node[1])]
-                                        for node in proposed_route) / len(proposed_route) -
+                                    average_profit / len(proposed_route) -
                                     sum(proposed_t_route) * self.move_cost_ratio)
             if proposed_route_score >= alt_route_score:
                 error_threshold = (self.e_t - self.e_max) / self.e_max * sum(proposed_t_route)
@@ -629,9 +621,12 @@ class UOPVPSolver:
             proposed_pt = [alt_route[vertex][0] + x, alt_route[vertex][1] + y]
             if math.sqrt(proposed_pt[0]**2 + proposed_pt[1]**2) <= self.d_max:
                 proposed_route, proposed_t_route = self.replace(alt_route, alt_t_route, proposed_pt, vertex)
+                average_profit = 0
+                for node in proposed_route:
+                    delta_profit, _ = self.find_profit_and_beta(node[0], node[1])
+                    average_profit += delta_profit
                 proposed_route_score = (self.find_outage_coefficient(proposed_route) *
-                                        sum(self.profit_map[self.get_profit_index(node[0], node[1])]
-                                            for node in proposed_route) / len(proposed_route) -
+                                        average_profit / len(proposed_route) -
                                         sum(proposed_t_route) * self.move_cost_ratio)
                 if proposed_route_score >= alt_route_score:
                     error_threshold = (self.e_t - self.e_max) / self.e_max * sum(proposed_t_route)

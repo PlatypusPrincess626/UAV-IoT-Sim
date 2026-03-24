@@ -1,11 +1,10 @@
-import uopvp_solver as uopvp
 import numpy as np
-import environment
+from moving_cells_utils import uopvp_solver as uopvp
 import math
 
 
 class DeviceUGV:
-    def __init__(self, env: environment.SingleUGVEnv, d_lim: int):
+    def __init__(self, env, d_lim: int):
 
         """
         Initialize with energy costs/limitations and solar cell specifications
@@ -50,7 +49,8 @@ class DeviceUGV:
     def find_power(self, x: int, y: int, time: int):
         spectra = self.env.get_spectrum(x, y, time)
         interference = self.env.get_obfuscation(x, y, time)
-        cell_current = np.trapz(spectra['poa_global'] * self.spectral_response, spectra['wavelength'], axis=0)
+        integral_content = np.nan_to_num(spectra['poa_global'], nan=0) * self.spectral_response
+        cell_current = np.trapz(integral_content, spectra['wavelength'], axis=0)
         a = time / 60 + 2
         alpha = abs(104 - 65 * a + 47 * pow(a, 2) - 12 * pow(a, 3) + pow(a, 4))
         power = abs(alpha / 100) * interference * cell_current * self.solar_area  # W
