@@ -185,7 +185,7 @@ class UOPVPSolver:
     def find_profit_and_beta(self, x: int, y: int, t: int):
         energy = self.agent.try_harvest(x, y, t)  # Nonlinear function that determines profit
         powered = 0
-        if energy > self.e_t:
+        if energy[0] > self.e_t:
             powered = 1
         expected_energy = max((energy[0] - self.e_t) / (self.e_max - self.e_t), 0)
         return expected_energy, powered
@@ -196,7 +196,8 @@ class UOPVPSolver:
         current_vertex = 0
         t = 0
         while t < self.t_max:
-            profit += self.agent.try_harvest(route[current_vertex][0], route[current_vertex][1], t)
+            energy = self.agent.try_harvest(route[current_vertex][0], route[current_vertex][1], t)
+            profit += max((energy[0] - self.e_t) / (self.e_max - self.e_t), 0)
             if t+1 == service_intervals[current_vertex]:
                 t += t_route[current_vertex]
                 current_vertex += 1
@@ -211,7 +212,7 @@ class UOPVPSolver:
             on_or_off = 0
             for pt in pts:
                 energy = self.agent.try_harvest(pt[0], pt[1], t)
-                if energy > self.e_t:
+                if energy[0] > self.e_t:
                     on_or_off = 1
                     break
             outage_coefficient += on_or_off
