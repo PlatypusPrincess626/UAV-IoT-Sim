@@ -108,13 +108,27 @@ class UOPVPSolver:
             self.time_writer.writerow(["total", "swap", "add", "remove", "replace"])
             self.time_file.flush()
 
+        # Map Logging
+        map_log = ("solver_map_" + date_time.strftime("%d") + "_" +
+                    date_time.strftime("%m") + csv_str)
+        map_logfile = os.path.join(log_dir, map_log)
+        # open once, append mode; newline='' avoids blank lines on Windows
+        self.map_file = open(map_logfile, mode='a', newline='', encoding='utf-8')
+        self.map_writer = csv.writer(self.map_file, delimiter='|')
+        # write header only if file is empty
+        if os.path.getsize(map_logfile) == 0:
+            self.map_writer.writerow(["route"])
+            self.map_file.flush()
+
         start_time = time.perf_counter()
-        self.best_vertices = self.max_profits()
+        self.profit_map, self.best_vertices = self.max_profits()
+        self.map_writer.writerows(self.profit_map)
+        self.map_file.flush()
+
         self.current_route, self.current_t_route, self.current_route_score = self.initial_planner(self.best_vertices[0])
         self.current_service_interval = self.service_window_optimizer(self.current_route, self.current_t_route)
-        (self.current_route, self.current_t_route, self.current_service_interval, self.current_actual_profit,
-         self.current_route_score) = (self.optimize_route(self.current_route, self.current_t_route,
-                                                          self.current_service_interval,  self.current_route_score))
+        self.current_actual_profit = self.find_actual_profits(self.current_route, self.current_t_route,
+                                                              self.current_service_interval)
 
         self.route_writer.writerow([self.change_num, self.current_route])
         self.route_file.flush()
@@ -126,6 +140,10 @@ class UOPVPSolver:
         self.scores_file.flush()
         self.change_num += 1
         print(self.change_num)
+
+        (self.current_route, self.current_t_route, self.current_service_interval, self.current_actual_profit,
+         self.current_route_score) = (self.optimize_route(self.current_route, self.current_t_route,
+                                                          self.current_service_interval, self.current_route_score))
 
         for root in range(len(self.best_vertices) - 1):
             proposed_route, proposed_t_route, proposed_route_score = self.initial_planner(self.best_vertices[root+1])
@@ -176,11 +194,16 @@ class UOPVPSolver:
             self.time_file.close()
         except Exception:
             pass
+        try:
+            self.map_file.close()
+        except Exception:
+            pass
         atexit.register(lambda: self.route_file and not self.route_file.closed and self.route_file.close())
         atexit.register(lambda: self.t_route_file and not self.t_route_file.closed and self.t_route_file.close())
         atexit.register(lambda: self.service_file and not self.service_file.closed and self.service_file.close())
         atexit.register(lambda: self.scores_file and not self.scores_file.closed and self.scores_file.close())
         atexit.register(lambda: self.time_file and not self.time_file.closed and self.time_file.close())
+        atexit.register(lambda: self.map_file and not self.map_file.closed and self.map_file.close())
 
     def find_profit_and_beta(self, x: int, y: int, t: int):
         energy = self.agent.try_harvest(x, y, t)  # Nonlinear function that determines profit
@@ -221,7 +244,7 @@ class UOPVPSolver:
 
     def max_profits(self):
         best_vertices = [[0, 0, 0]] * self.num_tries
-
+        profit_map = [0] * (1 + 2 * self.env.dim) * (1 + 2 * self.env.dim)
         # Set origin values
         p0, b0 = 0, 0
         for t in range(self.t_max):
@@ -229,9 +252,9 @@ class UOPVPSolver:
             p0 += profit
             b0 += beta
         best_vertices[0] = [0, 0, b0 / self.t_max * p0]
-
+        profit_map[self.get_map_index(0, 0)] = p0
         for i in range(self.d_max):
-            for j in range(int(math.sqrt(self.d_max**2 - (i+1)**2))):
+            for j in range(self.d_max):
                 if math.sqrt(i**2 + j**2) < self.d_max:
                     p1, p2, p3, p4 = 0, 0, 0, 0
                     b1, b2, b3, b4 = 0.0, 0.0, 0.0, 0.0
@@ -252,6 +275,10 @@ class UOPVPSolver:
                         profit, beta = self.find_profit_and_beta(j, -(i + 1), t)
                         p4 += profit
                         b4 += beta
+                    profit_map[self.get_map_index(i + 1, j)] = p1
+                    profit_map[self.get_map_index(-j, i + 1)] = p2
+                    profit_map[self.get_map_index(-(i + 1), -j)] = p3
+                    profit_map[self.get_map_index(j, -(i + 1))] = p4
 
                     origin_score_pairs = [[i+1, j, p1*b1/self.t_max],
                                           [-j, i+1, p2*b2/self.t_max],
@@ -266,7 +293,11 @@ class UOPVPSolver:
                                 best_vertices[vertex] = copy.deepcopy(test_origin)
                                 test_origin = copy.deepcopy(temp)
 
-        return best_vertices
+        return profit_map, best_vertices
+
+
+    def get_map_index(self, x, y):
+        return (y + self.env.dim + 1) * (self.env.dim + 1) + (x + self.env.din + 1)
 
 
     def initial_planner(self, root: list):
@@ -300,8 +331,7 @@ class UOPVPSolver:
                         outage_coefficient = self.find_outage_coefficient(proposed_route)
                         average_profit = 0
                         for node in proposed_route:
-                            delta_profit, _ = self.find_profit_and_beta(node[0], node[1])
-                            average_profit += delta_profit
+                            average_profit += self.profit_map[self.get_map_index(node[0], node[1])]
                         
                         proposed_route_score = outage_coefficient * average_profit / len(proposed_route) - travel_cost
                         if proposed_route_score > current_best_route_score:
@@ -468,8 +498,7 @@ class UOPVPSolver:
                 proposed_route, proposed_t_route = self.add(alt_route, alt_t_route, proposed_pt, vertex)
                 average_profit = 0
                 for node in proposed_route:
-                    delta_profit, _ = self.find_profit_and_beta(node[0], node[1])
-                    average_profit += delta_profit
+                    average_profit += self.profit_map[self.get_map_index(node[0], node[1])]
                 proposed_route_score = (self.find_outage_coefficient(proposed_route) *
                                         average_profit / len(proposed_route) -
                                         sum(proposed_t_route) * self.move_cost_ratio)
@@ -542,8 +571,7 @@ class UOPVPSolver:
             proposed_route, proposed_t_route = self.remove(alt_route, alt_t_route, vertex)
             average_profit = 0
             for node in proposed_route:
-                delta_profit, _ = self.find_profit_and_beta(node[0], node[1])
-                average_profit += delta_profit
+                average_profit += self.profit_map[self.get_map_index(node[0], node[1])]
             proposed_route_score = (self.find_outage_coefficient(proposed_route) *
                                     average_profit / len(proposed_route) -
                                     sum(proposed_t_route) * self.move_cost_ratio)
@@ -624,8 +652,7 @@ class UOPVPSolver:
                 proposed_route, proposed_t_route = self.replace(alt_route, alt_t_route, proposed_pt, vertex)
                 average_profit = 0
                 for node in proposed_route:
-                    delta_profit, _ = self.find_profit_and_beta(node[0], node[1])
-                    average_profit += delta_profit
+                    average_profit += self.profit_map[self.get_map_index(node[0], node[1])]
                 proposed_route_score = (self.find_outage_coefficient(proposed_route) *
                                         average_profit / len(proposed_route) -
                                         sum(proposed_t_route) * self.move_cost_ratio)
