@@ -42,6 +42,7 @@ class SingleUGVEnv:
             shadows = self.init_interference()
             shadow_array[checkpoint] = shadows
         self.obfuscation_array = np.array(shadow_array)
+        print(self.obfuscation_array.shape)
 
         # Set directory path
         log_dir = "moving_cells_utils/logs"
