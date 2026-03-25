@@ -205,6 +205,7 @@ class UOPVPSolver:
         atexit.register(lambda: self.time_file and not self.time_file.closed and self.time_file.close())
         atexit.register(lambda: self.map_file and not self.map_file.closed and self.map_file.close())
 
+
     def find_profit_and_beta(self, x: int, y: int, t: int):
         energy = self.agent.try_harvest(x, y, t)  # Nonlinear function that determines profit
         powered = 0
@@ -297,7 +298,7 @@ class UOPVPSolver:
 
 
     def get_map_index(self, x, y):
-        return (y + self.env.dim + 1) * (self.env.dim + 1) + (x + self.env.din + 1)
+        return (y + self.env.dim + 1) * (self.env.dim + 1) + (x + self.env.dim + 1)
 
 
     def initial_planner(self, root: list):
