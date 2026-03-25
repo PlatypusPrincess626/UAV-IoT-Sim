@@ -42,7 +42,6 @@ class SingleUGVEnv:
             shadows = self.init_interference()
             shadow_array[checkpoint] = shadows
         self.obfuscation_array = np.array(shadow_array)
-        print(self.obfuscation_array.shape)
 
         # Set directory path
         log_dir = "moving_cells_utils/logs"
@@ -60,11 +59,8 @@ class SingleUGVEnv:
         if os.path.getsize(shade_logfile) == 0:
             self.shade_writer.writerow(["shade"])
             self.shade_file.flush()
-        for timepoint in self.obfuscation_array:
-            self.shade_writer.writerow("Checkpoint")
-            self.shade_file.flush()
-            self.shade_writer.writerows(timepoint)
-            self.shade_file.flush()
+        self.shade_writer.writerows(self.obfuscation_array)
+        self.shade_file.flush()
         try:
             self.shade_file.close()
         except Exception:
@@ -81,7 +77,7 @@ class SingleUGVEnv:
 
 
     def init_interference(self):
-        env_static_interference = [0.0] * (1 + 2 * self.dim) * (1 + 2 * self.dim)
+        env_static_interference = [0.0] * (1 + 4 * self.dim * self.dim)
         shadows = int(self.dim)
         for shadow in range(shadows):
             place = random.randint(0, self.dim * self.dim - 1)
