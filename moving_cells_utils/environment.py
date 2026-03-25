@@ -70,7 +70,7 @@ class SingleUGVEnv:
             pass
         atexit.register(lambda: self.shade_file and not self.shade_file.closed and self.shade_file.close())
 
-        self.ugv = ugv.DeviceUGV(self, random.sample(range(int(self.dim*9/10)), k=1)[0])
+        self.ugv = ugv.DeviceUGV(self, random.sample(self.dim, k=1)[0])
 
         self.current_step = 0
 

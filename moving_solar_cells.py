@@ -23,9 +23,9 @@ def main():
         stats_writer.writerow(["e_harvest", "e_move", "e_overhead"])
         stats_file.flush()
 
-    max_time = 720  # min
+    max_time, max_size = 720, 50  # min
     start_time = time.perf_counter()
-    env = environment.SingleUGVEnv(max_steps=max_time)
+    env = environment.SingleUGVEnv(max_steps=max_time, max_dim=max_size)
     print(time.perf_counter() - start_time)
 
     start_time = time.perf_counter()
