@@ -27,7 +27,7 @@ class UOPVPSolver:
         self.num_tries = 10
         self.planner_limit = 10
         self.optimizer_minimum, self.optimizer_steps, self.optimizer_weight = 0.01, 100, 0.9
-        self.optimization_steps, self.optimization_threshold = 1000, 0.001
+        self.optimization_steps, self.optimization_threshold = 100, 0.001
 
         # Environment Requirements
         self.t_max = env.get_constraints()
