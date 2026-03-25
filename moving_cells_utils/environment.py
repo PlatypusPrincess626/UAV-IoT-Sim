@@ -36,11 +36,11 @@ class SingleUGVEnv:
         self.pressure, self.wvc, self.tau500, self.ozone, self.albedo = 101253, 0.35, 0.75, 0.23, 0.2
 
         checkpoints = int(720 / self.chkpt_div)
-        shadow_array = []
+        shadow_array = [[0.0] * (1 + 2 * self.dim) * (1 + 2 * self.dim)] * checkpoints
         for checkpoint in range(checkpoints):
             print("Making Happy Trees:", checkpoint)
             shadows = self.init_interference()
-            shadow_array.append(shadows)
+            shadow_array[checkpoint] = shadows
         self.obfuscation_array = np.array(shadow_array)
 
         # Set directory path
@@ -80,7 +80,7 @@ class SingleUGVEnv:
 
 
     def init_interference(self):
-        env_static_interference = [0.0] * (self.dim * self.dim)
+        env_static_interference = [[0.0] * (1 + 2 * self.dim) * (1 + 2 * self.dim)]
         shadows = int(self.dim)
         for shadow in range(shadows):
             place = random.randint(0, self.dim * self.dim - 1)
