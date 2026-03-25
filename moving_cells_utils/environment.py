@@ -89,10 +89,10 @@ class SingleUGVEnv:
             data_2D = gaussian_kernel(size, intensity, normalised=False)
             count = 0
             for pixel in range(size * size):
-                if place < len(env_static_interference):
-                    env_static_interference[place] += data_2D.flatten()[pixel]
-                    if env_static_interference[place] > 1:
-                        env_static_interference[place] = 1
+                if place < len(env_static_interference[0]):
+                    env_static_interference[0][place] += data_2D.flatten()[pixel]
+                    if env_static_interference[0][place] > 1:
+                        env_static_interference[0][place] = 1
                 else:
                     # In the case in which variable "place" would hit out-of-bounds
                     break
