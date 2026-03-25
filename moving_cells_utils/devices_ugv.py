@@ -10,7 +10,7 @@ class DeviceUGV:
         Initialize with energy costs/limitations and solar cell specifications
         """
         self.env = env
-        self.d_max = 800 - d_lim
+        self.d_max = d_lim
         self.v_max, self.w, self.u_rr = 4, 21, 0.1  # m/min, N, _
 
         # Solar cell
