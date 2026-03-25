@@ -245,7 +245,8 @@ class UOPVPSolver:
 
     def max_profits(self):
         best_vertices = [[0, 0, 0]] * self.num_tries
-        profit_map = [0] * (1 + 4 * self.env.dim * self.env.dim)
+        profit_map = [0] * (1 + 4 * (self.env.dim + self.env.dim * self.env.dim))
+        int(1 + 4 * self.d_max + 4 * sum_sqrt_diff_sq(self.d_max, self.d_max))
         # Set origin values
         p0, b0 = 0, 0
         for t in range(self.t_max):
@@ -256,7 +257,7 @@ class UOPVPSolver:
         profit_map[self.get_map_index(0, 0)] = p0
         for i in range(self.d_max):
             for j in range(self.d_max):
-                if math.sqrt(i**2 + j**2) < self.d_max:
+                if math.sqrt(i**2 + j**2) <= self.d_max:
                     p1, p2, p3, p4 = 0, 0, 0, 0
                     b1, b2, b3, b4 = 0.0, 0.0, 0.0, 0.0
                     for t in range(self.t_max):

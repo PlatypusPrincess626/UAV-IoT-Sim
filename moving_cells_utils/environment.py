@@ -77,7 +77,7 @@ class SingleUGVEnv:
 
 
     def init_interference(self):
-        env_static_interference = [0.0] * (1 + 4 * self.dim * self.dim)
+        env_static_interference = [0.0] * (1 + 4 * (self.dim + self.dim * self.dim))
         shadows = int(self.dim)
         for shadow in range(shadows):
             place = random.randint(0, self.dim * self.dim - 1)
