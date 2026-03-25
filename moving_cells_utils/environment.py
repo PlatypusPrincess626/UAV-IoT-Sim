@@ -4,6 +4,10 @@ from moving_cells_utils import devices_ugv as ugv
 import random
 import numpy as np
 from scipy.signal import windows
+import os
+import datetime
+import csv
+import atexit
 
 
 def gaussian_kernel(n, std, normalised=False):
@@ -38,6 +42,34 @@ class SingleUGVEnv:
             shadows = self.init_interference()
             shadow_array.append(shadows)
         self.obfuscation_array = np.array(shadow_array)
+
+        # Set directory path
+        log_dir = "moving_cells_utils/logs"
+        os.makedirs(log_dir, exist_ok=True)
+        csv_str = ".csv"
+        date_time = datetime.datetime.now()
+        # Shade logging
+        shade_log = ("solver_obfuscation_" + date_time.strftime("%d") + "_" +
+                     date_time.strftime("%m") + csv_str)
+        shade_logfile = os.path.join(log_dir, shade_log)
+        # open once, append mode; newline='' avoids blank lines on Windows
+        self.shade_file = open(shade_logfile, mode='a', newline='', encoding='utf-8')
+        self.shade_writer = csv.writer(self.shade_file, delimiter='|')
+        # write header only if file is empty
+        if os.path.getsize(shade_logfile) == 0:
+            self.shade_writer.writerow(["shade"])
+            self.shade_file.flush()
+        for timepoint in self.obfuscation_array:
+            self.shade_writer.writerow("Checkpoint")
+            self.shade_file.flush()
+            self.shade_writer.writerows(timepoint)
+            self.shade_file.flush()
+        try:
+            self.shade_file.close()
+        except Exception:
+            pass
+        atexit.register(lambda: self.shade_file and not self.shade_file.closed and self.shade_file.close())
+
         self.ugv = ugv.DeviceUGV(self, random.sample(range(int(self.dim*9/10)), k=1)[0])
 
         self.current_step = 0
