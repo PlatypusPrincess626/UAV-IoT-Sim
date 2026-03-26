@@ -222,7 +222,7 @@ class UOPVPSolver:
         while t < self.t_max:
             energy = self.agent.try_harvest(route[current_vertex][0], route[current_vertex][1], t)
             profit += max((energy[0] - self.e_t) / (self.e_max - self.e_t), 0)
-            if t+1 == service_intervals[current_vertex]:
+            if t+1 == service_intervals[current_vertex] and current_vertex < len(t_route):
                 t += t_route[current_vertex]
                 current_vertex += 1
             else:
@@ -410,13 +410,13 @@ class UOPVPSolver:
         t_b_after = (0 if a == len(alt_route)-1 else
                      math.sqrt((alt_route[b][0]-a_after[0])**2+(alt_route[b][1]-a_after[1])**2))
 
-        if a == 0:
+        if a > 0:
             alt_t_route[a-1] = t_b_before
-        if a == len(alt_route)-1:
+        if a < len(alt_t_route):
             alt_t_route[a] = t_b_after
-        if b == 0:
+        if b > 0:
             alt_t_route[b - 1] = t_a_before
-        if b == len(alt_route)-1:
+        if b < len(alt_t_route):
             alt_t_route[b] = t_a_after
 
         temp = copy.deepcopy(alt_route)[a]
