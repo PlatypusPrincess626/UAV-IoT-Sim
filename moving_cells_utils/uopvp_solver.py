@@ -122,7 +122,7 @@ class UOPVPSolver:
 
         start_time = time.perf_counter()
         self.profit_map, self.best_vertices = self.max_profits()
-        self.map_writer.writerows(self.profit_map)
+        self.map_writer.writerow(self.profit_map)
         self.map_file.flush()
 
         self.current_route, self.current_t_route, self.current_route_score = self.initial_planner(self.best_vertices[0])
