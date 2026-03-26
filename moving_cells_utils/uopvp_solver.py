@@ -244,8 +244,8 @@ class UOPVPSolver:
 
 
     def max_profits(self):
-        best_vertices = [[0, 0, 0]] * self.num_tries
-        profit_map = [0] * (1 + 4 * (self.env.dim + self.env.dim * self.env.dim))
+        best_vertices = [[0, 0, 0] for _ in range(self.num_tries)]
+        profit_map = [0 for _ in range(1 + 4 * (self.env.dim + self.env.dim * self.env.dim))]
         int(1 + 4 * self.d_max + 4 * sum_sqrt_diff_sq(self.d_max, self.d_max))
         # Set origin values
         p0, b0 = 0, 0
@@ -322,7 +322,7 @@ class UOPVPSolver:
                 for y in range(-y_max, y_max):
                     if (math.sqrt(x**2 + y**2) >= self.v_max
                             and math.sqrt((x+last_node[0])**2 + (y+last_node[1])**2) <= self.d_max):
-                        proposed_node = [[last_node[0]+x, last_node[1]+y]]
+                        proposed_node = [last_node[0]+x, last_node[1]+y]
                         proposed_route = copy.deepcopy(route)
                         proposed_route.append(proposed_node)
                         proposed_t_route = copy.deepcopy(current_best_t_route)

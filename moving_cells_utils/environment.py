@@ -36,7 +36,7 @@ class SingleUGVEnv:
         self.pressure, self.wvc, self.tau500, self.ozone, self.albedo = 101253, 0.35, 0.75, 0.23, 0.2
 
         checkpoints = int(720 / self.chkpt_div)
-        shadow_array = [[0.0] * (1 + 2 * self.dim) * (1 + 2 * self.dim)] * checkpoints
+        shadow_array = [[0.0 for _ in range((1 + 2 * self.dim) * (1 + 2 * self.dim))] for _ in range(checkpoints)]
         for checkpoint in range(checkpoints):
             print("Making Happy Trees:", checkpoint)
             shadows = self.init_interference()
@@ -77,7 +77,7 @@ class SingleUGVEnv:
 
 
     def init_interference(self):
-        env_static_interference = [0.0] * (1 + 4 * (self.dim + self.dim * self.dim))
+        env_static_interference = [0.0 for _ in range(1 + 4 * (self.dim + self.dim * self.dim))]
         shadows = int(self.dim)
         for shadow in range(shadows):
             place = random.randint(0, self.dim * self.dim - 1)
@@ -98,7 +98,7 @@ class SingleUGVEnv:
                 if count % size == 0:
                     place += (self.dim - size)
                     count = 0
-        return np.array(env_static_interference)
+        return env_static_interference
 
 
     def get_spectrum(self, x: int, y: int, time: int):
