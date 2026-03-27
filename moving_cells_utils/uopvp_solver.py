@@ -320,8 +320,7 @@ class UOPVPSolver:
             for x in range(-2*self.v_max, 2*self.v_max):
                 y_max = int(math.sqrt((2*self.v_max)**2 - (x+1)**2) + 1)
                 for y in range(-y_max, y_max):
-                    if (math.sqrt(x**2 + y**2) >= self.v_max
-                            and math.sqrt((x+last_node[0])**2 + (y+last_node[1])**2) <= self.d_max):
+                    if math.sqrt((x+last_node[0])**2 + (y+last_node[1])**2) <= self.d_max:
                         proposed_node = [last_node[0]+x, last_node[1]+y]
                         proposed_route = copy.deepcopy(route)
                         proposed_route.append(proposed_node)
@@ -550,7 +549,9 @@ class UOPVPSolver:
 
         a_before, a_after = None if a == 0 else alt_route[a - 1], None if a == len(alt_route)-1 else alt_route[a + 1]
         if a == len(alt_route)-1:
-            alt_route.pop(), alt_t_route.pop()
+            alt_route.pop()
+            if len(route) > 1:
+                alt_t_route.pop()
         else:
             if a > 0:
                 t_before_to_after = math.sqrt((a_before[0]-a_after[0])**2+(a_before[1]-a_after[1])**2)
@@ -627,8 +628,11 @@ class UOPVPSolver:
         t_a_before = 0 if b == 0 else math.sqrt((a[0]-b_before[0])**2+(a[1]-b_before[1])**2)
         t_a_after = 0 if b == len(alt_route)-1 else math.sqrt((a[0]-b_after[0])**2+(a[1]-b_after[1])**2)
         if b == len(alt_route)-1:
-            alt_route.pop(), alt_t_route.pop()
-            alt_route.append(a), alt_t_route.append(t_a_before)
+            alt_route.pop()
+            if len(route) > 1:
+                alt_t_route.pop()
+                alt_t_route.append(t_a_before)
+            alt_route.append(a)
         else:
             if b > 0:
                 alt_t_route[b - 1] = t_a_before
