@@ -715,7 +715,7 @@ class UOPVPSolver:
             # Begin with add method at each vertex
             iterations += 1
             changed = False
-            if t_route <= 0.2 * self.t_max and not changed:
+            if sum(t_route) <= 0.2 * self.t_max and not changed:
                 vertex = random.sample(range(len(route) + 1), k=1)
                 time_start = time.perf_counter()
                 alt_route, alt_t_route, alt_service, alt_route_score, changed, delta_swap = (
