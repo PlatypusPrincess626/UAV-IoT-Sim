@@ -494,7 +494,10 @@ class UOPVPSolver:
             x = random.sample(range(-self.v_max, self.v_max), k=1)
             y_max = int(math.sqrt(self.v_max**2 - (x[0]+1)**2)+1)
             y = random.sample(range(-y_max, y_max), k=1)
-            proposed_pt = [alt_route[vertex][0]+x[0], alt_route[vertex][1]+y[0]]
+            if vertex > 0:
+                proposed_pt = [alt_route[vertex-1][0]+x[0], alt_route[vertex-1][1]+y[0]]
+            else:
+                proposed_pt = [alt_route[vertex][0] - x[0], alt_route[vertex][1] - y[0]]
             if math.sqrt(proposed_pt[0]**2 + proposed_pt[1]**2) <= self.d_max:
                 proposed_route, proposed_t_route = self.add(alt_route, alt_t_route, proposed_pt, vertex)
                 average_profit = 0
