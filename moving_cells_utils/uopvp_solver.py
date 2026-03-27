@@ -493,9 +493,9 @@ class UOPVPSolver:
         time_swap = 0
         for attempt in range(int(self.v_max + sum_sqrt_diff_sq(self.v_max, self.v_max))):
             x = random.sample(range(-self.v_max, self.v_max), k=1)
-            y_max = int(math.sqrt(self.v_max**2 - (x+1)**2)+1)
+            y_max = int(math.sqrt(self.v_max**2 - (x[0]+1)**2)+1)
             y = random.sample(range(-y_max, y_max), k=1)
-            proposed_pt = [alt_route[vertex][0]+x, alt_route[vertex][1]+y]
+            proposed_pt = [alt_route[vertex][0]+x[0], alt_route[vertex][1]+y[0]]
             if math.sqrt(proposed_pt[0]**2 + proposed_pt[1]**2) <= self.d_max:
                 proposed_route, proposed_t_route = self.add(alt_route, alt_t_route, proposed_pt, vertex)
                 average_profit = 0
@@ -647,9 +647,9 @@ class UOPVPSolver:
         time_swap = 0
         for attempt in range(int(self.v_max + sum_sqrt_diff_sq(self.v_max, self.v_max))):
             x = random.sample(range(-self.v_max, self.v_max), k=1)
-            y_max = int(math.sqrt(self.v_max ** 2 - (x + 1) ** 2) + 1)
+            y_max = int(math.sqrt(self.v_max ** 2 - (x[0] + 1) ** 2) + 1)
             y = random.sample(range(-y_max, y_max), k=1)
-            proposed_pt = [alt_route[vertex][0] + x, alt_route[vertex][1] + y]
+            proposed_pt = [alt_route[vertex][0] + x[0], alt_route[vertex][1] + y[0]]
             if math.sqrt(proposed_pt[0]**2 + proposed_pt[1]**2) <= self.d_max:
                 proposed_route, proposed_t_route = self.replace(alt_route, alt_t_route, proposed_pt, vertex)
                 average_profit = 0
@@ -719,7 +719,7 @@ class UOPVPSolver:
                 vertex = random.sample(range(len(route) + 1), k=1)
                 time_start = time.perf_counter()
                 alt_route, alt_t_route, alt_service, alt_route_score, changed, delta_swap = (
-                    self.add_method(alt_route, alt_t_route, alt_service, alt_route_score, vertex))
+                    self.add_method(alt_route, alt_t_route, alt_service, alt_route_score, vertex[0]))
                 t_add = time.perf_counter() - time_start - delta_swap
                 time_swap += delta_swap
             if len(route) > 1 and not changed:
@@ -732,7 +732,7 @@ class UOPVPSolver:
                 vertex = random.sample(range(len(route)), k=1)
                 time_start = time.perf_counter()
                 alt_route, alt_t_route, alt_service, alt_route_score, changed, delta_swap = (
-                    self.replace_method(alt_route, alt_t_route, alt_service, alt_route_score, vertex))
+                    self.replace_method(alt_route, alt_t_route, alt_service, alt_route_score, vertex[0]))
                 time_replace = time.perf_counter() - time_start - delta_swap
                 time_swap += delta_swap
 
