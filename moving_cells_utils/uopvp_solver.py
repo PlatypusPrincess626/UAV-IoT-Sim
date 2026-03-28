@@ -461,12 +461,15 @@ class UOPVPSolver:
         """
         ADD a vertex to the route
         """
-        if b < 0 or b > len(route) or a == route[b]:
+        if b < 0 or b > len(route):
             return route
+        if b < len(route):
+            if a == route[b]:
+                return route
         alt_route, alt_t_route = copy.deepcopy(route), copy.deepcopy(t_route)
 
         b_before = None if b == 0 else alt_route[b-1]
-        if b == 0 and a == b_before:
+        if a == b_before:
             return route
 
         t_a_before = 0 if b == 0 else math.sqrt((a[0]-b_before[0])**2+(a[1]-b_before[1])**2)
