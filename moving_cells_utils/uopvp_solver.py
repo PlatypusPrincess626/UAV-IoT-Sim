@@ -394,7 +394,7 @@ class UOPVPSolver:
         SWAP two vertices in the route
         """
         if a < 0 or b < 0 or a >= len(route) or b >= len(route) or a == b:
-            return route
+            return route, t_route
         alt_route, alt_t_route = copy.deepcopy(route), copy.deepcopy(t_route)
 
         a_before, a_after = None if a == 0 else alt_route[a-1], None if a == len(alt_route)-1 else alt_route[a+1]
@@ -462,15 +462,15 @@ class UOPVPSolver:
         ADD a vertex to the route
         """
         if b < 0 or b > len(route):
-            return route
+            return route, t_route
         if b < len(route):
             if a == route[b]:
-                return route
+                return route, t_route
         alt_route, alt_t_route = copy.deepcopy(route), copy.deepcopy(t_route)
 
         b_before = None if b == 0 else alt_route[b-1]
         if a == b_before:
-            return route
+            return route, t_route
 
         t_a_before = 0 if b == 0 else math.sqrt((a[0]-b_before[0])**2+(a[1]-b_before[1])**2)
         t_a_after = 0 if b == len(route) else math.sqrt((a[0]-route[b][0])**2+(a[1]-route[b][1])**2)
@@ -550,7 +550,7 @@ class UOPVPSolver:
         REMOVE a vertex from the route
         """
         if a < 0 or a >= len(route):
-            return route
+            return route, t_route
         alt_route, alt_t_route = copy.deepcopy(route), copy.deepcopy(t_route)
 
         a_before, a_after = None if a == 0 else alt_route[a - 1], None if a == len(alt_route)-1 else alt_route[a + 1]
@@ -624,12 +624,12 @@ class UOPVPSolver:
         REPLACE a vertex on the route with a nearby vertex
         """
         if b < 0 or b >= len(route) or a == route[b]:
-            return route
+            return route, t_route
         alt_route, alt_t_route = copy.deepcopy(route), copy.deepcopy(t_route)
 
         b_before, b_after = None if b == 0 else alt_route[b - 1], None if b == len(alt_route)-1 else alt_route[b + 1]
         if (b == 0 and b_before == a) or (b == len(alt_route)-1 and b_after == a):
-            return route
+            return route, t_route
 
         t_a_before = 0 if b == 0 else math.sqrt((a[0]-b_before[0])**2+(a[1]-b_before[1])**2)
         t_a_after = 0 if b == len(alt_route)-1 else math.sqrt((a[0]-b_after[0])**2+(a[1]-b_after[1])**2)
