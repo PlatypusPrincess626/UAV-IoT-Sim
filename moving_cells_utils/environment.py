@@ -8,6 +8,7 @@ import os
 import datetime
 import csv
 import atexit
+import math
 
 
 def gaussian_kernel(n, std, normalised=False):
@@ -78,10 +79,10 @@ class SingleUGVEnv:
 
     def init_interference(self):
         env_static_interference = [0.0 for _ in range(1 + 4 * (self.dim + self.dim * self.dim))]
-        shadows = int(self.dim)
+        shadows = int(math.sqrt(self.dim))
         for shadow in range(shadows):
             place = random.randint(0, self.dim * self.dim - 1)
-            size = random.randint(int(8), int(50))
+            size = random.randint(int(2), int(4))
             intensity = random.randint(int(0.25 * size), int(0.75 * size))
             data_2D = gaussian_kernel(size, intensity, normalised=False)
             count = 0
