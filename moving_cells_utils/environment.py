@@ -82,7 +82,7 @@ class SingleUGVEnv:
         shadows = int(math.sqrt(self.dim))
         for shadow in range(shadows):
             place = random.randint(0, self.dim * self.dim - 1)
-            size = random.randint(int(2), int(4))
+            size = random.randint(int(32), int(64))
             intensity = random.randint(int(0.25 * size), int(0.75 * size))
             data_2D = gaussian_kernel(size, intensity, normalised=False)
             count = 0

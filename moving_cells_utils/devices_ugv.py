@@ -59,7 +59,7 @@ class DeviceUGV:
 
     def get_constraints(self):
         e_max = self.solar_current * self.solar_voltage * 60  # W * s = J
-        e_t = e_max * 0.8                                     # J = J
+        e_t = e_max * 0.6                                   # J = J
         e_move = self.motor_consumption * 60                  # W * s = J
         return e_t, e_max, e_move, self.v_max, self.d_max
 
