@@ -403,13 +403,13 @@ class UOPVPSolver:
         a_before, a_after = None if a == 0 else alt_route[a-1], None if a == len(alt_route)-1 else alt_route[a+1]
         b_before, b_after = None if b == 0 else alt_route[b-1], None if b == len(alt_route)-1 else alt_route[b+1]
 
-        t_a_before = (0 if b == 0 else
+        t_a_before = (None if b <= 0 else
                       math.sqrt((alt_route[a][0]-b_before[0])**2+(alt_route[a][1]-b_before[1])**2))
-        t_a_after = (0 if b == len(alt_route)-1 else
+        t_a_after = (None if b >= len(alt_route)-1 else
                      math.sqrt((alt_route[a][0]-b_after[0])**2+(alt_route[a][1]-b_after[1])**2))
-        t_b_before = (0 if a == 0 else
+        t_b_before = (None if a <= 0 else
                       math.sqrt((alt_route[b][0]-a_before[0])**2+(alt_route[b][1]-a_before[1])**2))
-        t_b_after = (0 if a == len(alt_route)-1 else
+        t_b_after = (None if a >= len(alt_route)-1 else
                      math.sqrt((alt_route[b][0]-a_after[0])**2+(alt_route[b][1]-a_after[1])**2))
 
         if a > 0:
@@ -475,8 +475,8 @@ class UOPVPSolver:
         if a == b_before:
             return route, t_route
 
-        t_a_before = 0 if b == 0 else math.sqrt((a[0]-b_before[0])**2+(a[1]-b_before[1])**2)
-        t_a_after = 0 if b == len(route) else math.sqrt((a[0]-route[b][0])**2+(a[1]-route[b][1])**2)
+        t_a_before = None if b <= 0 else math.sqrt((a[0]-b_before[0])**2+(a[1]-b_before[1])**2)
+        t_a_after = None if b >= len(route) else math.sqrt((a[0]-route[b][0])**2+(a[1]-route[b][1])**2)
 
         if b == len(route):
             alt_t_route.append(t_a_before)

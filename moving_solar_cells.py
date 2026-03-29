@@ -25,7 +25,7 @@ def main():
 
     max_time, max_size = 720, 25  # min
     start_time = time.perf_counter()
-    env = environment.SingleUGVEnv(max_steps=max_time, max_dim=max_size)
+    env = environment.SingleUGVEnv(max_steps=max_time, max_dim=max_size, chkpt_div=30)
     print(time.perf_counter() - start_time)
 
     start_time = time.perf_counter()
