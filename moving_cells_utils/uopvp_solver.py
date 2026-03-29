@@ -351,6 +351,9 @@ class UOPVPSolver:
         """
         Using a route, find optimal service window
         """
+        if len(route) <= 1:
+            return [self.t_max]
+
         available_time = self.t_max - sum(t_route)
         service_intervals = []
         for m in range(len(t_route)):
