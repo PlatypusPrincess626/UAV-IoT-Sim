@@ -355,14 +355,14 @@ class UOPVPSolver:
         service_intervals = []
         for m in range(len(t_route)):
             s = int((available_time - sum(service_intervals[:m])) / (len(route) - m))
-            left, right, t_lr = route[m], route[m+1], int(t_route[m])
+            left, right, t_lr = route[m], route[m+1], math.ceil(t_route[m])
 
-            time_to_m = int(sum(service_intervals[:m]) + sum(t_route[:m]))
-            start, stop = time_to_m, time_to_m+t_lr
-            profit_avg_i = sum(self.find_profit_and_beta(route[m][0], route[m][1], t)[0]
-                               for t in range(start+s, stop+s))/t_lr
-            profit_avg_j = sum(self.find_profit_and_beta(route[m + 1][0], route[m + 1][1], t)[0]
-                               for t in range(start+s, stop+s))/t_lr
+            time_to_m = math.ceil(sum(service_intervals[:m]) + sum(t_route[:m]))
+            start, stop = time_to_m, math.ceil(time_to_m+t_lr)
+            profit_avg_i = int(sum(self.find_profit_and_beta(route[m][0], route[m][1], t)[0]
+                                    for t in range(start+s, stop+s))/t_lr)
+            profit_avg_j = int(sum(self.find_profit_and_beta(route[m + 1][0], route[m + 1][1], t)[0]
+                                    for t in range(start+s, stop+s))/t_lr)
             profit_chg_i = (self.find_profit_and_beta(route[m][0], route[m][1], stop + s)[0] -
                             self.find_profit_and_beta(route[m][0], route[m][1], start + s)[0])
             profit_chg_j = (self.find_profit_and_beta(route[m + 1][0], route[m + 1][1], stop + s)[0] -
@@ -374,10 +374,10 @@ class UOPVPSolver:
                 print(step)
                 s = max(0, int(s + int(self.optimizer_weight * (profit_avg_i - profit_avg_j) +
                                        self.optimizer_weight**2 * (profit_chg_i**2 - profit_chg_j**2))))
-                profit_avg_i = sum(self.find_profit_and_beta(route[m][0], route[m][1], t)[0]
-                                   for t in range(start + s, stop + s)) / t_lr
-                profit_avg_j = sum(self.find_profit_and_beta(route[m + 1][0], route[m + 1][1], t)[0]
-                                   for t in range(start + s, stop + s)) / t_lr
+                profit_avg_i = int(sum(self.find_profit_and_beta(route[m][0], route[m][1], t)[0]
+                                        for t in range(start + s, stop + s))/t_lr)
+                profit_avg_j = int(sum(self.find_profit_and_beta(route[m + 1][0], route[m + 1][1], t)[0]
+                                        for t in range(start + s, stop + s))/t_lr)
                 profit_chg_i = (self.find_profit_and_beta(route[m][0], route[m][1], stop + s)[0] -
                                 self.find_profit_and_beta(route[m][0], route[m][1], start + s)[0])
                 profit_chg_j = (self.find_profit_and_beta(route[m + 1][0], route[m + 1][1], stop + s)[0] -
